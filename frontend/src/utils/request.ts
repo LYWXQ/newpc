@@ -16,13 +16,6 @@ interface RequestOptions {
   showLoading?: boolean
 }
 
-// 响应数据接口
-interface ResponseData<T = any> {
-  code: number
-  message: string
-  data: T
-}
-
 /**
  * 获取存储的 token
  */
@@ -266,7 +259,7 @@ export const upload = <T = any>(url: string, filePath: string, formData?: any): 
           try {
             const data = JSON.parse(res.data)
             resolve(data.data || data)
-          } catch (e) {
+          } catch {
             resolve(res.data as any)
           }
         } else {

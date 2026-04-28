@@ -7,8 +7,7 @@ import type { PaginationData } from './types'
 // 消息类型
 type MessageType = 'system' | 'text' | 'image'
 
-// 消息状态
-type MessageStatus = 'unread' | 'read'
+
 
 // 物品信息（简版）
 export interface ItemInfo {

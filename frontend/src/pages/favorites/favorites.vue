@@ -7,7 +7,10 @@
     </view>
 
     <!-- 收藏列表 -->
-    <scroll-view class="favorites-list" scroll-y @scrolltolower="loadMore" v-if="favorites.length > 0">
+    <scroll-view class="favorites-list"
+                 scroll-y
+                 @scrolltolower="loadMore"
+                 v-if="favorites.length > 0">
       <view 
         class="favorite-item" 
         :class="{ 'selected': isBatchMode && selectedItems.includes(favorite.item.id) }"
@@ -83,184 +86,184 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
-import { onShow } from '@dcloudio/uni-app'
-import { getFavorites, removeFavorite, batchRemoveFavorites, type Favorite } from '@/api/favorites'
+  import { ref, computed, onMounted } from 'vue'
+  import { onShow } from '@dcloudio/uni-app'
+  import { getFavorites, removeFavorite, batchRemoveFavorites, type Favorite } from '@/api/favorites'
 
-// 收藏列表
-const favorites = ref<Favorite[]>([])
-const loading = ref(false)
-const page = ref(1)
-const limit = 10
-const hasMore = ref(true)
+  // 收藏列表
+  const favorites = ref<Favorite[]>([])
+  const loading = ref(false)
+  const page = ref(1)
+  const limit = 10
+  const hasMore = ref(true)
 
-// 批量模式
-const isBatchMode = ref(false)
-const selectedItems = ref<number[]>([])
+  // 批量模式
+  const isBatchMode = ref(false)
+  const selectedItems = ref<number[]>([])
 
-// 计算属性：是否全选
-const isAllSelected = computed(() => {
-  if (favorites.value.length === 0) return false
-  return favorites.value.every(fav => selectedItems.value.includes(fav.item.id))
-})
+  // 计算属性：是否全选
+  const isAllSelected = computed(() => {
+    if (favorites.value.length === 0) return false
+    return favorites.value.every(fav => selectedItems.value.includes(fav.item.id))
+  })
 
-// 获取图片URL
-const getImageUrl = (url: string | undefined): string => {
-  if (!url) return '/static/logo.png'
-  if (url.startsWith('http')) return url
-  return `http://localhost:3000${url}`
-}
-
-// 加载收藏列表
-const loadFavorites = async (isRefresh = false) => {
-  if (loading.value) return
-  
-  if (isRefresh) {
-    page.value = 1
-    hasMore.value = true
+  // 获取图片URL
+  const getImageUrl = (url: string | undefined): string => {
+    if (!url) return '/static/logo.png'
+    if (url.startsWith('http')) return url
+    return `http://localhost:3000${url}`
   }
+
+  // 加载收藏列表
+  const loadFavorites = async (isRefresh = false) => {
+    if (loading.value) return
   
-  if (!hasMore.value && !isRefresh) return
-  
-  loading.value = true
-  
-  try {
-    const res = await getFavorites(page.value, limit)
-    
     if (isRefresh) {
-      favorites.value = res.favorites
-    } else {
-      favorites.value = [...favorites.value, ...res.favorites]
+      page.value = 1
+      hasMore.value = true
     }
-    
-    hasMore.value = res.pagination.page < res.pagination.totalPages
-    page.value++
-  } catch (error) {
-    console.error('获取收藏列表失败:', error)
-    uni.showToast({ title: '获取收藏列表失败', icon: 'none' })
-  } finally {
-    loading.value = false
-  }
-}
-
-// 加载更多
-const loadMore = () => {
-  if (!loading.value && hasMore.value) {
-    loadFavorites()
-  }
-}
-
-// 切换批量模式
-const toggleBatchMode = () => {
-  isBatchMode.value = !isBatchMode.value
-  if (!isBatchMode.value) {
-    selectedItems.value = []
-  }
-}
-
-// 切换选择
-const toggleSelect = (itemId: number) => {
-  const index = selectedItems.value.indexOf(itemId)
-  if (index > -1) {
-    selectedItems.value.splice(index, 1)
-  } else {
-    selectedItems.value.push(itemId)
-  }
-}
-
-// 切换全选
-const toggleSelectAll = () => {
-  if (isAllSelected.value) {
-    selectedItems.value = []
-  } else {
-    selectedItems.value = favorites.value.map(fav => fav.item.id)
-  }
-}
-
-// 确认取消收藏
-const confirmUnfavorite = (itemId: number) => {
-  uni.showModal({
-    title: '提示',
-    content: '确定要取消收藏该物品吗？',
-    success: (res) => {
-      if (res.confirm) {
-        unfavorite(itemId)
-      }
-    }
-  })
-}
-
-// 取消收藏
-const unfavorite = async (itemId: number) => {
-  try {
-    await removeFavorite(itemId)
-    favorites.value = favorites.value.filter(fav => fav.item.id !== itemId)
-    uni.showToast({ title: '已取消收藏', icon: 'success' })
-  } catch (error) {
-    console.error('取消收藏失败:', error)
-    uni.showToast({ title: '取消收藏失败', icon: 'none' })
-  }
-}
-
-// 确认批量取消收藏
-const confirmBatchUnfavorite = () => {
-  if (selectedItems.value.length === 0) {
-    uni.showToast({ title: '请选择要取消收藏的物品', icon: 'none' })
-    return
-  }
   
-  uni.showModal({
-    title: '提示',
-    content: `确定要取消收藏选中的 ${selectedItems.value.length} 个物品吗？`,
-    success: (res) => {
-      if (res.confirm) {
-        batchUnfavorite()
+    if (!hasMore.value && !isRefresh) return
+  
+    loading.value = true
+  
+    try {
+      const res = await getFavorites(page.value, limit)
+    
+      if (isRefresh) {
+        favorites.value = res.favorites
+      } else {
+        favorites.value = [...favorites.value, ...res.favorites]
       }
+    
+      hasMore.value = res.pagination.page < res.pagination.totalPages
+      page.value++
+    } catch (error) {
+      console.error('获取收藏列表失败:', error)
+      uni.showToast({ title: '获取收藏列表失败', icon: 'none' })
+    } finally {
+      loading.value = false
     }
+  }
+
+  // 加载更多
+  const loadMore = () => {
+    if (!loading.value && hasMore.value) {
+      loadFavorites()
+    }
+  }
+
+  // 切换批量模式
+  const toggleBatchMode = () => {
+    isBatchMode.value = !isBatchMode.value
+    if (!isBatchMode.value) {
+      selectedItems.value = []
+    }
+  }
+
+  // 切换选择
+  const toggleSelect = (itemId: number) => {
+    const index = selectedItems.value.indexOf(itemId)
+    if (index > -1) {
+      selectedItems.value.splice(index, 1)
+    } else {
+      selectedItems.value.push(itemId)
+    }
+  }
+
+  // 切换全选
+  const toggleSelectAll = () => {
+    if (isAllSelected.value) {
+      selectedItems.value = []
+    } else {
+      selectedItems.value = favorites.value.map(fav => fav.item.id)
+    }
+  }
+
+  // 确认取消收藏
+  const confirmUnfavorite = (itemId: number) => {
+    uni.showModal({
+      title: '提示',
+      content: '确定要取消收藏该物品吗？',
+      success: (res) => {
+        if (res.confirm) {
+          unfavorite(itemId)
+        }
+      }
+    })
+  }
+
+  // 取消收藏
+  const unfavorite = async (itemId: number) => {
+    try {
+      await removeFavorite(itemId)
+      favorites.value = favorites.value.filter(fav => fav.item.id !== itemId)
+      uni.showToast({ title: '已取消收藏', icon: 'success' })
+    } catch (error) {
+      console.error('取消收藏失败:', error)
+      uni.showToast({ title: '取消收藏失败', icon: 'none' })
+    }
+  }
+
+  // 确认批量取消收藏
+  const confirmBatchUnfavorite = () => {
+    if (selectedItems.value.length === 0) {
+      uni.showToast({ title: '请选择要取消收藏的物品', icon: 'none' })
+      return
+    }
+  
+    uni.showModal({
+      title: '提示',
+      content: `确定要取消收藏选中的 ${selectedItems.value.length} 个物品吗？`,
+      success: (res) => {
+        if (res.confirm) {
+          batchUnfavorite()
+        }
+      }
+    })
+  }
+
+  // 批量取消收藏
+  const batchUnfavorite = async () => {
+    try {
+      await batchRemoveFavorites(selectedItems.value)
+      favorites.value = favorites.value.filter(fav => !selectedItems.value.includes(fav.item.id))
+      selectedItems.value = []
+      uni.showToast({ title: '批量取消收藏成功', icon: 'success' })
+    } catch (error) {
+      console.error('批量取消收藏失败:', error)
+      uni.showToast({ title: '批量取消收藏失败', icon: 'none' })
+    }
+  }
+
+  // 处理列表项点击
+  const handleItemClick = (itemId: number) => {
+    if (isBatchMode.value) {
+      toggleSelect(itemId)
+    } else {
+      goToItemDetail(itemId)
+    }
+  }
+
+  // 跳转到物品详情
+  const goToItemDetail = (itemId: number) => {
+    uni.navigateTo({ url: `/pages/item-detail/item-detail?id=${itemId}` })
+  }
+
+  // 去浏览
+  const goToBrowse = () => {
+    uni.switchTab({ url: '/pages/index/index' })
+  }
+
+  // 页面显示
+  onShow(() => {
+    loadFavorites(true)
   })
-}
 
-// 批量取消收藏
-const batchUnfavorite = async () => {
-  try {
-    await batchRemoveFavorites(selectedItems.value)
-    favorites.value = favorites.value.filter(fav => !selectedItems.value.includes(fav.item.id))
-    selectedItems.value = []
-    uni.showToast({ title: '批量取消收藏成功', icon: 'success' })
-  } catch (error) {
-    console.error('批量取消收藏失败:', error)
-    uni.showToast({ title: '批量取消收藏失败', icon: 'none' })
-  }
-}
-
-// 处理列表项点击
-const handleItemClick = (itemId: number) => {
-  if (isBatchMode.value) {
-    toggleSelect(itemId)
-  } else {
-    goToItemDetail(itemId)
-  }
-}
-
-// 跳转到物品详情
-const goToItemDetail = (itemId: number) => {
-  uni.navigateTo({ url: `/pages/item-detail/item-detail?id=${itemId}` })
-}
-
-// 去浏览
-const goToBrowse = () => {
-  uni.switchTab({ url: '/pages/index/index' })
-}
-
-// 页面显示
-onShow(() => {
-  loadFavorites(true)
-})
-
-// 页面加载
-onMounted(() => {
-  loadFavorites(true)
-})
+  // 页面加载
+  onMounted(() => {
+    loadFavorites(true)
+  })
 </script>
 
 <style scoped>

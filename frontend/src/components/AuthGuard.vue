@@ -1,28 +1,28 @@
 <template>
   <view v-if="loading" class="auth-loading">
     <view class="loading-content">
-      <view class="loading-spinner"></view>
+      <view class="loading-spinner"/>
       <text class="loading-text">检查登录状态...</text>
     </view>
   </view>
-  <slot v-else></slot>
+  <slot v-else/>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { requireAuth } from '@/utils/auth'
+  import { ref, onMounted } from 'vue'
+  import { requireAuth } from '@/utils/auth'
 
-const props = defineProps<{
-  pagePath: string
-}>()
+  const props = defineProps<{
+    pagePath: string
+  }>()
 
-const loading = ref(true)
+  const loading = ref(true)
 
-onMounted(() => {
-  // 检查登录状态
-  requireAuth(props.pagePath)
-  loading.value = false
-})
+  onMounted(() => {
+    // 检查登录状态
+    requireAuth(props.pagePath)
+    loading.value = false
+  })
 </script>
 
 <style lang="scss" scoped>

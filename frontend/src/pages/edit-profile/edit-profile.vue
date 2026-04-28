@@ -1,39 +1,51 @@
 <template>
   <view class="edit-profile-container">
     <view class="avatar-section">
-      <image class="avatar" :src="form.avatar || '/static/logo.png'" mode="aspectFill" @click="chooseAvatar" />
+      <image class="avatar"
+             :src="form.avatar || '/static/logo.png'"
+             mode="aspectFill"
+             @click="chooseAvatar" />
       <view class="avatar-tip">点击更换头像</view>
     </view>
 
     <view class="form-section">
       <view class="form-item">
         <text class="label">用户名</text>
-        <input class="input" v-model="form.username" placeholder="请输入用户名" disabled />
+        <input class="input"
+               v-model="form.username"
+               placeholder="请输入用户名"
+               disabled >
       </view>
 
       <view class="form-item">
         <text class="label">学号</text>
-        <input class="input" v-model="form.studentId" placeholder="请输入学号" disabled />
+        <input class="input"
+               v-model="form.studentId"
+               placeholder="请输入学号"
+               disabled >
       </view>
 
       <view class="form-item">
         <text class="label">手机号</text>
-        <input class="input" v-model="form.phone" placeholder="请输入手机号" type="number" />
+        <input class="input"
+               v-model="form.phone"
+               placeholder="请输入手机号"
+               type="number" >
       </view>
 
       <view class="form-item">
         <text class="label">邮箱</text>
-        <input class="input" v-model="form.email" placeholder="请输入邮箱" />
+        <input class="input" v-model="form.email" placeholder="请输入邮箱" >
       </view>
 
       <view class="form-item">
         <text class="label">学校</text>
-        <input class="input" v-model="form.school" placeholder="请输入学校" />
+        <input class="input" v-model="form.school" placeholder="请输入学校" >
       </view>
 
       <view class="form-item">
         <text class="label">专业</text>
-        <input class="input" v-model="form.major" placeholder="请输入专业" />
+        <input class="input" v-model="form.major" placeholder="请输入专业" >
       </view>
     </view>
 
@@ -44,69 +56,69 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { updateUserInfo, uploadAvatar, type UserInfo } from '@/api/auth'
-import { useAuthStore } from '@/stores/auth'
+  import { ref, onMounted } from 'vue'
+  import { updateUserInfo, uploadAvatar, type UserInfo } from '@/api/auth'
+  import { useAuthStore } from '@/stores/auth'
 
-const authStore = useAuthStore()
-const loading = ref(false)
+  const authStore = useAuthStore()
+  const loading = ref(false)
 
-const form = ref<Partial<UserInfo>>({
-  username: '',
-  studentId: '',
-  phone: '',
-  email: '',
-  avatar: '',
-  school: '',
-  major: ''
-})
+  const form = ref<Partial<UserInfo>>({
+    username: '',
+    studentId: '',
+    phone: '',
+    email: '',
+    avatar: '',
+    school: '',
+    major: ''
+  })
 
-onMounted(() => {
-  if (authStore.userInfo) {
-    form.value = { ...authStore.userInfo }
-  }
-})
-
-const chooseAvatar = () => {
-  uni.chooseImage({
-    count: 1,
-    sizeType: ['compressed'],
-    sourceType: ['album', 'camera'],
-    success: async (res) => {
-      const tempFilePath = res.tempFilePaths[0]
-      await uploadAvatarImage(tempFilePath)
+  onMounted(() => {
+    if (authStore.userInfo) {
+      form.value = { ...authStore.userInfo }
     }
   })
-}
 
-const uploadAvatarImage = async (filePath: string) => {
-  try {
-    uni.showLoading({ title: '上传中...' })
-    const result = await uploadAvatar(filePath)
-    form.value.avatar = result.url
-    uni.showToast({ title: '上传成功', icon: 'success' })
-  } catch (error) {
-    uni.showToast({ title: '上传失败', icon: 'none' })
-  } finally {
-    uni.hideLoading()
+  const chooseAvatar = () => {
+    uni.chooseImage({
+      count: 1,
+      sizeType: ['compressed'],
+      sourceType: ['album', 'camera'],
+      success: async (res) => {
+        const tempFilePath = res.tempFilePaths[0]
+        await uploadAvatarImage(tempFilePath)
+      }
+    })
   }
-}
 
-const handleSave = async () => {
-  try {
-    loading.value = true
-    const user = await updateUserInfo(form.value)
-    authStore.updateUserInfo(user)
-    uni.showToast({ title: '保存成功', icon: 'success' })
-    setTimeout(() => {
-      uni.navigateBack()
-    }, 1500)
-  } catch (error) {
-    uni.showToast({ title: '保存失败', icon: 'none' })
-  } finally {
-    loading.value = false
+  const uploadAvatarImage = async (filePath: string) => {
+    try {
+      uni.showLoading({ title: '上传中...' })
+      const result = await uploadAvatar(filePath)
+      form.value.avatar = result.url
+      uni.showToast({ title: '上传成功', icon: 'success' })
+    } catch (error) {
+      uni.showToast({ title: '上传失败', icon: 'none' })
+    } finally {
+      uni.hideLoading()
+    }
   }
-}
+
+  const handleSave = async () => {
+    try {
+      loading.value = true
+      const user = await updateUserInfo(form.value)
+      authStore.updateUserInfo(user)
+      uni.showToast({ title: '保存成功', icon: 'success' })
+      setTimeout(() => {
+        uni.navigateBack()
+      }, 1500)
+    } catch (error) {
+      uni.showToast({ title: '保存失败', icon: 'none' })
+    } finally {
+      loading.value = false
+    }
+  }
 </script>
 
 <style lang="scss">

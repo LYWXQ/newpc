@@ -15,9 +15,15 @@
     <view v-else-if="item" class="item-detail">
       <!-- 图片轮播 -->
       <view class="image-swiper-container">
-        <swiper class="image-swiper" :indicator-dots="true" :autoplay="false" :circular="true">
+        <swiper class="image-swiper"
+                :indicator-dots="true"
+                :autoplay="false"
+                :circular="true">
           <swiper-item v-for="(image, index) in item.images" :key="index">
-            <image class="swiper-image" :src="getImageUrl(image)" mode="aspectFill" @error="onImageError" />
+            <image class="swiper-image"
+                   :src="getImageUrl(image)"
+                   mode="aspectFill"
+                   @error="onImageError" />
           </swiper-item>
         </swiper>
         <view v-if="!item.images || item.images.length === 0" class="no-image">
@@ -130,7 +136,7 @@
                 :src="img" 
                 mode="aspectFill"
                 @click="previewReviewImage(img)"
-              ></image>
+              />
             </view>
           </view>
         </view>
@@ -241,445 +247,445 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-import { onLoad } from '@dcloudio/uni-app'
-import { getItemDetail, type Item } from '@/api/items'
-import { createOrder, type CreateOrderParams } from '@/api/orders'
-import { getItemReviews, type Review } from '@/api/reviews'
-import { addFavorite, removeFavorite, checkFavoriteStatus } from '@/api/favorites'
-import { useAuthStore } from '@/stores/auth'
-import { formatItemStatus, getBorrowButtonText, canBorrow as canBorrowItem } from '@/utils/constants'
-import { checkLogin } from '@/utils/auth'
+  import { ref, computed } from 'vue'
+  import { onLoad } from '@dcloudio/uni-app'
+  import { getItemDetail, type Item } from '@/api/items'
+  import { createOrder, type CreateOrderParams } from '@/api/orders'
+  import { getItemReviews, type Review } from '@/api/reviews'
+  import { addFavorite, removeFavorite, checkFavoriteStatus } from '@/api/favorites'
+  import { useAuthStore } from '@/stores/auth'
+  import { formatItemStatus, getBorrowButtonText, canBorrow as canBorrowItem } from '@/utils/constants'
+  import { checkLogin } from '@/utils/auth'
 
-const authStore = useAuthStore()
+  const authStore = useAuthStore()
 
-// 收藏状态
-const isFavorite = ref(false)
-const favoriteLoading = ref(false)
+  // 收藏状态
+  const isFavorite = ref(false)
+  const favoriteLoading = ref(false)
 
-// 弹窗显示状态
-const showBorrowDialog = ref(false)
-const showDateTimePicker = ref(false)
-const pickerType = ref<'start' | 'end'>('start')
+  // 弹窗显示状态
+  const showBorrowDialog = ref(false)
+  const showDateTimePicker = ref(false)
+  const pickerType = ref<'start' | 'end'>('start')
 
-// 订单表单
-const orderForm = ref({
-  startDate: '',
-  endDate: '',
-  note: ''
-})
-
-// 日期时间选择器数据
-const years = ref<string[]>([])
-const months = ref<string[]>([])
-const days = ref<string[]>([])
-const hours = ref<string[]>([])
-const minutes = ref<string[]>([])
-const pickerValue = ref<number[]>([0, 0, 0, 0, 0])
-const tempPickerValue = ref<number[]>([0, 0, 0, 0, 0])
-
-// 物品 ID
-const itemId = ref<number>(0)
-// 物品数据
-const item = ref<Item | null>(null)
-// 评价数据
-const reviews = ref<Review[]>([])
-// 加载状态
-const loading = ref(false)
-// 评价加载状态
-const reviewsLoading = ref(false)
-// 错误信息
-const error = ref('')
-
-// 计算属性：是否可以借用
-const canBorrow = computed(() => {
-  return item.value ? canBorrowItem(item.value.status) : false
-})
-
-// 计算属性：是否可以提交订单
-const canSubmit = computed(() => {
-  return orderForm.value.startDate && orderForm.value.endDate
-})
-
-// 计算属性：是否是本人发布的物品
-const isOwnItem = computed(() => {
-  if (!item.value || !item.value.user || !authStore.userInfo) {
-    return false
-  }
-  const itemUserId = String(item.value.user.id)
-  const currentUserId = String(authStore.userInfo.id)
-  return itemUserId === currentUserId
-})
-
-// 计算属性：借用按钮文字
-const borrowButtonText = computed(() => {
-  return item.value ? getBorrowButtonText(item.value.status) : '立即借用'
-})
-
-// 计算属性：计算借用时长
-const calculateDuration = computed(() => {
-  if (!orderForm.value.startDate || !orderForm.value.endDate) return ''
-  const start = new Date(orderForm.value.startDate)
-  const end = new Date(orderForm.value.endDate)
-  const diffMs = end.getTime() - start.getTime()
-  const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24))
-  if (diffDays < 1) return '不足1天'
-  return `${diffDays}天`
-})
-
-// 初始化日期时间选择器数据
-const initPickerData = () => {
-  const currentYear = new Date().getFullYear()
-  // 生成年份（当前年到后2年）
-  years.value = Array.from({ length: 3 }, (_, i) => String(currentYear + i))
-  // 生成月份
-  months.value = Array.from({ length: 12 }, (_, i) => String(i + 1).padStart(2, '0'))
-  // 生成日期（根据年月动态生成）
-  updateDays()
-  // 生成小时
-  hours.value = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0'))
-  // 生成分钟
-  minutes.value = Array.from({ length: 60 }, (_, i) => String(i).padStart(2, '0'))
-}
-
-// 更新日期列表
-const updateDays = () => {
-  const year = parseInt(years.value[pickerValue.value[0]] || new Date().getFullYear())
-  const month = parseInt(months.value[pickerValue.value[1]] || 1)
-  const daysInMonth = new Date(year, month, 0).getDate()
-  days.value = Array.from({ length: daysInMonth }, (_, i) => String(i + 1).padStart(2, '0'))
-}
-
-// 获取图片 URL
-const getImageUrl = (url: string): string => {
-  if (!url) return '/static/logo.png'
-  if (url.startsWith('http')) return url
-  return `http://localhost:3000${url}`
-}
-
-// 图片加载失败处理
-const onImageError = () => {
-  console.log('图片加载失败')
-}
-
-// 格式化状态
-const formatStatus = (status: string): string => {
-  return formatItemStatus(status)
-}
-
-// 格式化可借时间
-const formatAvailableTime = (time: { start?: string; end?: string }): string => {
-  if (time.start && time.end) {
-    return `${formatDate(time.start)} 至 ${formatDate(time.end)}`
-  } else if (time.start) {
-    return `从 ${formatDate(time.start)} 开始`
-  } else if (time.end) {
-    return `至 ${formatDate(time.end)} 结束`
-  }
-  return '随时可借'
-}
-
-// 格式化日期
-const formatDate = (dateStr: string): string => {
-  if (!dateStr) return ''
-  const date = new Date(dateStr)
-  return date.toLocaleDateString('zh-CN')
-}
-
-// 格式化日期时间
-const formatDateTime = (dateStr: string): string => {
-  if (!dateStr) return ''
-  const date = new Date(dateStr)
-  const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-  const hour = String(date.getHours()).padStart(2, '0')
-  const minute = String(date.getMinutes()).padStart(2, '0')
-  return `${year}-${month}-${day} ${hour}:${minute}`
-}
-
-// 格式化评价时间
-const formatReviewTime = (time: string): string => {
-  if (!time) return ''
-  const date = new Date(time)
-  const now = new Date()
-  const diff = now.getTime() - date.getTime()
-  
-  if (diff < 60000) {
-    return '刚刚'
-  } else if (diff < 3600000) {
-    return `${Math.floor(diff / 60000)}分钟前`
-  } else if (diff < 86400000) {
-    return `${Math.floor(diff / 3600000)}小时前`
-  } else if (diff < 604800000) {
-    return `${Math.floor(diff / 86400000)}天前`
-  } else {
-    return `${date.getMonth() + 1}月${date.getDate()}日`
-  }
-}
-
-// 预览评价图片
-const previewReviewImage = (url: string) => {
-  uni.previewImage({
-    urls: [url],
-    current: url
+  // 订单表单
+  const orderForm = ref({
+    startDate: '',
+    endDate: '',
+    note: ''
   })
-}
 
-// 加载物品评价
-const loadReviews = async () => {
-  if (!itemId.value) return
-  
-  reviewsLoading.value = true
-  
-  try {
-    const res = await getItemReviews(itemId.value, { page: 1, limit: 5 })
-    reviews.value = res.data || []
-  } catch (error) {
-    console.error('获取物品评价失败:', error)
-  } finally {
-    reviewsLoading.value = false
-  }
-}
+  // 日期时间选择器数据
+  const years = ref<string[]>([])
+  const months = ref<string[]>([])
+  const days = ref<string[]>([])
+  const hours = ref<string[]>([])
+  const minutes = ref<string[]>([])
+  const pickerValue = ref<number[]>([0, 0, 0, 0, 0])
+  const tempPickerValue = ref<number[]>([0, 0, 0, 0, 0])
 
-// 加载物品详情
-const loadItemDetail = async () => {
-  if (!itemId.value) {
-    error.value = '物品ID无效'
-    return
-  }
+  // 物品 ID
+  const itemId = ref<number>(0)
+  // 物品数据
+  const item = ref<Item | null>(null)
+  // 评价数据
+  const reviews = ref<Review[]>([])
+  // 加载状态
+  const loading = ref(false)
+  // 评价加载状态
+  const reviewsLoading = ref(false)
+  // 错误信息
+  const error = ref('')
 
-  loading.value = true
-  error.value = ''
+  // 计算属性：是否可以借用
+  const canBorrow = computed(() => {
+    return item.value ? canBorrowItem(item.value.status) : false
+  })
 
-  try {
-    const res = await getItemDetail(itemId.value)
-    if (res.item) {
-      item.value = res.item
-      // 加载评价
-      await loadReviews()
-    } else {
-      error.value = '物品不存在'
+  // 计算属性：是否可以提交订单
+  const canSubmit = computed(() => {
+    return orderForm.value.startDate && orderForm.value.endDate
+  })
+
+  // 计算属性：是否是本人发布的物品
+  const isOwnItem = computed(() => {
+    if (!item.value || !item.value.user || !authStore.userInfo) {
+      return false
     }
-  } catch (err: any) {
-    console.error('获取物品详情失败:', err)
-    error.value = err.message || '获取物品详情失败，请稍后重试'
-  } finally {
-    loading.value = false
-  }
-}
+    const itemUserId = String(item.value.user.id)
+    const currentUserId = String(authStore.userInfo.id)
+    return itemUserId === currentUserId
+  })
 
-// 检查收藏状态
-const checkFavorite = async () => {
-  if (!authStore.isLoggedIn || !itemId.value) return
-  
-  try {
-    const res = await checkFavoriteStatus(itemId.value)
-    isFavorite.value = res.isFavorite
-  } catch (error) {
-    console.error('检查收藏状态失败:', error)
-  }
-}
+  // 计算属性：借用按钮文字
+  const borrowButtonText = computed(() => {
+    return item.value ? getBorrowButtonText(item.value.status) : '立即借用'
+  })
 
-// 切换收藏状态
-const toggleFavorite = async () => {
-  if (!checkLogin()) return
-  
-  if (favoriteLoading.value) return
-  
-  favoriteLoading.value = true
-  
-  try {
-    if (isFavorite.value) {
-      await removeFavorite(itemId.value)
-      isFavorite.value = false
-      uni.showToast({ title: '已取消收藏', icon: 'success' })
-    } else {
-      await addFavorite(itemId.value)
-      isFavorite.value = true
-      uni.showToast({ title: '收藏成功', icon: 'success' })
-    }
-  } catch (error: any) {
-    console.error('收藏操作失败:', error)
-    uni.showToast({ title: error.message || '操作失败', icon: 'none' })
-  } finally {
-    favoriteLoading.value = false
-  }
-}
+  // 计算属性：计算借用时长
+  const calculateDuration = computed(() => {
+    if (!orderForm.value.startDate || !orderForm.value.endDate) return ''
+    const start = new Date(orderForm.value.startDate)
+    const end = new Date(orderForm.value.endDate)
+    const diffMs = end.getTime() - start.getTime()
+    const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24))
+    if (diffDays < 1) return '不足1天'
+    return `${diffDays}天`
+  })
 
-// 联系发布者
-const contactOwner = () => {
-  if (!item.value?.user) {
-    uni.showToast({ title: '发布者信息不可用', icon: 'none' })
-    return
-  }
-  if (!checkLogin()) return
-  uni.navigateTo({ url: `/pages/chat/chat?itemId=${itemId.value}&userId=${item.value.user.id}` })
-}
-
-// 打开借用弹窗
-const openBorrowDialog = () => {
-  if (!canBorrow.value) return
-  if (!checkLogin()) return
-  if (!item.value) return
-
-  // 初始化默认时间
-  const now = new Date()
-  const startDate = new Date(now)
-  startDate.setMinutes(0, 0, 0)
-  startDate.setHours(startDate.getHours() + 1)
-  
-  const endDate = new Date(startDate)
-  endDate.setDate(endDate.getDate() + 7)
-  
-  orderForm.value.startDate = startDate.toISOString()
-  orderForm.value.endDate = endDate.toISOString()
-  orderForm.value.note = ''
-  
-  showBorrowDialog.value = true
-}
-
-// 关闭借用弹窗
-const closeBorrowDialog = () => {
-  showBorrowDialog.value = false
-}
-
-// 打开日期时间选择器
-const openDateTimePicker = (type: 'start' | 'end') => {
-  pickerType.value = type
-  initPickerData()
-  
-  // 根据当前选择的值设置 picker
-  const currentDate = type === 'start' 
-    ? (orderForm.value.startDate ? new Date(orderForm.value.startDate) : new Date())
-    : (orderForm.value.endDate ? new Date(orderForm.value.endDate) : new Date())
-  
-  const year = currentDate.getFullYear()
-  const month = currentDate.getMonth()
-  const day = currentDate.getDate() - 1
-  const hour = currentDate.getHours()
-  const minute = currentDate.getMinutes()
-  
-  const yearIndex = years.value.findIndex(y => parseInt(y) === year)
-  pickerValue.value = [
-    yearIndex >= 0 ? yearIndex : 0,
-    month,
-    day,
-    hour,
-    minute
-  ]
-  tempPickerValue.value = [...pickerValue.value]
-  
-  updateDays()
-  showDateTimePicker.value = true
-}
-
-// 关闭日期时间选择器
-const closeDateTimePicker = () => {
-  showDateTimePicker.value = false
-}
-
-// picker 值改变
-const onPickerChange = (e: any) => {
-  tempPickerValue.value = e.detail.value
-  // 如果年份或月份改变，更新日期
-  if (tempPickerValue.value[0] !== pickerValue.value[0] || tempPickerValue.value[1] !== pickerValue.value[1]) {
-    pickerValue.value = [...tempPickerValue.value]
+  // 初始化日期时间选择器数据
+  const initPickerData = () => {
+    const currentYear = new Date().getFullYear()
+    // 生成年份（当前年到后2年）
+    years.value = Array.from({ length: 3 }, (_, i) => String(currentYear + i))
+    // 生成月份
+    months.value = Array.from({ length: 12 }, (_, i) => String(i + 1).padStart(2, '0'))
+    // 生成日期（根据年月动态生成）
     updateDays()
+    // 生成小时
+    hours.value = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0'))
+    // 生成分钟
+    minutes.value = Array.from({ length: 60 }, (_, i) => String(i).padStart(2, '0'))
   }
-}
 
-// 确认日期时间选择
-const confirmDateTime = () => {
-  const year = parseInt(years.value[tempPickerValue.value[0]])
-  const month = parseInt(months.value[tempPickerValue.value[1]])
-  const day = parseInt(days.value[tempPickerValue.value[2]] || '1')
-  const hour = parseInt(hours.value[tempPickerValue.value[3]])
-  const minute = parseInt(minutes.value[tempPickerValue.value[4]])
-  
-  const selectedDate = new Date(year, month - 1, day, hour, minute)
-  
-  // 验证时间
-  const now = new Date()
-  if (pickerType.value === 'start' && selectedDate < now) {
-    uni.showToast({ title: '开始时间不能早于当前时间', icon: 'none' })
-    return
+  // 更新日期列表
+  const updateDays = () => {
+    const year = parseInt(years.value[pickerValue.value[0]] || new Date().getFullYear())
+    const month = parseInt(months.value[pickerValue.value[1]] || 1)
+    const daysInMonth = new Date(year, month, 0).getDate()
+    days.value = Array.from({ length: daysInMonth }, (_, i) => String(i + 1).padStart(2, '0'))
   }
+
+  // 获取图片 URL
+  const getImageUrl = (url: string): string => {
+    if (!url) return '/static/logo.png'
+    if (url.startsWith('http')) return url
+    return `http://localhost:3000${url}`
+  }
+
+  // 图片加载失败处理
+  const onImageError = () => {
+    console.log('图片加载失败')
+  }
+
+  // 格式化状态
+  const formatStatus = (status: string): string => {
+    return formatItemStatus(status)
+  }
+
+  // 格式化可借时间
+  const formatAvailableTime = (time: { start?: string; end?: string }): string => {
+    if (time.start && time.end) {
+      return `${formatDate(time.start)} 至 ${formatDate(time.end)}`
+    } else if (time.start) {
+      return `从 ${formatDate(time.start)} 开始`
+    } else if (time.end) {
+      return `至 ${formatDate(time.end)} 结束`
+    }
+    return '随时可借'
+  }
+
+  // 格式化日期
+  const formatDate = (dateStr: string): string => {
+    if (!dateStr) return ''
+    const date = new Date(dateStr)
+    return date.toLocaleDateString('zh-CN')
+  }
+
+  // 格式化日期时间
+  const formatDateTime = (dateStr: string): string => {
+    if (!dateStr) return ''
+    const date = new Date(dateStr)
+    const year = date.getFullYear()
+    const month = String(date.getMonth() + 1).padStart(2, '0')
+    const day = String(date.getDate()).padStart(2, '0')
+    const hour = String(date.getHours()).padStart(2, '0')
+    const minute = String(date.getMinutes()).padStart(2, '0')
+    return `${year}-${month}-${day} ${hour}:${minute}`
+  }
+
+  // 格式化评价时间
+  const formatReviewTime = (time: string): string => {
+    if (!time) return ''
+    const date = new Date(time)
+    const now = new Date()
+    const diff = now.getTime() - date.getTime()
   
-  if (pickerType.value === 'end' && orderForm.value.startDate) {
+    if (diff < 60000) {
+      return '刚刚'
+    } else if (diff < 3600000) {
+      return `${Math.floor(diff / 60000)}分钟前`
+    } else if (diff < 86400000) {
+      return `${Math.floor(diff / 3600000)}小时前`
+    } else if (diff < 604800000) {
+      return `${Math.floor(diff / 86400000)}天前`
+    } else {
+      return `${date.getMonth() + 1}月${date.getDate()}日`
+    }
+  }
+
+  // 预览评价图片
+  const previewReviewImage = (url: string) => {
+    uni.previewImage({
+      urls: [url],
+      current: url
+    })
+  }
+
+  // 加载物品评价
+  const loadReviews = async () => {
+    if (!itemId.value) return
+  
+    reviewsLoading.value = true
+  
+    try {
+      const res = await getItemReviews(itemId.value, { page: 1, limit: 5 })
+      reviews.value = res.data || []
+    } catch (error) {
+      console.error('获取物品评价失败:', error)
+    } finally {
+      reviewsLoading.value = false
+    }
+  }
+
+  // 加载物品详情
+  const loadItemDetail = async () => {
+    if (!itemId.value) {
+      error.value = '物品ID无效'
+      return
+    }
+
+    loading.value = true
+    error.value = ''
+
+    try {
+      const res = await getItemDetail(itemId.value)
+      if (res.item) {
+        item.value = res.item
+        // 加载评价
+        await loadReviews()
+      } else {
+        error.value = '物品不存在'
+      }
+    } catch (err: any) {
+      console.error('获取物品详情失败:', err)
+      error.value = err.message || '获取物品详情失败，请稍后重试'
+    } finally {
+      loading.value = false
+    }
+  }
+
+  // 检查收藏状态
+  const checkFavorite = async () => {
+    if (!authStore.isLoggedIn || !itemId.value) return
+  
+    try {
+      const res = await checkFavoriteStatus(itemId.value)
+      isFavorite.value = res.isFavorite
+    } catch (error) {
+      console.error('检查收藏状态失败:', error)
+    }
+  }
+
+  // 切换收藏状态
+  const toggleFavorite = async () => {
+    if (!checkLogin()) return
+  
+    if (favoriteLoading.value) return
+  
+    favoriteLoading.value = true
+  
+    try {
+      if (isFavorite.value) {
+        await removeFavorite(itemId.value)
+        isFavorite.value = false
+        uni.showToast({ title: '已取消收藏', icon: 'success' })
+      } else {
+        await addFavorite(itemId.value)
+        isFavorite.value = true
+        uni.showToast({ title: '收藏成功', icon: 'success' })
+      }
+    } catch (error: any) {
+      console.error('收藏操作失败:', error)
+      uni.showToast({ title: error.message || '操作失败', icon: 'none' })
+    } finally {
+      favoriteLoading.value = false
+    }
+  }
+
+  // 联系发布者
+  const contactOwner = () => {
+    if (!item.value?.user) {
+      uni.showToast({ title: '发布者信息不可用', icon: 'none' })
+      return
+    }
+    if (!checkLogin()) return
+    uni.navigateTo({ url: `/pages/chat/chat?itemId=${itemId.value}&userId=${item.value.user.id}` })
+  }
+
+  // 打开借用弹窗
+  const openBorrowDialog = () => {
+    if (!canBorrow.value) return
+    if (!checkLogin()) return
+    if (!item.value) return
+
+    // 初始化默认时间
+    const now = new Date()
+    const startDate = new Date(now)
+    startDate.setMinutes(0, 0, 0)
+    startDate.setHours(startDate.getHours() + 1)
+  
+    const endDate = new Date(startDate)
+    endDate.setDate(endDate.getDate() + 7)
+  
+    orderForm.value.startDate = startDate.toISOString()
+    orderForm.value.endDate = endDate.toISOString()
+    orderForm.value.note = ''
+  
+    showBorrowDialog.value = true
+  }
+
+  // 关闭借用弹窗
+  const closeBorrowDialog = () => {
+    showBorrowDialog.value = false
+  }
+
+  // 打开日期时间选择器
+  const openDateTimePicker = (type: 'start' | 'end') => {
+    pickerType.value = type
+    initPickerData()
+  
+    // 根据当前选择的值设置 picker
+    const currentDate = type === 'start' 
+      ? (orderForm.value.startDate ? new Date(orderForm.value.startDate) : new Date())
+      : (orderForm.value.endDate ? new Date(orderForm.value.endDate) : new Date())
+  
+    const year = currentDate.getFullYear()
+    const month = currentDate.getMonth()
+    const day = currentDate.getDate() - 1
+    const hour = currentDate.getHours()
+    const minute = currentDate.getMinutes()
+  
+    const yearIndex = years.value.findIndex(y => parseInt(y) === year)
+    pickerValue.value = [
+      yearIndex >= 0 ? yearIndex : 0,
+      month,
+      day,
+      hour,
+      minute
+    ]
+    tempPickerValue.value = [...pickerValue.value]
+  
+    updateDays()
+    showDateTimePicker.value = true
+  }
+
+  // 关闭日期时间选择器
+  const closeDateTimePicker = () => {
+    showDateTimePicker.value = false
+  }
+
+  // picker 值改变
+  const onPickerChange = (e: any) => {
+    tempPickerValue.value = e.detail.value
+    // 如果年份或月份改变，更新日期
+    if (tempPickerValue.value[0] !== pickerValue.value[0] || tempPickerValue.value[1] !== pickerValue.value[1]) {
+      pickerValue.value = [...tempPickerValue.value]
+      updateDays()
+    }
+  }
+
+  // 确认日期时间选择
+  const confirmDateTime = () => {
+    const year = parseInt(years.value[tempPickerValue.value[0]])
+    const month = parseInt(months.value[tempPickerValue.value[1]])
+    const day = parseInt(days.value[tempPickerValue.value[2]] || '1')
+    const hour = parseInt(hours.value[tempPickerValue.value[3]])
+    const minute = parseInt(minutes.value[tempPickerValue.value[4]])
+  
+    const selectedDate = new Date(year, month - 1, day, hour, minute)
+  
+    // 验证时间
+    const now = new Date()
+    if (pickerType.value === 'start' && selectedDate < now) {
+      uni.showToast({ title: '开始时间不能早于当前时间', icon: 'none' })
+      return
+    }
+  
+    if (pickerType.value === 'end' && orderForm.value.startDate) {
+      const startDate = new Date(orderForm.value.startDate)
+      if (selectedDate <= startDate) {
+        uni.showToast({ title: '结束时间必须晚于开始时间', icon: 'none' })
+        return
+      }
+    }
+  
+    if (pickerType.value === 'start') {
+      orderForm.value.startDate = selectedDate.toISOString()
+      // 如果结束时间早于新的开始时间，清空结束时间
+      if (orderForm.value.endDate) {
+        const endDate = new Date(orderForm.value.endDate)
+        if (endDate <= selectedDate) {
+          const newEndDate = new Date(selectedDate)
+          newEndDate.setDate(newEndDate.getDate() + 1)
+          orderForm.value.endDate = newEndDate.toISOString()
+        }
+      }
+    } else {
+      orderForm.value.endDate = selectedDate.toISOString()
+    }
+  
+    closeDateTimePicker()
+  }
+
+  // 提交订单
+  const submitOrder = async () => {
+    if (!orderForm.value.startDate || !orderForm.value.endDate) {
+      uni.showToast({ title: '请选择借用时间', icon: 'none' })
+      return
+    }
+  
     const startDate = new Date(orderForm.value.startDate)
-    if (selectedDate <= startDate) {
+    const endDate = new Date(orderForm.value.endDate)
+  
+    if (endDate <= startDate) {
       uni.showToast({ title: '结束时间必须晚于开始时间', icon: 'none' })
       return
     }
-  }
   
-  if (pickerType.value === 'start') {
-    orderForm.value.startDate = selectedDate.toISOString()
-    // 如果结束时间早于新的开始时间，清空结束时间
-    if (orderForm.value.endDate) {
-      const endDate = new Date(orderForm.value.endDate)
-      if (endDate <= selectedDate) {
-        const newEndDate = new Date(selectedDate)
-        newEndDate.setDate(newEndDate.getDate() + 1)
-        orderForm.value.endDate = newEndDate.toISOString()
+    try {
+      uni.showLoading({ title: '提交中...' })
+      const params: CreateOrderParams = {
+        itemId: itemId.value,
+        startDate: orderForm.value.startDate,
+        endDate: orderForm.value.endDate,
+        note: orderForm.value.note || undefined
       }
+      await createOrder(params)
+      uni.hideLoading()
+      uni.showToast({ title: '借用申请已提交', icon: 'success' })
+      closeBorrowDialog()
+      setTimeout(() => {
+        uni.switchTab({ url: '/pages/orders/orders' })
+      }, 1500)
+    } catch (error) {
+      uni.hideLoading()
+      uni.showToast({ title: '提交失败，请重试', icon: 'none' })
     }
-  } else {
-    orderForm.value.endDate = selectedDate.toISOString()
   }
-  
-  closeDateTimePicker()
-}
 
-// 提交订单
-const submitOrder = async () => {
-  if (!orderForm.value.startDate || !orderForm.value.endDate) {
-    uni.showToast({ title: '请选择借用时间', icon: 'none' })
-    return
-  }
-  
-  const startDate = new Date(orderForm.value.startDate)
-  const endDate = new Date(orderForm.value.endDate)
-  
-  if (endDate <= startDate) {
-    uni.showToast({ title: '结束时间必须晚于开始时间', icon: 'none' })
-    return
-  }
-  
-  try {
-    uni.showLoading({ title: '提交中...' })
-    const params: CreateOrderParams = {
-      itemId: itemId.value,
-      startDate: orderForm.value.startDate,
-      endDate: orderForm.value.endDate,
-      note: orderForm.value.note || undefined
+  // 页面加载
+  onLoad((options) => {
+    const id = options?.id
+    if (id) {
+      itemId.value = parseInt(id, 10)
+      loadItemDetail().then(() => {
+        checkFavorite()
+      })
+    } else {
+      error.value = '缺少物品ID参数'
     }
-    await createOrder(params)
-    uni.hideLoading()
-    uni.showToast({ title: '借用申请已提交', icon: 'success' })
-    closeBorrowDialog()
-    setTimeout(() => {
-      uni.switchTab({ url: '/pages/orders/orders' })
-    }, 1500)
-  } catch (error) {
-    uni.hideLoading()
-    uni.showToast({ title: '提交失败，请重试', icon: 'none' })
-  }
-}
-
-// 页面加载
-onLoad((options) => {
-  const id = options?.id
-  if (id) {
-    itemId.value = parseInt(id, 10)
-    loadItemDetail().then(() => {
-      checkFavorite()
-    })
-  } else {
-    error.value = '缺少物品ID参数'
-  }
-})
+  })
 </script>
 
 <style scoped>

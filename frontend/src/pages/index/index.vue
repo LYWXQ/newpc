@@ -10,7 +10,7 @@
           placeholder="搜索闲置物品"
           @input="handleInput"
           @confirm="handleSearch"
-        />
+        >
         <text class="icon-clear" v-if="searchKeyword" @click="clearSearch">✕</text>
       </view>
       <text class="cancel-btn" v-if="isSearching" @click="cancelSearch">取消</text>
@@ -88,7 +88,10 @@
       </view>
 
       <!-- 轮播图 -->
-      <swiper class="banner" indicator-dots autoplay circular>
+      <swiper class="banner"
+              indicator-dots
+              autoplay
+              circular>
         <swiper-item v-for="(banner, index) in banners" :key="index">
           <image :src="banner" mode="aspectFill" />
         </swiper-item>
@@ -118,7 +121,7 @@
               <view class="item-meta">
                 <text class="item-price">¥{{ item.price }}/天</text>
                 <text class="item-credit"
-                  >信用分: {{ item.user?.creditScore || 100 }}</text
+                >信用分: {{ item.user?.creditScore || 100 }}</text
                 >
               </view>
               <view class="item-user">
@@ -178,229 +181,229 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from "vue";
-import { onLoad, onShow, onPullDownRefresh } from "@dcloudio/uni-app";
-import { getItemList, getCategories, type Item } from "@/api/items";
-import { isLoggedIn } from "@/utils/auth";
+  import { ref, computed } from 'vue'
+  import { onLoad, onShow, onPullDownRefresh } from '@dcloudio/uni-app'
+  import { getItemList, getCategories, type Item } from '@/api/items'
+  import { isLoggedIn } from '@/utils/auth'
 
-const searchKeyword = ref("");
-const isSearching = ref(false);
-const searchLoading = ref(false);
-const searchResults = ref<Item[]>([]);
-let searchTimeout: ReturnType<typeof setTimeout> | null = null;
+  const searchKeyword = ref('')
+  const isSearching = ref(false)
+  const searchLoading = ref(false)
+  const searchResults = ref<Item[]>([])
+  let searchTimeout: ReturnType<typeof setTimeout> | null = null
 
-const currentCategory = ref("全部");
-const currentCategoryId = ref("cat-0");
-const currentTransactionType = ref<string | null>(null);
-const transactionTypes = ref([
-  { label: "全部", value: null },
-  { label: "免费", value: "free" },
-  { label: "可租", value: "rent" },
-  { label: "购买", value: "sell" },
-]);
-const categories = ref([
-  "全部",
-  "图书",
-  "电子产品",
-  "运动器材",
-  "生活用品",
-  "服装",
-  "其他",
-]);
+  const currentCategory = ref('全部')
+  const currentCategoryId = ref('cat-0')
+  const currentTransactionType = ref<string | null>(null)
+  const transactionTypes = ref([
+    { label: '全部', value: null },
+    { label: '免费', value: 'free' },
+    { label: '可租', value: 'rent' },
+    { label: '购买', value: 'sell' },
+  ])
+  const categories = ref([
+    '全部',
+    '图书',
+    '电子产品',
+    '运动器材',
+    '生活用品',
+    '服装',
+    '其他',
+  ])
 
-const banners = ["/static/logo.png", "/static/logo.png", "/static/logo.png"];
+  const banners = ['/static/logo.png', '/static/logo.png', '/static/logo.png']
 
-const recommendedItems = ref<Item[]>([]);
-const latestItems = ref<Item[]>([]);
-const loading = ref(false);
+  const recommendedItems = ref<Item[]>([])
+  const latestItems = ref<Item[]>([])
+  const loading = ref(false)
 
-// 获取图片完整 URL
-const getImageUrl = (url?: string) => {
-  if (!url) return "/static/logo.png";
-  if (url.startsWith("http")) return url;
-  return `http://localhost:3000${url}`;
-};
+  // 获取图片完整 URL
+  const getImageUrl = (url?: string) => {
+    if (!url) return '/static/logo.png'
+    if (url.startsWith('http')) return url
+    return `http://localhost:3000${url}`
+  }
 
-// 加载推荐物品（按浏览量排序）
-const loadRecommendedItems = async (category?: string, transactionType?: string) => {
-  try {
-    const params: any = {
-      page: 1,
-      limit: 4,
-      sort: "newest",
-    };
-    if (category && category !== "全部") {
-      params.category = category;
+  // 加载推荐物品（按浏览量排序）
+  const loadRecommendedItems = async (category?: string, transactionType?: string) => {
+    try {
+      const params: any = {
+        page: 1,
+        limit: 4,
+        sort: 'newest',
+      }
+      if (category && category !== '全部') {
+        params.category = category
+      }
+      if (transactionType) {
+        params.transactionType = transactionType
+      }
+      const res = await getItemList(params)
+      recommendedItems.value = res.items || []
+    } catch (error) {
+      console.error('加载推荐物品失败:', error)
+      recommendedItems.value = []
     }
-    if (transactionType) {
-      params.transactionType = transactionType;
+  }
+
+  // 加载最新物品
+  const loadLatestItems = async (category?: string, transactionType?: string) => {
+    try {
+      const params: any = {
+        page: 1,
+        limit: 5,
+        sort: 'newest',
+      }
+      if (category && category !== '全部') {
+        params.category = category
+      }
+      if (transactionType) {
+        params.transactionType = transactionType
+      }
+      const res = await getItemList(params)
+      latestItems.value = res.items || []
+    } catch (error) {
+      console.error('加载最新物品失败:', error)
+      latestItems.value = []
     }
-    const res = await getItemList(params);
-    recommendedItems.value = res.items || [];
-  } catch (error) {
-    console.error("加载推荐物品失败:", error);
-    recommendedItems.value = [];
   }
-};
 
-// 加载最新物品
-const loadLatestItems = async (category?: string, transactionType?: string) => {
-  try {
-    const params: any = {
-      page: 1,
-      limit: 5,
-      sort: "newest",
-    };
-    if (category && category !== "全部") {
-      params.category = category;
+  // 加载分类
+  const loadCategories = async () => {
+    try {
+      const cats = await getCategories()
+      categories.value = cats
+    } catch (error) {
+      console.error('加载分类失败:', error)
     }
-    if (transactionType) {
-      params.transactionType = transactionType;
+  }
+
+  // 加载所有数据
+  const loadData = async () => {
+    loading.value = true
+    await Promise.all([
+      loadRecommendedItems(currentCategory.value, currentTransactionType.value || undefined),
+      loadLatestItems(currentCategory.value, currentTransactionType.value || undefined),
+      loadCategories(),
+    ])
+    loading.value = false
+  }
+
+  // 加载筛选数据
+  const loadFilteredData = async () => {
+    loading.value = true
+    await Promise.all([
+      loadRecommendedItems(currentCategory.value, currentTransactionType.value || undefined),
+      loadLatestItems(currentCategory.value, currentTransactionType.value || undefined),
+    ])
+    loading.value = false
+  }
+
+  onLoad(() => {
+    if (!isLoggedIn()) {
+      uni.reLaunch({
+        url: '/pages/login/login'
+      })
+      return
     }
-    const res = await getItemList(params);
-    latestItems.value = res.items || [];
-  } catch (error) {
-    console.error("加载最新物品失败:", error);
-    latestItems.value = [];
-  }
-};
+    loadData()
+  })
 
-// 加载分类
-const loadCategories = async () => {
-  try {
-    const cats = await getCategories();
-    categories.value = cats;
-  } catch (error) {
-    console.error("加载分类失败:", error);
-  }
-};
+  onShow(() => {
+    if (!isLoggedIn()) {
+      uni.reLaunch({
+        url: '/pages/login/login'
+      })
+      return
+    }
+    loadData()
+  })
 
-// 加载所有数据
-const loadData = async () => {
-  loading.value = true;
-  await Promise.all([
-    loadRecommendedItems(currentCategory.value, currentTransactionType.value || undefined),
-    loadLatestItems(currentCategory.value, currentTransactionType.value || undefined),
-    loadCategories(),
-  ]);
-  loading.value = false;
-};
+  // 下拉刷新
+  onPullDownRefresh(async () => {
+    await loadData()
+    uni.stopPullDownRefresh()
+  })
 
-// 加载筛选数据
-const loadFilteredData = async () => {
-  loading.value = true;
-  await Promise.all([
-    loadRecommendedItems(currentCategory.value, currentTransactionType.value || undefined),
-    loadLatestItems(currentCategory.value, currentTransactionType.value || undefined),
-  ]);
-  loading.value = false;
-};
-
-onLoad(() => {
-  if (!isLoggedIn()) {
-    uni.reLaunch({
-      url: '/pages/login/login'
-    });
-    return;
-  }
-  loadData();
-});
-
-onShow(() => {
-  if (!isLoggedIn()) {
-    uni.reLaunch({
-      url: '/pages/login/login'
-    });
-    return;
-  }
-  loadData();
-});
-
-// 下拉刷新
-onPullDownRefresh(async () => {
-  await loadData();
-  uni.stopPullDownRefresh();
-});
-
-const handleInput = () => {
-  if (!searchKeyword.value) {
-    clearSearch();
-    return;
-  }
+  const handleInput = () => {
+    if (!searchKeyword.value) {
+      clearSearch()
+      return
+    }
   
-  isSearching.value = true;
+    isSearching.value = true
   
-  if (searchTimeout) {
-    clearTimeout(searchTimeout);
-  }
+    if (searchTimeout) {
+      clearTimeout(searchTimeout)
+    }
   
-  searchTimeout = setTimeout(() => {
-    performSearch();
-  }, 300);
-};
-
-const handleSearch = async () => {
-  if (searchKeyword.value) {
-    isSearching.value = true;
-    await performSearch();
+    searchTimeout = setTimeout(() => {
+      performSearch()
+    }, 300)
   }
-};
 
-const performSearch = async () => {
-  try {
-    searchLoading.value = true;
-    const res = await getItemList({
-      keyword: searchKeyword.value,
-      page: 1,
-      limit: 20,
-    });
-    searchResults.value = res.items || [];
-  } catch (error) {
-    console.error("搜索失败:", error);
-    uni.showToast({
-      title: "搜索失败",
-      icon: "none",
-    });
-  } finally {
-    searchLoading.value = false;
+  const handleSearch = async () => {
+    if (searchKeyword.value) {
+      isSearching.value = true
+      await performSearch()
+    }
   }
-};
 
-const clearSearch = () => {
-  searchKeyword.value = "";
-  searchResults.value = [];
-  isSearching.value = false;
-  if (searchTimeout) {
-    clearTimeout(searchTimeout);
+  const performSearch = async () => {
+    try {
+      searchLoading.value = true
+      const res = await getItemList({
+        keyword: searchKeyword.value,
+        page: 1,
+        limit: 20,
+      })
+      searchResults.value = res.items || []
+    } catch (error) {
+      console.error('搜索失败:', error)
+      uni.showToast({
+        title: '搜索失败',
+        icon: 'none',
+      })
+    } finally {
+      searchLoading.value = false
+    }
   }
-};
 
-const cancelSearch = () => {
-  clearSearch();
-};
+  const clearSearch = () => {
+    searchKeyword.value = ''
+    searchResults.value = []
+    isSearching.value = false
+    if (searchTimeout) {
+      clearTimeout(searchTimeout)
+    }
+  }
 
-const selectCategory = (cat: string, index: number) => {
-  currentCategory.value = cat;
-  currentCategoryId.value = `cat-${index}`;
-  loadFilteredData();
-};
+  const cancelSearch = () => {
+    clearSearch()
+  }
 
-const selectTransactionType = (type: string | null) => {
-  currentTransactionType.value = type;
-  loadFilteredData();
-};
+  const selectCategory = (cat: string, index: number) => {
+    currentCategory.value = cat
+    currentCategoryId.value = `cat-${index}`
+    loadFilteredData()
+  }
 
-const goToDetail = (id: number) => {
-  uni.navigateTo({
-    url: `/pages/item-detail/item-detail?id=${id}`,
-  });
-};
+  const selectTransactionType = (type: string | null) => {
+    currentTransactionType.value = type
+    loadFilteredData()
+  }
 
-const goToMore = () => {
-  uni.navigateTo({
-    url: "/pages/search/search",
-  });
-};
+  const goToDetail = (id: number) => {
+    uni.navigateTo({
+      url: `/pages/item-detail/item-detail?id=${id}`,
+    })
+  }
+
+  const goToMore = () => {
+    uni.navigateTo({
+      url: '/pages/search/search',
+    })
+  }
 </script>
 
 <style lang="scss">

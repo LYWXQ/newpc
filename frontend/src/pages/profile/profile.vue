@@ -106,185 +106,185 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { onShow } from '@dcloudio/uni-app'
-import { getCurrentUser, type UserInfo } from '@/api/auth'
-import { getOrderStats } from '@/api/orders'
-import { getUnreadCount } from '@/api/messages'
-import { getMyItemsCount } from '@/api/items'
-import { getFavoriteCount } from '@/api/favorites'
-import { useAuthStore } from '@/stores/auth'
-import { checkLogin } from '@/utils/auth'
+  import { ref, onMounted } from 'vue'
+  import { onShow } from '@dcloudio/uni-app'
+  import { getCurrentUser, type UserInfo } from '@/api/auth'
+  import { getOrderStats } from '@/api/orders'
+  import { getUnreadCount } from '@/api/messages'
+  import { getMyItemsCount } from '@/api/items'
+  import { getFavoriteCount } from '@/api/favorites'
+  import { useAuthStore } from '@/stores/auth'
+  import { checkLogin } from '@/utils/auth'
 
-const authStore = useAuthStore()
+  const authStore = useAuthStore()
 
-const stats = ref({
-  items: 0,
-  orders: 0,
-  pending: 0,
-  messages: 0,
-  published: 0,
-  favorites: 0
-})
+  const stats = ref({
+    items: 0,
+    orders: 0,
+    pending: 0,
+    messages: 0,
+    published: 0,
+    favorites: 0
+  })
 
-onMounted(() => {
-  checkLoginStatus()
-})
+  onMounted(() => {
+    checkLoginStatus()
+  })
 
-onShow(() => {
-  checkLoginStatus()
-})
+  onShow(() => {
+    checkLoginStatus()
+  })
 
-const checkLoginStatus = () => {
-  if (authStore.isLoggedIn) {
-    // 从服务器加载最新信息
-    loadUserInfo()
-    loadStats()
-    loadUnreadCount()
-    loadPublishedCount()
-    loadFavoriteCount()
-  } else {
-    stats.value = {
-      items: 0,
-      orders: 0,
-      pending: 0,
-      messages: 0,
-      published: 0,
-      favorites: 0
-    }
-  }
-}
-
-// 加载用户信息
-const loadUserInfo = async () => {
-  try {
-    const user = await getCurrentUser(undefined, { showLoading: false })
-    authStore.updateUserInfo(user)
-  } catch (error) {
-    console.error('获取用户信息失败:', error)
-  }
-}
-
-// 加载订单统计
-const loadStats = async () => {
-  try {
-    const orderStats = await getOrderStats({ showLoading: false })
-    stats.value.items = orderStats.totalAsLender
-    stats.value.orders = orderStats.totalAsBorrower
-    stats.value.pending = orderStats.pendingCount
-  } catch (error) {
-    console.error('获取订单统计失败:', error)
-  }
-}
-
-// 加载未读消息数
-const loadUnreadCount = async () => {
-  try {
-    const { count } = await getUnreadCount({ showLoading: false })
-    stats.value.messages = count
-  } catch (error) {
-    console.error('获取未读消息数失败:', error)
-  }
-}
-
-// 加载用户发布物品数量
-const loadPublishedCount = async () => {
-  try {
-    const { total } = await getMyItemsCount()
-    stats.value.published = total
-  } catch (error) {
-    console.error('获取发布物品数失败:', error)
-  }
-}
-
-// 加载收藏数量
-const loadFavoriteCount = async () => {
-  try {
-    const { count } = await getFavoriteCount()
-    stats.value.favorites = count
-  } catch (error) {
-    console.error('获取收藏数量失败:', error)
-  }
-}
-
-const editProfile = () => {
-  if (!checkLogin()) return
-  uni.navigateTo({ url: '/pages/edit-profile/edit-profile' })
-}
-
-const goToMyItems = () => {
-  if (!checkLogin()) return
-  uni.navigateTo({ url: '/pages/my-items/my-items' })
-}
-
-const goToOrders = (role: 'lender' | 'borrower' = 'borrower') => {
-  if (!checkLogin()) return
-  uni.setStorageSync('orderRole', role)
-  uni.switchTab({ url: '/pages/orders/orders' })
-}
-
-const goToMessages = () => {
-  if (!checkLogin()) return
-  uni.switchTab({ url: '/pages/messages/messages' })
-}
-
-const goToReviews = () => {
-  if (!checkLogin()) return
-  uni.navigateTo({ url: '/pages/reviews/reviews' })
-}
-
-const goToFavorites = () => {
-  if (!checkLogin()) return
-  uni.navigateTo({ url: '/pages/favorites/favorites' })
-}
-
-const goToSettings = () => {
-  if (!checkLogin()) return
-  uni.navigateTo({ url: '/pages/settings/settings' })
-}
-
-const goToLogin = () => {
-  uni.navigateTo({ url: '/pages/login/login' })
-}
-
-const handleVerifyClick = () => {
-  if (!checkLogin()) return
-  if (authStore.userInfo.isVerified) {
-    uni.showToast({ title: '您已通过认证', icon: 'success' })
-    return
-  }
-  uni.showToast({ title: '认证功能即将上线，敬请期待', icon: 'none' })
-}
-
-const handleLogout = () => {
-  uni.showModal({
-    title: '提示',
-    content: '确定要退出登录吗？',
-    success: (res) => {
-      if (res.confirm) {
-        authStore.logout()
-        stats.value = {
-          items: 0,
-          orders: 0,
-          pending: 0,
-          messages: 0,
-          published: 0,
-          favorites: 0
-        }
-        uni.showToast({ 
-          title: '已退出登录', 
-          icon: 'success',
-          duration: 1500 
-        })
-        setTimeout(() => {
-          uni.reLaunch({ 
-            url: '/pages/login/login' 
-          })
-        }, 1000)
+  const checkLoginStatus = () => {
+    if (authStore.isLoggedIn) {
+      // 从服务器加载最新信息
+      loadUserInfo()
+      loadStats()
+      loadUnreadCount()
+      loadPublishedCount()
+      loadFavoriteCount()
+    } else {
+      stats.value = {
+        items: 0,
+        orders: 0,
+        pending: 0,
+        messages: 0,
+        published: 0,
+        favorites: 0
       }
     }
-  })
-}
+  }
+
+  // 加载用户信息
+  const loadUserInfo = async () => {
+    try {
+      const user = await getCurrentUser(undefined, { showLoading: false })
+      authStore.updateUserInfo(user)
+    } catch (error) {
+      console.error('获取用户信息失败:', error)
+    }
+  }
+
+  // 加载订单统计
+  const loadStats = async () => {
+    try {
+      const orderStats = await getOrderStats({ showLoading: false })
+      stats.value.items = orderStats.totalAsLender
+      stats.value.orders = orderStats.totalAsBorrower
+      stats.value.pending = orderStats.pendingCount
+    } catch (error) {
+      console.error('获取订单统计失败:', error)
+    }
+  }
+
+  // 加载未读消息数
+  const loadUnreadCount = async () => {
+    try {
+      const { count } = await getUnreadCount({ showLoading: false })
+      stats.value.messages = count
+    } catch (error) {
+      console.error('获取未读消息数失败:', error)
+    }
+  }
+
+  // 加载用户发布物品数量
+  const loadPublishedCount = async () => {
+    try {
+      const { total } = await getMyItemsCount()
+      stats.value.published = total
+    } catch (error) {
+      console.error('获取发布物品数失败:', error)
+    }
+  }
+
+  // 加载收藏数量
+  const loadFavoriteCount = async () => {
+    try {
+      const { count } = await getFavoriteCount()
+      stats.value.favorites = count
+    } catch (error) {
+      console.error('获取收藏数量失败:', error)
+    }
+  }
+
+  const editProfile = () => {
+    if (!checkLogin()) return
+    uni.navigateTo({ url: '/pages/edit-profile/edit-profile' })
+  }
+
+  const goToMyItems = () => {
+    if (!checkLogin()) return
+    uni.navigateTo({ url: '/pages/my-items/my-items' })
+  }
+
+  const goToOrders = (role: 'lender' | 'borrower' = 'borrower') => {
+    if (!checkLogin()) return
+    uni.setStorageSync('orderRole', role)
+    uni.switchTab({ url: '/pages/orders/orders' })
+  }
+
+  const goToMessages = () => {
+    if (!checkLogin()) return
+    uni.switchTab({ url: '/pages/messages/messages' })
+  }
+
+  const goToReviews = () => {
+    if (!checkLogin()) return
+    uni.navigateTo({ url: '/pages/reviews/reviews' })
+  }
+
+  const goToFavorites = () => {
+    if (!checkLogin()) return
+    uni.navigateTo({ url: '/pages/favorites/favorites' })
+  }
+
+  const goToSettings = () => {
+    if (!checkLogin()) return
+    uni.navigateTo({ url: '/pages/settings/settings' })
+  }
+
+  const goToLogin = () => {
+    uni.navigateTo({ url: '/pages/login/login' })
+  }
+
+  const handleVerifyClick = () => {
+    if (!checkLogin()) return
+    if (authStore.userInfo.isVerified) {
+      uni.showToast({ title: '您已通过认证', icon: 'success' })
+      return
+    }
+    uni.showToast({ title: '认证功能即将上线，敬请期待', icon: 'none' })
+  }
+
+  const handleLogout = () => {
+    uni.showModal({
+      title: '提示',
+      content: '确定要退出登录吗？',
+      success: (res) => {
+        if (res.confirm) {
+          authStore.logout()
+          stats.value = {
+            items: 0,
+            orders: 0,
+            pending: 0,
+            messages: 0,
+            published: 0,
+            favorites: 0
+          }
+          uni.showToast({ 
+            title: '已退出登录', 
+            icon: 'success',
+            duration: 1500 
+          })
+          setTimeout(() => {
+            uni.reLaunch({ 
+              url: '/pages/login/login' 
+            })
+          }, 1000)
+        }
+      }
+    })
+  }
 </script>
 
 <style lang="scss">

@@ -66,115 +66,115 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-import { onLoad } from '@dcloudio/uni-app'
-import { createReview } from '@/api/reviews'
-import { getOrderDetail, type Order } from '@/api/orders'
-import { upload } from '@/utils/request'
+  import { ref, computed } from 'vue'
+  import { onLoad } from '@dcloudio/uni-app'
+  import { createReview } from '@/api/reviews'
+  import { getOrderDetail, type Order } from '@/api/orders'
+  import { upload } from '@/utils/request'
 
-const orderId = ref<number>(0)
-const order = ref<Order | null>(null)
-const rating = ref(0)
-const content = ref('')
-const images = ref<string[]>([])
-const submitting = ref(false)
+  const orderId = ref<number>(0)
+  const order = ref<Order | null>(null)
+  const rating = ref(0)
+  const content = ref('')
+  const images = ref<string[]>([])
+  const submitting = ref(false)
 
-const ratingText = computed(() => {
-  const texts = ['', '非常差', '差', '一般', '好', '非常好']
-  return texts[rating.value] || ''
-})
+  const ratingText = computed(() => {
+    const texts = ['', '非常差', '差', '一般', '好', '非常好']
+    return texts[rating.value] || ''
+  })
 
-// 获取图片完整 URL
-const getImageUrl = (url?: string) => {
-  if (!url) return '/static/logo.png'
-  if (url.startsWith('http')) return url
-  return `http://localhost:3000${url}`
-}
-
-onLoad((options) => {
-  if (options?.orderId) {
-    orderId.value = parseInt(options.orderId)
-    loadOrderDetail()
+  // 获取图片完整 URL
+  const getImageUrl = (url?: string) => {
+    if (!url) return '/static/logo.png'
+    if (url.startsWith('http')) return url
+    return `http://localhost:3000${url}`
   }
-})
 
-const loadOrderDetail = async () => {
-  try {
-    const res = await getOrderDetail(orderId.value)
-    order.value = res.order
-  } catch (error) {
-    console.error('加载订单详情失败:', error)
-    uni.showToast({ title: '加载订单失败', icon: 'none' })
-  }
-}
-
-const setRating = (value: number) => {
-  rating.value = value
-}
-
-const chooseImage = async () => {
-  try {
-    const res = await uni.chooseImage({
-      count: 6 - images.value.length,
-      sizeType: ['compressed'],
-      sourceType: ['album', 'camera']
-    })
-
-    // 上传每张图片
-    for (const tempFilePath of res.tempFilePaths) {
-      try {
-        const uploadRes = await upload('/upload', tempFilePath)
-        images.value.push(uploadRes.url)
-      } catch (error) {
-        console.error('上传图片失败:', error)
-        uni.showToast({ title: '上传图片失败', icon: 'none' })
-      }
+  onLoad((options) => {
+    if (options?.orderId) {
+      orderId.value = parseInt(options.orderId)
+      loadOrderDetail()
     }
-  } catch (error) {
-    console.error('选择图片失败:', error)
-  }
-}
+  })
 
-const removeImage = (index: number) => {
-  images.value.splice(index, 1)
-}
-
-const handleSubmit = async () => {
-  if (rating.value === 0) {
-    uni.showToast({ title: '请选择评分', icon: 'none' })
-    return
+  const loadOrderDetail = async () => {
+    try {
+      const res = await getOrderDetail(orderId.value)
+      order.value = res.order
+    } catch (error) {
+      console.error('加载订单详情失败:', error)
+      uni.showToast({ title: '加载订单失败', icon: 'none' })
+    }
   }
 
-  if (!content.value.trim()) {
-    uni.showToast({ title: '请输入评价内容', icon: 'none' })
-    return
+  const setRating = (value: number) => {
+    rating.value = value
   }
 
-  submitting.value = true
+  const chooseImage = async () => {
+    try {
+      const res = await uni.chooseImage({
+        count: 6 - images.value.length,
+        sizeType: ['compressed'],
+        sourceType: ['album', 'camera']
+      })
 
-  try {
-    await createReview({
-      orderId: orderId.value,
-      rating: rating.value,
-      content: content.value,
-      images: images.value
-    })
+      // 上传每张图片
+      for (const tempFilePath of res.tempFilePaths) {
+        try {
+          const uploadRes = await upload('/upload', tempFilePath)
+          images.value.push(uploadRes.url)
+        } catch (error) {
+          console.error('上传图片失败:', error)
+          uni.showToast({ title: '上传图片失败', icon: 'none' })
+        }
+      }
+    } catch (error) {
+      console.error('选择图片失败:', error)
+    }
+  }
 
-    uni.showToast({ title: '评价成功', icon: 'success' })
+  const removeImage = (index: number) => {
+    images.value.splice(index, 1)
+  }
+
+  const handleSubmit = async () => {
+    if (rating.value === 0) {
+      uni.showToast({ title: '请选择评分', icon: 'none' })
+      return
+    }
+
+    if (!content.value.trim()) {
+      uni.showToast({ title: '请输入评价内容', icon: 'none' })
+      return
+    }
+
+    submitting.value = true
+
+    try {
+      await createReview({
+        orderId: orderId.value,
+        rating: rating.value,
+        content: content.value,
+        images: images.value
+      })
+
+      uni.showToast({ title: '评价成功', icon: 'success' })
     
-    setTimeout(() => {
-      uni.navigateBack()
-    }, 1500)
-  } catch (error: any) {
-    console.error('提交评价失败:', error)
-    uni.showToast({ 
-      title: error.message || '评价失败', 
-      icon: 'none' 
-    })
-  } finally {
-    submitting.value = false
+      setTimeout(() => {
+        uni.navigateBack()
+      }, 1500)
+    } catch (error: any) {
+      console.error('提交评价失败:', error)
+      uni.showToast({ 
+        title: error.message || '评价失败', 
+        icon: 'none' 
+      })
+    } finally {
+      submitting.value = false
+    }
   }
-}
 </script>
 
 <style lang="scss">

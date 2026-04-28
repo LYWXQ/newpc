@@ -17,7 +17,7 @@
             v-model="studentId" 
             placeholder="请输入学号"
             maxlength="20"
-          />
+          >
         </view>
 
         <view class="form-item">
@@ -30,7 +30,7 @@
             v-model="username" 
             placeholder="请输入用户名"
             maxlength="50"
-          />
+          >
         </view>
 
         <view class="form-item school-selector">
@@ -42,7 +42,7 @@
             maxlength="100"
             @input="handleSchoolInput"
             @focus="showDropdown = true"
-          />
+          >
           <view class="dropdown" v-if="showDropdown && filteredUniversities.length > 0">
             <view 
               v-for="uni in filteredUniversities" 
@@ -62,7 +62,7 @@
             v-model="major" 
             placeholder="请输入专业"
             maxlength="100"
-          />
+          >
         </view>
 
         <view class="form-item">
@@ -75,7 +75,7 @@
             v-model="phone" 
             placeholder="请输入手机号"
             maxlength="11"
-          />
+          >
         </view>
 
         <view class="form-item">
@@ -88,7 +88,7 @@
             v-model="password" 
             placeholder="请输入密码（6-20位）"
             maxlength="20"
-          />
+          >
         </view>
 
         <view class="form-item">
@@ -101,7 +101,7 @@
             v-model="confirmPassword" 
             placeholder="请再次输入密码"
             maxlength="20"
-          />
+          >
         </view>
 
         <view class="form-item agreement-item">
@@ -120,7 +120,10 @@
           <text>为必填项</text>
         </view>
 
-        <button class="register-btn" @click="handleRegister" :loading="loading" :disabled="loading">
+        <button class="register-btn"
+                @click="handleRegister"
+                :loading="loading"
+                :disabled="loading">
           注册
         </button>
 
@@ -133,127 +136,127 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
-import { register } from '@/api/auth'
-import { UNIVERSITIES } from '@/utils/universities'
+  import { ref } from 'vue'
+  import { register } from '@/api/auth'
+  import { UNIVERSITIES } from '@/utils/universities'
 
-const studentId = ref('')
-const username = ref('')
-const password = ref('')
-const confirmPassword = ref('')
-const agreed = ref(false)
-const loading = ref(false)
-const schoolInput = ref('')
-const selectedSchool = ref('')
-const major = ref('')
-const phone = ref('')
-const filteredUniversities = ref<string[]>([])
-const showDropdown = ref(false)
-let debounceTimer: number | null = null
+  const studentId = ref('')
+  const username = ref('')
+  const password = ref('')
+  const confirmPassword = ref('')
+  const agreed = ref(false)
+  const loading = ref(false)
+  const schoolInput = ref('')
+  const selectedSchool = ref('')
+  const major = ref('')
+  const phone = ref('')
+  const filteredUniversities = ref<string[]>([])
+  const showDropdown = ref(false)
+  let debounceTimer: number | null = null
 
-const debounce = (fn: () => void, delay: number) => {
-  if (debounceTimer) {
-    clearTimeout(debounceTimer)
-  }
-  debounceTimer = setTimeout(fn, delay) as unknown as number
-}
-
-const handleSchoolInput = () => {
-  debounce(() => {
-    searchUniversities(schoolInput.value)
-  }, 300)
-}
-
-const searchUniversities = (query: string) => {
-  if (!query.trim()) {
-    filteredUniversities.value = []
-    return
-  }
-  filteredUniversities.value = UNIVERSITIES.filter(uni => 
-    uni.toLowerCase().includes(query.toLowerCase())
-  )
-}
-
-const selectSchool = (uni: string) => {
-  schoolInput.value = uni
-  selectedSchool.value = uni
-  showDropdown.value = false
-}
-
-const handleRegister = async () => {
-  if (!studentId.value.trim()) {
-    uni.showToast({ title: '请输入学号', icon: 'none' })
-    return
-  }
-  if (!username.value.trim()) {
-    uni.showToast({ title: '请输入用户名', icon: 'none' })
-    return
-  }
-  if (!phone.value.trim()) {
-    uni.showToast({ title: '请输入手机号', icon: 'none' })
-    return
-  }
-  if (!/^1[3-9]\d{9}$/.test(phone.value)) {
-    uni.showToast({ title: '请输入正确的手机号', icon: 'none' })
-    return
-  }
-  if (!password.value.trim()) {
-    uni.showToast({ title: '请输入密码', icon: 'none' })
-    return
-  }
-  if (password.value.length < 6) {
-    uni.showToast({ title: '密码长度不能少于6位', icon: 'none' })
-    return
-  }
-  if (password.value !== confirmPassword.value) {
-    uni.showToast({ title: '两次输入的密码不一致', icon: 'none' })
-    return
-  }
-  if (!agreed.value) {
-    uni.showToast({ title: '请同意用户协议和隐私政策', icon: 'none' })
-    return
+  const debounce = (fn: () => void, delay: number) => {
+    if (debounceTimer) {
+      clearTimeout(debounceTimer)
+    }
+    debounceTimer = setTimeout(fn, delay) as unknown as number
   }
 
-  loading.value = true
+  const handleSchoolInput = () => {
+    debounce(() => {
+      searchUniversities(schoolInput.value)
+    }, 300)
+  }
+
+  const searchUniversities = (query: string) => {
+    if (!query.trim()) {
+      filteredUniversities.value = []
+      return
+    }
+    filteredUniversities.value = UNIVERSITIES.filter(uni => 
+      uni.toLowerCase().includes(query.toLowerCase())
+    )
+  }
+
+  const selectSchool = (uni: string) => {
+    schoolInput.value = uni
+    selectedSchool.value = uni
+    showDropdown.value = false
+  }
+
+  const handleRegister = async () => {
+    if (!studentId.value.trim()) {
+      uni.showToast({ title: '请输入学号', icon: 'none' })
+      return
+    }
+    if (!username.value.trim()) {
+      uni.showToast({ title: '请输入用户名', icon: 'none' })
+      return
+    }
+    if (!phone.value.trim()) {
+      uni.showToast({ title: '请输入手机号', icon: 'none' })
+      return
+    }
+    if (!/^1[3-9]\d{9}$/.test(phone.value)) {
+      uni.showToast({ title: '请输入正确的手机号', icon: 'none' })
+      return
+    }
+    if (!password.value.trim()) {
+      uni.showToast({ title: '请输入密码', icon: 'none' })
+      return
+    }
+    if (password.value.length < 6) {
+      uni.showToast({ title: '密码长度不能少于6位', icon: 'none' })
+      return
+    }
+    if (password.value !== confirmPassword.value) {
+      uni.showToast({ title: '两次输入的密码不一致', icon: 'none' })
+      return
+    }
+    if (!agreed.value) {
+      uni.showToast({ title: '请同意用户协议和隐私政策', icon: 'none' })
+      return
+    }
+
+    loading.value = true
   
-  try {
-    const res = await register({
-      studentId: studentId.value,
-      username: username.value,
-      password: password.value,
-      school: selectedSchool.value || schoolInput.value,
-      major: major.value,
-      phone: phone.value
-    })
+    try {
+      const res = await register({
+        studentId: studentId.value,
+        username: username.value,
+        password: password.value,
+        school: selectedSchool.value || schoolInput.value,
+        major: major.value,
+        phone: phone.value
+      })
     
-    uni.showToast({ title: '注册成功', icon: 'success' })
+      uni.showToast({ title: '注册成功', icon: 'success' })
     
-    setTimeout(() => {
-      uni.navigateBack()
-    }, 1500)
-  } catch (error: any) {
-    console.error('注册失败:', error)
-    uni.showToast({ 
-      title: error.message || '注册失败，请稍后重试', 
-      icon: 'none',
-      duration: 2000
-    })
-  } finally {
-    loading.value = false
+      setTimeout(() => {
+        uni.navigateBack()
+      }, 1500)
+    } catch (error: any) {
+      console.error('注册失败:', error)
+      uni.showToast({ 
+        title: error.message || '注册失败，请稍后重试', 
+        icon: 'none',
+        duration: 2000
+      })
+    } finally {
+      loading.value = false
+    }
   }
-}
 
-const goToLogin = () => {
-  uni.navigateBack()
-}
+  const goToLogin = () => {
+    uni.navigateBack()
+  }
 
-const showAgreement = () => {
-  uni.showToast({ title: '用户协议', icon: 'none' })
-}
+  const showAgreement = () => {
+    uni.showToast({ title: '用户协议', icon: 'none' })
+  }
 
-const showPrivacy = () => {
-  uni.showToast({ title: '隐私政策', icon: 'none' })
-}
+  const showPrivacy = () => {
+    uni.showToast({ title: '隐私政策', icon: 'none' })
+  }
 </script>
 
 <style lang="scss">

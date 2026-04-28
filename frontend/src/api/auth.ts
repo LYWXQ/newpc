@@ -90,7 +90,7 @@ export const uploadAvatar = (filePath: string): Promise<{ url: string }> => {
           try {
             const data = JSON.parse(res.data)
             resolve(data)
-          } catch (e) {
+          } catch {
             reject(new Error('解析响应失败'))
           }
         } else {

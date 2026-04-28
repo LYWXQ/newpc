@@ -58,7 +58,7 @@
               :src="img" 
               mode="aspectFill"
               @click="previewImage(img)"
-            ></image>
+            />
           </view>
         </view>
       </view>
@@ -78,112 +78,112 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
-import { getUserReviews, type Review } from '@/api/reviews'
-import { useAuthStore } from '@/stores/auth'
+  import { ref, computed, onMounted } from 'vue'
+  import { getUserReviews, type Review } from '@/api/reviews'
+  import { useAuthStore } from '@/stores/auth'
 
-const authStore = useAuthStore()
-const currentUserId = computed(() => authStore.userInfo?.id || 0)
+  const authStore = useAuthStore()
+  const currentUserId = computed(() => authStore.userInfo?.id || 0)
 
-const currentType = ref<'received' | 'given'>('received')
-const reviews = ref<Review[]>([])
-const loading = ref(false)
-const refreshing = ref(false)
-const hasMore = ref(true)
-const page = ref(1)
-const limit = 10
+  const currentType = ref<'received' | 'given'>('received')
+  const reviews = ref<Review[]>([])
+  const loading = ref(false)
+  const refreshing = ref(false)
+  const hasMore = ref(true)
+  const page = ref(1)
+  const limit = 10
 
-onMounted(() => {
-  loadReviews()
-})
-
-const loadReviews = async () => {
-  if (loading.value) return
-  
-  loading.value = true
-  
-  try {
-    const res = await getUserReviews(currentUserId.value, {
-      page: page.value,
-      limit: limit,
-      type: currentType.value
-    })
-    
-    if (page.value === 1) {
-      reviews.value = res.data || []
-    } else {
-      reviews.value = [...reviews.value, ...(res.data || [])]
-    }
-    
-    hasMore.value = (res.data?.length || 0) === limit && page.value < (res.totalPages || 1)
-  } catch (error) {
-    console.error('获取评价列表失败:', error)
-    uni.showToast({ title: '获取评价失败', icon: 'none' })
-  } finally {
-    loading.value = false
-  }
-}
-
-const selectType = (type: 'received' | 'given') => {
-  currentType.value = type
-  page.value = 1
-  reviews.value = []
-  hasMore.value = true
-  loadReviews()
-}
-
-const getUserAvatar = (review: Review) => {
-  const user = currentType.value === 'received' ? review.reviewer : review.reviewee
-  return user?.avatar || '/static/logo.png'
-}
-
-const getUsername = (review: Review) => {
-  const user = currentType.value === 'received' ? review.reviewer : review.reviewee
-  return user?.username || '未知用户'
-}
-
-const formatTime = (time: string) => {
-  if (!time) return ''
-  const date = new Date(time)
-  const now = new Date()
-  const diff = now.getTime() - date.getTime()
-  
-  if (diff < 60000) {
-    return '刚刚'
-  } else if (diff < 3600000) {
-    return `${Math.floor(diff / 60000)}分钟前`
-  } else if (diff < 86400000) {
-    return `${Math.floor(diff / 3600000)}小时前`
-  } else if (diff < 604800000) {
-    return `${Math.floor(diff / 86400000)}天前`
-  } else {
-    return `${date.getMonth() + 1}月${date.getDate()}日`
-  }
-}
-
-const previewImage = (url: string) => {
-  uni.previewImage({
-    urls: [url],
-    current: url
+  onMounted(() => {
+    loadReviews()
   })
-}
 
-const loadMore = () => {
-  if (!hasMore.value || loading.value) return
+  const loadReviews = async () => {
+    if (loading.value) return
   
-  page.value++
-  loadReviews()
-}
+    loading.value = true
+  
+    try {
+      const res = await getUserReviews(currentUserId.value, {
+        page: page.value,
+        limit: limit,
+        type: currentType.value
+      })
+    
+      if (page.value === 1) {
+        reviews.value = res.data || []
+      } else {
+        reviews.value = [...reviews.value, ...(res.data || [])]
+      }
+    
+      hasMore.value = (res.data?.length || 0) === limit && page.value < (res.totalPages || 1)
+    } catch (error) {
+      console.error('获取评价列表失败:', error)
+      uni.showToast({ title: '获取评价失败', icon: 'none' })
+    } finally {
+      loading.value = false
+    }
+  }
 
-const onRefresh = async () => {
-  refreshing.value = true
-  page.value = 1
-  hasMore.value = true
+  const selectType = (type: 'received' | 'given') => {
+    currentType.value = type
+    page.value = 1
+    reviews.value = []
+    hasMore.value = true
+    loadReviews()
+  }
+
+  const getUserAvatar = (review: Review) => {
+    const user = currentType.value === 'received' ? review.reviewer : review.reviewee
+    return user?.avatar || '/static/logo.png'
+  }
+
+  const getUsername = (review: Review) => {
+    const user = currentType.value === 'received' ? review.reviewer : review.reviewee
+    return user?.username || '未知用户'
+  }
+
+  const formatTime = (time: string) => {
+    if (!time) return ''
+    const date = new Date(time)
+    const now = new Date()
+    const diff = now.getTime() - date.getTime()
   
-  await loadReviews()
+    if (diff < 60000) {
+      return '刚刚'
+    } else if (diff < 3600000) {
+      return `${Math.floor(diff / 60000)}分钟前`
+    } else if (diff < 86400000) {
+      return `${Math.floor(diff / 3600000)}小时前`
+    } else if (diff < 604800000) {
+      return `${Math.floor(diff / 86400000)}天前`
+    } else {
+      return `${date.getMonth() + 1}月${date.getDate()}日`
+    }
+  }
+
+  const previewImage = (url: string) => {
+    uni.previewImage({
+      urls: [url],
+      current: url
+    })
+  }
+
+  const loadMore = () => {
+    if (!hasMore.value || loading.value) return
   
-  refreshing.value = false
-}
+    page.value++
+    loadReviews()
+  }
+
+  const onRefresh = async () => {
+    refreshing.value = true
+    page.value = 1
+    hasMore.value = true
+  
+    await loadReviews()
+  
+    refreshing.value = false
+  }
 </script>
 
 <style lang="scss">

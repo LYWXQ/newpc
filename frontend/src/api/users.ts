@@ -1,7 +1,7 @@
 /**
  * 用户管理相关 API
  */
-import { get, post, put } from '@/utils/request'
+import { get } from '@/utils/request'
 import type { UserInfo } from './auth'
 
 // 获取用户信息

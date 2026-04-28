@@ -73,7 +73,10 @@
             </view>
           </view>
           
-          <image class="item-image" :src="getImageUrl(item.images?.[0])" mode="aspectFill" @click.stop="isBatchMode ? toggleSelect(item) : goToDetail(item.id)" />
+          <image class="item-image"
+                 :src="getImageUrl(item.images?.[0])"
+                 mode="aspectFill"
+                 @click.stop="isBatchMode ? toggleSelect(item) : goToDetail(item.id)" />
           <view class="item-content">
             <view class="item-header">
               <text class="item-title" @click.stop="isBatchMode ? toggleSelect(item) : goToDetail(item.id)">{{ item.title }}</text>
@@ -159,332 +162,332 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
-import { getMyItems, deleteItem, updateItem, type Item } from '@/api/items'
-import { formatItemStatus } from '@/utils/constants'
+  import { ref, onMounted, computed } from 'vue'
+  import { getMyItems, deleteItem, updateItem, type Item } from '@/api/items'
+  import { formatItemStatus } from '@/utils/constants'
 
-const currentStatus = ref('')
-const items = ref<Item[]>([])
-const loading = ref(false)
-const refreshing = ref(false)
-const hasMore = ref(true)
-const page = ref(1)
-const limit = ref(10)
+  const currentStatus = ref('')
+  const items = ref<Item[]>([])
+  const loading = ref(false)
+  const refreshing = ref(false)
+  const hasMore = ref(true)
+  const page = ref(1)
+  const limit = ref(10)
 
-// 批量操作相关
-const isBatchMode = ref(false)
-const selectedItems = ref<number[]>([])
+  // 批量操作相关
+  const isBatchMode = ref(false)
+  const selectedItems = ref<number[]>([])
 
-// 计算是否全选
-const isAllSelected = computed(() => {
-  return items.value.length > 0 && selectedItems.value.length === items.value.length
-})
+  // 计算是否全选
+  const isAllSelected = computed(() => {
+    return items.value.length > 0 && selectedItems.value.length === items.value.length
+  })
 
-// 计算是否可以批量上架（选中的都是已下架状态）
-const canBatchOnline = computed(() => {
-  const selected = items.value.filter(item => selectedItems.value.includes(item.id))
-  return selected.length > 0 && selected.every(item => item.status === 'offline')
-})
+  // 计算是否可以批量上架（选中的都是已下架状态）
+  const canBatchOnline = computed(() => {
+    const selected = items.value.filter(item => selectedItems.value.includes(item.id))
+    return selected.length > 0 && selected.every(item => item.status === 'offline')
+  })
 
-// 计算是否可以批量下架（选中的都是可租状态）
-const canBatchOffline = computed(() => {
-  const selected = items.value.filter(item => selectedItems.value.includes(item.id))
-  return selected.length > 0 && selected.every(item => item.status === 'available')
-})
+  // 计算是否可以批量下架（选中的都是可租状态）
+  const canBatchOffline = computed(() => {
+    const selected = items.value.filter(item => selectedItems.value.includes(item.id))
+    return selected.length > 0 && selected.every(item => item.status === 'available')
+  })
 
-const getImageUrl = (url?: string) => {
-  if (!url) return '/static/logo.png'
-  if (url.startsWith('http')) return url
-  return `http://localhost:3000${url}`
-}
-
-// 获取状态文本，已下架物品显示更详细的状态
-const getStatusText = (item: Item) => {
-  if (item.status === 'offline') {
-    if ((item as any).rentInfo || (item as any).isRented) {
-      return '已租下架'
-    }
-    return '未上架'
+  const getImageUrl = (url?: string) => {
+    if (!url) return '/static/logo.png'
+    if (url.startsWith('http')) return url
+    return `http://localhost:3000${url}`
   }
-  
-  const statusMap: Record<string, string> = {
-    available: '可租',
-    rented: '已租',
-    offline: '已下架'
-  }
-  return statusMap[item.status] || formatItemStatus(item.status)
-}
 
-const formatDate = (dateString: string) => {
-  const date = new Date(dateString)
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
-}
-
-const loadItems = async (isRefresh = false) => {
-  if (loading.value) return
-  
-  loading.value = true
-  
-  try {
-    const params = {
-      page: page.value,
-      limit: limit.value,
-      status: currentStatus.value || undefined
+  // 获取状态文本，已下架物品显示更详细的状态
+  const getStatusText = (item: Item) => {
+    if (item.status === 'offline') {
+      if ((item as any).rentInfo || (item as any).isRented) {
+        return '已租下架'
+      }
+      return '未上架'
     }
+  
+    const statusMap: Record<string, string> = {
+      available: '可租',
+      rented: '已租',
+      offline: '已下架'
+    }
+    return statusMap[item.status] || formatItemStatus(item.status)
+  }
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString)
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+  }
+
+  const loadItems = async (isRefresh = false) => {
+    if (loading.value) return
+  
+    loading.value = true
+  
+    try {
+      const params = {
+        page: page.value,
+        limit: limit.value,
+        status: currentStatus.value || undefined
+      }
     
-    const res = await getMyItems(params, { showLoading: false })
-    const resItems = res.items || []
+      const res = await getMyItems(params, { showLoading: false })
+      const resItems = res.items || []
     
-    if (isRefresh) {
-      items.value = resItems
-      // 清空选择
+      if (isRefresh) {
+        items.value = resItems
+        // 清空选择
+        selectedItems.value = []
+      } else {
+        items.value = [...items.value, ...resItems]
+      }
+    
+      hasMore.value = resItems.length === limit.value && page.value < res.pagination.totalPages
+    } catch (error) {
+      uni.showToast({
+        title: '加载失败',
+        icon: 'none'
+      })
+    } finally {
+      loading.value = false
+      refreshing.value = false
+    }
+  }
+
+  const selectStatus = (status: string) => {
+    currentStatus.value = status
+    page.value = 1
+    items.value = []
+    hasMore.value = true
+    // 退出批量模式
+    exitBatchMode()
+    loadItems(true)
+  }
+
+  const loadMore = () => {
+    if (!hasMore.value || loading.value) return
+  
+    page.value++
+    loadItems()
+  }
+
+  const onRefresh = () => {
+    refreshing.value = true
+    page.value = 1
+    hasMore.value = true
+    selectedItems.value = []
+    loadItems(true)
+  }
+
+  const goToDetail = (id: number) => {
+    uni.navigateTo({
+      url: `/pages/item-detail/item-detail?id=${id}`
+    })
+  }
+
+  const editItem = (item: Item) => {
+    uni.navigateTo({
+      url: `/pages/publish/publish?id=${item.id}`
+    })
+  }
+
+  // 批量操作相关方法
+  const enterBatchMode = () => {
+    isBatchMode.value = true
+    selectedItems.value = []
+  }
+
+  const exitBatchMode = () => {
+    isBatchMode.value = false
+    selectedItems.value = []
+  }
+
+  const isSelected = (id: number) => {
+    return selectedItems.value.includes(id)
+  }
+
+  const toggleSelect = (item: Item) => {
+    const index = selectedItems.value.indexOf(item.id)
+    if (index > -1) {
+      selectedItems.value.splice(index, 1)
+    } else {
+      selectedItems.value.push(item.id)
+    }
+  }
+
+  const handleItemClick = (item: Item) => {
+    if (isBatchMode.value) {
+      toggleSelect(item)
+    } else {
+      goToDetail(item.id)
+    }
+  }
+
+  const toggleSelectAll = () => {
+    if (isAllSelected.value) {
       selectedItems.value = []
     } else {
-      items.value = [...items.value, ...resItems]
+      selectedItems.value = items.value.map(item => item.id)
     }
-    
-    hasMore.value = resItems.length === limit.value && page.value < res.pagination.totalPages
-  } catch (error) {
-    uni.showToast({
-      title: '加载失败',
-      icon: 'none'
+  }
+
+  // 批量上架
+  const batchOnline = () => {
+    if (selectedItems.value.length === 0) return
+  
+    uni.showModal({
+      title: '确认批量上架',
+      content: `确定要将选中的 ${selectedItems.value.length} 个物品上架吗？`,
+      success: async (res) => {
+        if (res.confirm) {
+          try {
+            uni.showLoading({ title: '处理中...' })
+            // 逐个更新
+            for (const id of selectedItems.value) {
+              await updateItem(id, { status: 'available' })
+            }
+            uni.showToast({ title: '批量上架成功', icon: 'success' })
+            exitBatchMode()
+            onRefresh()
+          } catch (error) {
+            uni.showToast({ title: '批量上架失败', icon: 'none' })
+          } finally {
+            uni.hideLoading()
+          }
+        }
+      }
     })
-  } finally {
-    loading.value = false
-    refreshing.value = false
   }
-}
 
-const selectStatus = (status: string) => {
-  currentStatus.value = status
-  page.value = 1
-  items.value = []
-  hasMore.value = true
-  // 退出批量模式
-  exitBatchMode()
-  loadItems(true)
-}
-
-const loadMore = () => {
-  if (!hasMore.value || loading.value) return
+  // 批量下架
+  const batchOffline = () => {
+    if (selectedItems.value.length === 0) return
   
-  page.value++
-  loadItems()
-}
-
-const onRefresh = () => {
-  refreshing.value = true
-  page.value = 1
-  hasMore.value = true
-  selectedItems.value = []
-  loadItems(true)
-}
-
-const goToDetail = (id: number) => {
-  uni.navigateTo({
-    url: `/pages/item-detail/item-detail?id=${id}`
-  })
-}
-
-const editItem = (item: Item) => {
-  uni.navigateTo({
-    url: `/pages/publish/publish?id=${item.id}`
-  })
-}
-
-// 批量操作相关方法
-const enterBatchMode = () => {
-  isBatchMode.value = true
-  selectedItems.value = []
-}
-
-const exitBatchMode = () => {
-  isBatchMode.value = false
-  selectedItems.value = []
-}
-
-const isSelected = (id: number) => {
-  return selectedItems.value.includes(id)
-}
-
-const toggleSelect = (item: Item) => {
-  const index = selectedItems.value.indexOf(item.id)
-  if (index > -1) {
-    selectedItems.value.splice(index, 1)
-  } else {
-    selectedItems.value.push(item.id)
-  }
-}
-
-const handleItemClick = (item: Item) => {
-  if (isBatchMode.value) {
-    toggleSelect(item)
-  } else {
-    goToDetail(item.id)
-  }
-}
-
-const toggleSelectAll = () => {
-  if (isAllSelected.value) {
-    selectedItems.value = []
-  } else {
-    selectedItems.value = items.value.map(item => item.id)
-  }
-}
-
-// 批量上架
-const batchOnline = () => {
-  if (selectedItems.value.length === 0) return
-  
-  uni.showModal({
-    title: '确认批量上架',
-    content: `确定要将选中的 ${selectedItems.value.length} 个物品上架吗？`,
-    success: async (res) => {
-      if (res.confirm) {
-        try {
-          uni.showLoading({ title: '处理中...' })
-          // 逐个更新
-          for (const id of selectedItems.value) {
-            await updateItem(id, { status: 'available' })
+    uni.showModal({
+      title: '确认批量下架',
+      content: `确定要将选中的 ${selectedItems.value.length} 个物品下架吗？`,
+      confirmColor: '#ff4d4f',
+      success: async (res) => {
+        if (res.confirm) {
+          try {
+            uni.showLoading({ title: '处理中...' })
+            for (const id of selectedItems.value) {
+              await updateItem(id, { status: 'offline' })
+            }
+            uni.showToast({ title: '批量下架成功', icon: 'success' })
+            exitBatchMode()
+            onRefresh()
+          } catch (error) {
+            uni.showToast({ title: '批量下架失败', icon: 'none' })
+          } finally {
+            uni.hideLoading()
           }
-          uni.showToast({ title: '批量上架成功', icon: 'success' })
-          exitBatchMode()
-          onRefresh()
-        } catch (error) {
-          uni.showToast({ title: '批量上架失败', icon: 'none' })
-        } finally {
-          uni.hideLoading()
         }
       }
-    }
-  })
-}
+    })
+  }
 
-// 批量下架
-const batchOffline = () => {
-  if (selectedItems.value.length === 0) return
+  // 批量删除
+  const batchDelete = () => {
+    if (selectedItems.value.length === 0) return
   
-  uni.showModal({
-    title: '确认批量下架',
-    content: `确定要将选中的 ${selectedItems.value.length} 个物品下架吗？`,
-    confirmColor: '#ff4d4f',
-    success: async (res) => {
-      if (res.confirm) {
-        try {
-          uni.showLoading({ title: '处理中...' })
-          for (const id of selectedItems.value) {
-            await updateItem(id, { status: 'offline' })
+    uni.showModal({
+      title: '确认批量删除',
+      content: `确定要删除选中的 ${selectedItems.value.length} 个物品吗？删除后无法恢复！`,
+      confirmColor: '#ff4d4f',
+      success: async (res) => {
+        if (res.confirm) {
+          try {
+            uni.showLoading({ title: '删除中...' })
+            for (const id of selectedItems.value) {
+              await deleteItem(id)
+            }
+            uni.showToast({ title: '批量删除成功', icon: 'success' })
+            exitBatchMode()
+            onRefresh()
+          } catch (error) {
+            uni.showToast({ title: '批量删除失败', icon: 'none' })
+          } finally {
+            uni.hideLoading()
           }
-          uni.showToast({ title: '批量下架成功', icon: 'success' })
-          exitBatchMode()
-          onRefresh()
-        } catch (error) {
-          uni.showToast({ title: '批量下架失败', icon: 'none' })
-        } finally {
-          uni.hideLoading()
         }
       }
-    }
-  })
-}
+    })
+  }
 
-// 批量删除
-const batchDelete = () => {
-  if (selectedItems.value.length === 0) return
-  
-  uni.showModal({
-    title: '确认批量删除',
-    content: `确定要删除选中的 ${selectedItems.value.length} 个物品吗？删除后无法恢复！`,
-    confirmColor: '#ff4d4f',
-    success: async (res) => {
-      if (res.confirm) {
-        try {
-          uni.showLoading({ title: '删除中...' })
-          for (const id of selectedItems.value) {
-            await deleteItem(id)
+  // 单个操作（保持原有功能）
+  const offlineItemHandler = (item: Item) => {
+    uni.showModal({
+      title: '确认下架',
+      content: '下架后该物品将不再展示给其他用户，确定要下架吗？',
+      confirmColor: '#ff4d4f',
+      success: async (res) => {
+        if (res.confirm) {
+          try {
+            uni.showLoading({ title: '下架中...' })
+            await updateItem(item.id, { status: 'offline' })
+            uni.showToast({ title: '下架成功', icon: 'success' })
+            onRefresh()
+          } catch (error) {
+            uni.showToast({ title: '下架失败', icon: 'none' })
+          } finally {
+            uni.hideLoading()
           }
-          uni.showToast({ title: '批量删除成功', icon: 'success' })
-          exitBatchMode()
-          onRefresh()
-        } catch (error) {
-          uni.showToast({ title: '批量删除失败', icon: 'none' })
-        } finally {
-          uni.hideLoading()
         }
       }
-    }
-  })
-}
+    })
+  }
 
-// 单个操作（保持原有功能）
-const offlineItemHandler = (item: Item) => {
-  uni.showModal({
-    title: '确认下架',
-    content: '下架后该物品将不再展示给其他用户，确定要下架吗？',
-    confirmColor: '#ff4d4f',
-    success: async (res) => {
-      if (res.confirm) {
-        try {
-          uni.showLoading({ title: '下架中...' })
-          await updateItem(item.id, { status: 'offline' })
-          uni.showToast({ title: '下架成功', icon: 'success' })
-          onRefresh()
-        } catch (error) {
-          uni.showToast({ title: '下架失败', icon: 'none' })
-        } finally {
-          uni.hideLoading()
+  const onlineItemHandler = (item: Item) => {
+    uni.showModal({
+      title: '确认上架',
+      content: '上架后该物品将展示给其他用户，确定要上架吗？',
+      success: async (res) => {
+        if (res.confirm) {
+          try {
+            uni.showLoading({ title: '上架中...' })
+            await updateItem(item.id, { status: 'available' })
+            uni.showToast({ title: '上架成功', icon: 'success' })
+            onRefresh()
+          } catch (error) {
+            uni.showToast({ title: '上架失败', icon: 'none' })
+          } finally {
+            uni.hideLoading()
+          }
         }
       }
-    }
-  })
-}
+    })
+  }
 
-const onlineItemHandler = (item: Item) => {
-  uni.showModal({
-    title: '确认上架',
-    content: '上架后该物品将展示给其他用户，确定要上架吗？',
-    success: async (res) => {
-      if (res.confirm) {
-        try {
-          uni.showLoading({ title: '上架中...' })
-          await updateItem(item.id, { status: 'available' })
-          uni.showToast({ title: '上架成功', icon: 'success' })
-          onRefresh()
-        } catch (error) {
-          uni.showToast({ title: '上架失败', icon: 'none' })
-        } finally {
-          uni.hideLoading()
+  const deleteItemHandler = (item: Item) => {
+    uni.showModal({
+      title: '确认删除',
+      content: '删除后无法恢复，确定要删除这个物品吗？',
+      confirmColor: '#ff4d4f',
+      success: async (res) => {
+        if (res.confirm) {
+          try {
+            uni.showLoading({ title: '删除中...' })
+            await deleteItem(item.id)
+            uni.showToast({ title: '删除成功', icon: 'success' })
+            onRefresh()
+          } catch (error) {
+            uni.showToast({ title: '删除失败', icon: 'none' })
+          } finally {
+            uni.hideLoading()
+          }
         }
       }
-    }
-  })
-}
+    })
+  }
 
-const deleteItemHandler = (item: Item) => {
-  uni.showModal({
-    title: '确认删除',
-    content: '删除后无法恢复，确定要删除这个物品吗？',
-    confirmColor: '#ff4d4f',
-    success: async (res) => {
-      if (res.confirm) {
-        try {
-          uni.showLoading({ title: '删除中...' })
-          await deleteItem(item.id)
-          uni.showToast({ title: '删除成功', icon: 'success' })
-          onRefresh()
-        } catch (error) {
-          uni.showToast({ title: '删除失败', icon: 'none' })
-        } finally {
-          uni.hideLoading()
-        }
-      }
-    }
+  onMounted(() => {
+    loadItems()
   })
-}
-
-onMounted(() => {
-  loadItems()
-})
 </script>
 
 <style lang="scss">

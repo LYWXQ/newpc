@@ -35,7 +35,7 @@
           type="text"
           placeholder="请输入物品标题"
           v-model="form.title"
-        />
+        >
       </view>
 
       <view class="form-item">
@@ -58,7 +58,7 @@
           class="textarea"
           placeholder="请详细描述物品的成色、使用方法等信息"
           v-model="form.description"
-        ></textarea>
+        />
       </view>
 
       <view class="form-item" v-if="form.transactionType === 'rent'">
@@ -68,7 +68,7 @@
           type="number"
           placeholder="请输入租金"
           v-model="form.price"
-        />
+        >
       </view>
 
       <view class="form-item" v-if="form.transactionType === 'sell'">
@@ -78,7 +78,7 @@
           type="number"
           placeholder="请输入售价"
           v-model="form.salePrice"
-        />
+        >
       </view>
 
       <view class="form-item" v-if="form.transactionType === 'rent'">
@@ -88,7 +88,7 @@
           type="number"
           placeholder="请输入押金"
           v-model="form.deposit"
-        />
+        >
       </view>
 
       <view class="form-item" v-if="form.transactionType === 'rent'">
@@ -171,7 +171,7 @@
           type="text"
           placeholder="请输入交易地点"
           v-model="form.location"
-        />
+        >
       </view>
 
       <view class="form-item">
@@ -187,7 +187,7 @@
                 class="uploaded-image"
                 :src="image"
                 mode="aspectFill"
-              ></image>
+              />
               <view class="delete-btn" @click="removeImage(index)">
                 <text class="delete-icon">×</text>
               </view>
@@ -216,414 +216,414 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from "vue";
-import { createItem, updateItem, getItemDetail, type CreateItemParams, type Item } from "@/api/items";
-import { upload } from "@/utils/request";
-import { isLoggedIn } from "@/utils/auth";
+  import { ref, computed, onMounted } from 'vue'
+  import { createItem, updateItem, getItemDetail, type CreateItemParams, type Item } from '@/api/items'
+  import { upload } from '@/utils/request'
+  import { isLoggedIn } from '@/utils/auth'
 
-const itemId = ref<number | null>(null)
-const isEditMode = ref(false)
-const originalStatus = ref<string>('available') // 保存原始状态
+  const itemId = ref<number | null>(null)
+  const isEditMode = ref(false)
+  const originalStatus = ref<string>('available') // 保存原始状态
 
-const getCurrentDate = () => {
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, '0');
-  const day = String(now.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
-};
-
-const getCurrentTime = () => {
-  const now = new Date();
-  const hours = String(now.getHours()).padStart(2, '0');
-  const minutes = String(now.getMinutes()).padStart(2, '0');
-  return `${hours}:${minutes}`;
-};
-
-const form = ref({
-  title: "",
-  categoryIndex: 0,
-  description: "",
-  price: "",
-  deposit: "",
-  transactionType: 'rent' as 'free' | 'rent' | 'sell',
-  salePrice: "",
-  isLongTermRent: false,
-  availableTime: {
-    startDate: getCurrentDate(),
-    startTime: getCurrentTime(),
-    endDate: "",
-    endTime: "",
-  },
-  location: "",
-  images: [] as string[],
-});
-
-const displayStartTime = computed(() => {
-  const { startDate, startTime } = form.value.availableTime;
-  if (startDate && startTime) {
-    return `${startDate} ${startTime}`;
+  const getCurrentDate = () => {
+    const now = new Date()
+    const year = now.getFullYear()
+    const month = String(now.getMonth() + 1).padStart(2, '0')
+    const day = String(now.getDate()).padStart(2, '0')
+    return `${year}-${month}-${day}`
   }
-  return "";
-});
 
-const displayEndTime = computed(() => {
-  const { endDate, endTime } = form.value.availableTime;
-  if (endDate && endTime) {
-    return `${endDate} ${endTime}`;
+  const getCurrentTime = () => {
+    const now = new Date()
+    const hours = String(now.getHours()).padStart(2, '0')
+    const minutes = String(now.getMinutes()).padStart(2, '0')
+    return `${hours}:${minutes}`
   }
-  return "";
-});
 
-const isSubmitting = ref(false);
-const categories = ["图书", "电子产品", "运动器材", "生活用品", "服装", "其他"];
-
-onMounted(() => {
-  if (!isLoggedIn()) {
-    uni.reLaunch({
-      url: '/pages/login/login'
-    })
-    return
-  }
-  const pages = getCurrentPages()
-  const currentPage = pages[pages.length - 1]
-  const options = currentPage.options as any
-  if (options.id) {
-    itemId.value = parseInt(options.id)
-    isEditMode.value = true
-    loadItemDetail()
-  }
-})
-
-const loadItemDetail = async () => {
-  try {
-    uni.showLoading({ title: '加载中...' })
-    const { item } = await getItemDetail(itemId.value!)
-    // 保存原始状态
-    originalStatus.value = item.status
-    
-    form.value.title = item.title
-    form.value.description = item.description || ''
-    form.value.categoryIndex = categories.indexOf(item.category)
-    if (form.value.categoryIndex === -1) form.value.categoryIndex = 0
-    form.value.price = item.price.toString()
-    form.value.deposit = item.deposit.toString()
-    form.value.transactionType = item.transactionType || 'rent'
-    form.value.salePrice = item.salePrice ? item.salePrice.toString() : ''
-    form.value.isLongTermRent = item.isLongTermRent || false
-    form.value.location = item.location || ''
-    form.value.images = item.images || []
-    if (item.availableTime) {
-      if (item.availableTime.start) {
-        const parts = item.availableTime.start.split(' ')
-        form.value.availableTime.startDate = parts[0] || ''
-        form.value.availableTime.startTime = parts[1] || ''
-      }
-      if (item.availableTime.end) {
-        const parts = item.availableTime.end.split(' ')
-        form.value.availableTime.endDate = parts[0] || ''
-        form.value.availableTime.endTime = parts[1] || ''
-      }
-    }
-  } catch (error) {
-    uni.showToast({ title: '加载失败', icon: 'none' })
-  } finally {
-    uni.hideLoading()
-  }
-}
-
-const handleLongTermRentChange = (e: any) => {
-  form.value.isLongTermRent = e.detail.value
-}
-
-const handleCategoryChange = (e: any) => {
-  form.value.categoryIndex = e.detail.value;
-};
-
-const combineDateTime = (date: string, time: string) => {
-  return new Date(`${date}T${time}`);
-};
-
-const isPastDateTime = (date: string, time: string) => {
-  if (!date || !time) return false;
-  const selected = combineDateTime(date, time);
-  const now = new Date();
-  return selected < now;
-};
-
-const isEndBeforeStart = () => {
-  const { startDate, startTime, endDate, endTime } = form.value.availableTime;
-  if (!startDate || !startTime || !endDate || !endTime) return false;
-  const start = combineDateTime(startDate, startTime);
-  const end = combineDateTime(endDate, endTime);
-  return end <= start;
-};
-
-const handleStartDateChange = (e: any) => {
-  const selectedDate = e.detail.value;
-  const currentTime = form.value.availableTime.startTime || getCurrentTime();
-  
-  if (isPastDateTime(selectedDate, currentTime)) {
-    uni.showToast({
-      title: "不能选择过去的日期",
-      icon: "none",
-    });
-    return;
-  }
-  
-  form.value.availableTime.startDate = selectedDate;
-};
-
-const handleStartTimeChange = (e: any) => {
-  const selectedTime = e.detail.value;
-  const currentDate = form.value.availableTime.startDate || getCurrentDate();
-  
-  if (isPastDateTime(currentDate, selectedTime)) {
-    uni.showToast({
-      title: "不能选择过去的时间",
-      icon: "none",
-    });
-    return;
-  }
-  
-  form.value.availableTime.startTime = selectedTime;
-};
-
-const handleEndDateChange = (e: any) => {
-  const selectedDate = e.detail.value;
-  const currentTime = form.value.availableTime.endTime || "23:59";
-  
-  if (isPastDateTime(selectedDate, currentTime)) {
-    uni.showToast({
-      title: "不能选择过去的日期",
-      icon: "none",
-    });
-    return;
-  }
-  
-  form.value.availableTime.endDate = selectedDate;
-};
-
-const handleEndTimeChange = (e: any) => {
-  const selectedTime = e.detail.value;
-  const currentDate = form.value.availableTime.endDate || getCurrentDate();
-  
-  if (isPastDateTime(currentDate, selectedTime)) {
-    uni.showToast({
-      title: "不能选择过去的时间",
-      icon: "none",
-    });
-    return;
-  }
-  
-  form.value.availableTime.endTime = selectedTime;
-};
-
-const chooseImage = () => {
-  const remainCount = 6 - form.value.images.length;
-  uni.chooseImage({
-    count: remainCount,
-    sizeType: ["compressed"],
-    sourceType: ["album", "camera"],
-    success: (res) => {
-      const tempFilePaths = res.tempFilePaths as string[];
-      uploadImages(tempFilePaths);
+  const form = ref({
+    title: '',
+    categoryIndex: 0,
+    description: '',
+    price: '',
+    deposit: '',
+    transactionType: 'rent' as 'free' | 'rent' | 'sell',
+    salePrice: '',
+    isLongTermRent: false,
+    availableTime: {
+      startDate: getCurrentDate(),
+      startTime: getCurrentTime(),
+      endDate: '',
+      endTime: '',
     },
-  });
-};
+    location: '',
+    images: [] as string[],
+  })
 
-const uploadImages = async (filePaths: string[]) => {
-  uni.showLoading({ title: "上传中..." });
-
-  try {
-    for (const filePath of filePaths) {
-      const result = await upload("/upload", filePath);
-      if (result && typeof result === "object" && "url" in result) {
-        form.value.images.push((result as { url: string }).url);
-      } else if (typeof result === "string") {
-        form.value.images.push(result);
-      }
-    }
-  } catch (error) {
-    console.error("上传图片失败:", error);
-    uni.showToast({
-      title: "图片上传失败",
-      icon: "none",
-    });
-  } finally {
-    uni.hideLoading();
-  }
-};
-
-const removeImage = (index: number) => {
-  form.value.images.splice(index, 1);
-};
-
-const validateForm = (): boolean => {
-  if (!form.value.title.trim()) {
-    uni.showToast({
-      title: "请输入物品标题",
-      icon: "none",
-    });
-    return false;
-  }
-
-  if (form.value.transactionType === 'rent') {
-    if (!form.value.price || parseFloat(form.value.price) <= 0) {
-      uni.showToast({
-        title: "请输入有效的租金",
-        icon: "none",
-      });
-      return false;
-    }
-
-    if (!form.value.deposit || parseFloat(form.value.deposit) < 0) {
-      uni.showToast({
-        title: "请输入有效的押金",
-        icon: "none",
-      });
-      return false;
-    }
-  }
-
-  if (form.value.transactionType === 'sell') {
-    if (!form.value.salePrice || parseFloat(form.value.salePrice) <= 0) {
-      uni.showToast({
-        title: "请输入有效的售价",
-        icon: "none",
-      });
-      return false;
-    }
-  }
-
-  if (form.value.transactionType === 'rent') {
-    const { startDate, startTime, endDate, endTime } = form.value.availableTime;
-    
+  const displayStartTime = computed(() => {
+    const { startDate, startTime } = form.value.availableTime
     if (startDate && startTime) {
-      if (isPastDateTime(startDate, startTime)) {
-        uni.showToast({
-          title: "开始时间不能早于当前时间",
-          icon: "none",
-        });
-        return false;
-      }
+      return `${startDate} ${startTime}`
     }
-    
-    if (!form.value.isLongTermRent && endDate && endTime) {
-      if (isPastDateTime(endDate, endTime)) {
-        uni.showToast({
-          title: "结束时间不能早于当前时间",
-          icon: "none",
-        });
-        return false;
-      }
+    return ''
+  })
+
+  const displayEndTime = computed(() => {
+    const { endDate, endTime } = form.value.availableTime
+    if (endDate && endTime) {
+      return `${endDate} ${endTime}`
     }
+    return ''
+  })
+
+  const isSubmitting = ref(false)
+  const categories = ['图书', '电子产品', '运动器材', '生活用品', '服装', '其他']
+
+  onMounted(() => {
+    if (!isLoggedIn()) {
+      uni.reLaunch({
+        url: '/pages/login/login'
+      })
+      return
+    }
+    const pages = getCurrentPages()
+    const currentPage = pages[pages.length - 1]
+    const options = currentPage.options as any
+    if (options.id) {
+      itemId.value = parseInt(options.id)
+      isEditMode.value = true
+      loadItemDetail()
+    }
+  })
+
+  const loadItemDetail = async () => {
+    try {
+      uni.showLoading({ title: '加载中...' })
+      const { item } = await getItemDetail(itemId.value!)
+      // 保存原始状态
+      originalStatus.value = item.status
     
-    if (!form.value.isLongTermRent && (startDate && startTime) && (endDate && endTime)) {
-      if (isEndBeforeStart()) {
-        uni.showToast({
-          title: "结束时间必须晚于开始时间",
-          icon: "none",
-        });
-        return false;
+      form.value.title = item.title
+      form.value.description = item.description || ''
+      form.value.categoryIndex = categories.indexOf(item.category)
+      if (form.value.categoryIndex === -1) form.value.categoryIndex = 0
+      form.value.price = item.price.toString()
+      form.value.deposit = item.deposit.toString()
+      form.value.transactionType = item.transactionType || 'rent'
+      form.value.salePrice = item.salePrice ? item.salePrice.toString() : ''
+      form.value.isLongTermRent = item.isLongTermRent || false
+      form.value.location = item.location || ''
+      form.value.images = item.images || []
+      if (item.availableTime) {
+        if (item.availableTime.start) {
+          const parts = item.availableTime.start.split(' ')
+          form.value.availableTime.startDate = parts[0] || ''
+          form.value.availableTime.startTime = parts[1] || ''
+        }
+        if (item.availableTime.end) {
+          const parts = item.availableTime.end.split(' ')
+          form.value.availableTime.endDate = parts[0] || ''
+          form.value.availableTime.endTime = parts[1] || ''
+        }
       }
+    } catch (error) {
+      uni.showToast({ title: '加载失败', icon: 'none' })
+    } finally {
+      uni.hideLoading()
     }
   }
 
-  return true;
-};
-
-const submitForm = async () => {
-  if (isSubmitting.value) return;
-
-  if (!validateForm()) {
-    return;
+  const handleLongTermRentChange = (e: any) => {
+    form.value.isLongTermRent = e.detail.value
   }
 
-  isSubmitting.value = true;
-  uni.showLoading({ title: isEditMode.value ? "保存中..." : "发布中..." });
+  const handleCategoryChange = (e: any) => {
+    form.value.categoryIndex = e.detail.value
+  }
 
-  try {
-    const params: CreateItemParams = {
-      title: form.value.title.trim(),
-      description: form.value.description.trim(),
-      category: categories[form.value.categoryIndex],
-      images: form.value.images,
-      price: form.value.transactionType === 'rent' ? parseFloat(form.value.price) : 0,
-      deposit: form.value.transactionType === 'rent' ? parseFloat(form.value.deposit) : 0,
-      transactionType: form.value.transactionType,
-      salePrice: form.value.transactionType === 'sell' && form.value.salePrice 
-        ? parseFloat(form.value.salePrice) 
-        : null,
-      isLongTermRent: form.value.transactionType === 'rent' ? form.value.isLongTermRent : false,
-      location: form.value.location.trim() || undefined,
-    };
+  const combineDateTime = (date: string, time: string) => {
+    return new Date(`${date}T${time}`)
+  }
 
-    const { startDate, startTime, endDate, endTime } = form.value.availableTime;
-    if (form.value.transactionType === 'rent' && (startDate || startTime || endDate || endTime)) {
-      params.availableTime = {
-        start: (startDate && startTime) ? `${startDate} ${startTime}` : undefined,
-        end: (!form.value.isLongTermRent && endDate && endTime) ? `${endDate} ${endTime}` : undefined,
-      };
+  const isPastDateTime = (date: string, time: string) => {
+    if (!date || !time) return false
+    const selected = combineDateTime(date, time)
+    const now = new Date()
+    return selected < now
+  }
+
+  const isEndBeforeStart = () => {
+    const { startDate, startTime, endDate, endTime } = form.value.availableTime
+    if (!startDate || !startTime || !endDate || !endTime) return false
+    const start = combineDateTime(startDate, startTime)
+    const end = combineDateTime(endDate, endTime)
+    return end <= start
+  }
+
+  const handleStartDateChange = (e: any) => {
+    const selectedDate = e.detail.value
+    const currentTime = form.value.availableTime.startTime || getCurrentTime()
+  
+    if (isPastDateTime(selectedDate, currentTime)) {
+      uni.showToast({
+        title: '不能选择过去的日期',
+        icon: 'none',
+      })
+      return
+    }
+  
+    form.value.availableTime.startDate = selectedDate
+  }
+
+  const handleStartTimeChange = (e: any) => {
+    const selectedTime = e.detail.value
+    const currentDate = form.value.availableTime.startDate || getCurrentDate()
+  
+    if (isPastDateTime(currentDate, selectedTime)) {
+      uni.showToast({
+        title: '不能选择过去的时间',
+        icon: 'none',
+      })
+      return
+    }
+  
+    form.value.availableTime.startTime = selectedTime
+  }
+
+  const handleEndDateChange = (e: any) => {
+    const selectedDate = e.detail.value
+    const currentTime = form.value.availableTime.endTime || '23:59'
+  
+    if (isPastDateTime(selectedDate, currentTime)) {
+      uni.showToast({
+        title: '不能选择过去的日期',
+        icon: 'none',
+      })
+      return
+    }
+  
+    form.value.availableTime.endDate = selectedDate
+  }
+
+  const handleEndTimeChange = (e: any) => {
+    const selectedTime = e.detail.value
+    const currentDate = form.value.availableTime.endDate || getCurrentDate()
+  
+    if (isPastDateTime(currentDate, selectedTime)) {
+      uni.showToast({
+        title: '不能选择过去的时间',
+        icon: 'none',
+      })
+      return
+    }
+  
+    form.value.availableTime.endTime = selectedTime
+  }
+
+  const chooseImage = () => {
+    const remainCount = 6 - form.value.images.length
+    uni.chooseImage({
+      count: remainCount,
+      sizeType: ['compressed'],
+      sourceType: ['album', 'camera'],
+      success: (res) => {
+        const tempFilePaths = res.tempFilePaths as string[]
+        uploadImages(tempFilePaths)
+      },
+    })
+  }
+
+  const uploadImages = async (filePaths: string[]) => {
+    uni.showLoading({ title: '上传中...' })
+
+    try {
+      for (const filePath of filePaths) {
+        const result = await upload('/upload', filePath)
+        if (result && typeof result === 'object' && 'url' in result) {
+          form.value.images.push((result as { url: string }).url)
+        } else if (typeof result === 'string') {
+          form.value.images.push(result)
+        }
+      }
+    } catch (error) {
+      console.error('上传图片失败:', error)
+      uni.showToast({
+        title: '图片上传失败',
+        icon: 'none',
+      })
+    } finally {
+      uni.hideLoading()
+    }
+  }
+
+  const removeImage = (index: number) => {
+    form.value.images.splice(index, 1)
+  }
+
+  const validateForm = (): boolean => {
+    if (!form.value.title.trim()) {
+      uni.showToast({
+        title: '请输入物品标题',
+        icon: 'none',
+      })
+      return false
     }
 
-    if (isEditMode.value && itemId.value) {
-      // 编辑时保持原有状态：可租物品编辑后仍为可租，下架物品编辑后仍为下架
-      const updateParams: any = { ...params }
-      if (originalStatus.value === 'offline') {
-        updateParams.status = 'offline'
-      } else if (originalStatus.value === 'available') {
-        updateParams.status = 'available'
+    if (form.value.transactionType === 'rent') {
+      if (!form.value.price || parseFloat(form.value.price) <= 0) {
+        uni.showToast({
+          title: '请输入有效的租金',
+          icon: 'none',
+        })
+        return false
       }
+
+      if (!form.value.deposit || parseFloat(form.value.deposit) < 0) {
+        uni.showToast({
+          title: '请输入有效的押金',
+          icon: 'none',
+        })
+        return false
+      }
+    }
+
+    if (form.value.transactionType === 'sell') {
+      if (!form.value.salePrice || parseFloat(form.value.salePrice) <= 0) {
+        uni.showToast({
+          title: '请输入有效的售价',
+          icon: 'none',
+        })
+        return false
+      }
+    }
+
+    if (form.value.transactionType === 'rent') {
+      const { startDate, startTime, endDate, endTime } = form.value.availableTime
+    
+      if (startDate && startTime) {
+        if (isPastDateTime(startDate, startTime)) {
+          uni.showToast({
+            title: '开始时间不能早于当前时间',
+            icon: 'none',
+          })
+          return false
+        }
+      }
+    
+      if (!form.value.isLongTermRent && endDate && endTime) {
+        if (isPastDateTime(endDate, endTime)) {
+          uni.showToast({
+            title: '结束时间不能早于当前时间',
+            icon: 'none',
+          })
+          return false
+        }
+      }
+    
+      if (!form.value.isLongTermRent && (startDate && startTime) && (endDate && endTime)) {
+        if (isEndBeforeStart()) {
+          uni.showToast({
+            title: '结束时间必须晚于开始时间',
+            icon: 'none',
+          })
+          return false
+        }
+      }
+    }
+
+    return true
+  }
+
+  const submitForm = async () => {
+    if (isSubmitting.value) return
+
+    if (!validateForm()) {
+      return
+    }
+
+    isSubmitting.value = true
+    uni.showLoading({ title: isEditMode.value ? '保存中...' : '发布中...' })
+
+    try {
+      const params: CreateItemParams = {
+        title: form.value.title.trim(),
+        description: form.value.description.trim(),
+        category: categories[form.value.categoryIndex],
+        images: form.value.images,
+        price: form.value.transactionType === 'rent' ? parseFloat(form.value.price) : 0,
+        deposit: form.value.transactionType === 'rent' ? parseFloat(form.value.deposit) : 0,
+        transactionType: form.value.transactionType,
+        salePrice: form.value.transactionType === 'sell' && form.value.salePrice 
+          ? parseFloat(form.value.salePrice) 
+          : null,
+        isLongTermRent: form.value.transactionType === 'rent' ? form.value.isLongTermRent : false,
+        location: form.value.location.trim() || undefined,
+      }
+
+      const { startDate, startTime, endDate, endTime } = form.value.availableTime
+      if (form.value.transactionType === 'rent' && (startDate || startTime || endDate || endTime)) {
+        params.availableTime = {
+          start: (startDate && startTime) ? `${startDate} ${startTime}` : undefined,
+          end: (!form.value.isLongTermRent && endDate && endTime) ? `${endDate} ${endTime}` : undefined,
+        }
+      }
+
+      if (isEditMode.value && itemId.value) {
+        // 编辑时保持原有状态：可租物品编辑后仍为可租，下架物品编辑后仍为下架
+        const updateParams: any = { ...params }
+        if (originalStatus.value === 'offline') {
+          updateParams.status = 'offline'
+        } else if (originalStatus.value === 'available') {
+          updateParams.status = 'available'
+        }
       
-      await updateItem(itemId.value, updateParams, { showLoading: false });
-      uni.hideLoading();
+        await updateItem(itemId.value, updateParams, { showLoading: false })
+        uni.hideLoading()
+        uni.showToast({
+          title: '保存成功',
+          icon: 'success',
+        })
+        setTimeout(() => {
+          uni.navigateBack()
+        }, 1500)
+      } else {
+        await createItem(params, { showLoading: false })
+        uni.hideLoading()
+        uni.showToast({
+          title: '发布成功',
+          icon: 'success',
+        })
+        setTimeout(() => {
+          form.value = {
+            title: '',
+            categoryIndex: 0,
+            description: '',
+            price: '',
+            deposit: '',
+            transactionType: 'rent',
+            salePrice: '',
+            isLongTermRent: false,
+            availableTime: {
+              startDate: getCurrentDate(),
+              startTime: getCurrentTime(),
+              endDate: '',
+              endTime: '',
+            },
+            location: '',
+            images: [] as string[],
+          }
+        }, 1500)
+      }
+    } catch (error) {
+      console.error(isEditMode.value ? '保存失败:' : '发布失败:', error)
+      uni.hideLoading()
       uni.showToast({
-        title: "保存成功",
-        icon: "success",
-      });
-      setTimeout(() => {
-        uni.navigateBack();
-      }, 1500);
-    } else {
-      await createItem(params, { showLoading: false });
-      uni.hideLoading();
-      uni.showToast({
-        title: "发布成功",
-        icon: "success",
-      });
-      setTimeout(() => {
-        form.value = {
-          title: "",
-          categoryIndex: 0,
-          description: "",
-          price: "",
-          deposit: "",
-          transactionType: 'rent',
-          salePrice: "",
-          isLongTermRent: false,
-          availableTime: {
-            startDate: getCurrentDate(),
-            startTime: getCurrentTime(),
-            endDate: "",
-            endTime: "",
-          },
-          location: "",
-          images: [] as string[],
-        };
-      }, 1500);
+        title: isEditMode.value ? '保存失败，请重试' : '发布失败，请重试',
+        icon: 'none',
+      })
+    } finally {
+      isSubmitting.value = false
     }
-  } catch (error) {
-    console.error(isEditMode.value ? "保存失败:" : "发布失败:", error);
-    uni.hideLoading();
-    uni.showToast({
-      title: isEditMode.value ? "保存失败，请重试" : "发布失败，请重试",
-      icon: "none",
-    });
-  } finally {
-    isSubmitting.value = false;
   }
-};
 </script>
 
 <style scoped>

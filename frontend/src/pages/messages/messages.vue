@@ -52,7 +52,7 @@
             <text class="message-text">{{ message.content }}</text>
             <text class="message-time">{{ formatTime(message.createdAt) }}</text>
           </view>
-          <view v-if="!message.isRead" class="message-badge"></view>
+          <view v-if="!message.isRead" class="message-badge"/>
           <view class="delete-btn" @click.stop="handleDelete(message)">
             <text class="delete-icon">🗑️</text>
           </view>
@@ -114,257 +114,257 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
-import { onShow } from '@dcloudio/uni-app'
-import { getMessageList, markAsRead, markAllAsRead, deleteMessage, type Message, type ChatConversation } from '@/api/messages'
-import { getImageUrl as getImgUrl } from '@/utils/image'
+  import { ref, onMounted, computed } from 'vue'
+  import { onShow } from '@dcloudio/uni-app'
+  import { getMessageList, markAsRead, markAllAsRead, deleteMessage, type Message, type ChatConversation } from '@/api/messages'
+  import { getImageUrl as getImgUrl } from '@/utils/image'
 
-// 当前选中的消息类型
-const currentType = ref<'system' | 'chat'>('system')
+  // 当前选中的消息类型
+  const currentType = ref<'system' | 'chat'>('system')
 
-// 系统消息列表
-const systemMessageList = ref<Message[]>([])
-// 聊天会话列表
-const chatConversationList = ref<ChatConversation[]>([])
+  // 系统消息列表
+  const systemMessageList = ref<Message[]>([])
+  // 聊天会话列表
+  const chatConversationList = ref<ChatConversation[]>([])
 
-// 分页参数
-const page = ref(1)
-const limit = ref(10)
-const hasMore = ref(true)
-const isLoading = ref(false)
-const isRefreshing = ref(false)
+  // 分页参数
+  const page = ref(1)
+  const limit = ref(10)
+  const hasMore = ref(true)
+  const isLoading = ref(false)
+  const isRefreshing = ref(false)
 
-// 计算当前显示列表（用于空状态判断）
-const displayList = computed(() => {
-  return currentType.value === 'system' ? systemMessageList.value : chatConversationList.value
-})
+  // 计算当前显示列表（用于空状态判断）
+  const displayList = computed(() => {
+    return currentType.value === 'system' ? systemMessageList.value : chatConversationList.value
+  })
 
-// 获取图片URL
-const getImageUrl = (imagePath: string) => {
-  return getImgUrl(imagePath)
-}
-
-// 获取消息列表
-const fetchMessageList = async (isRefresh = false) => {
-  if (isLoading.value) return
-  
-  isLoading.value = true
-  
-  try {
-    const params: { page: number; limit: number; type: 'system' | 'chat' } = {
-      page: isRefresh ? 1 : page.value,
-      limit: limit.value,
-      type: currentType.value
-    }
-    
-    const res = await getMessageList(params)
-    const resData = res.messages || []
-    
-    if (currentType.value === 'system') {
-      // 系统消息
-      if (isRefresh) {
-        systemMessageList.value = resData as Message[]
-        page.value = 2
-      } else {
-        systemMessageList.value = [...systemMessageList.value, ...(resData as Message[])]
-        page.value++
-      }
-    } else {
-      // 聊天会话
-      if (isRefresh) {
-        chatConversationList.value = resData as ChatConversation[]
-        page.value = 2
-      } else {
-        chatConversationList.value = [...chatConversationList.value, ...(resData as ChatConversation[])]
-        page.value++
-      }
-    }
-    
-    // 判断是否还有更多数据
-    hasMore.value = res.pagination.page < res.pagination.totalPages
-  } catch (error) {
-    uni.showToast({
-      title: '获取消息失败',
-      icon: 'none'
-    })
-  } finally {
-    isLoading.value = false
-    isRefreshing.value = false
+  // 获取图片URL
+  const getImageUrl = (imagePath: string) => {
+    return getImgUrl(imagePath)
   }
-}
 
-// 切换消息类型
-const switchType = (type: 'system' | 'chat') => {
-  if (currentType.value === type) return
-  currentType.value = type
-  page.value = 1
-  hasMore.value = true
-  fetchMessageList(true)
-}
-
-// 下拉刷新
-const onRefresh = () => {
-  isRefreshing.value = true
-  page.value = 1
-  hasMore.value = true
-  fetchMessageList(true)
-}
-
-// 加载更多
-const onLoadMore = () => {
-  if (!hasMore.value || isLoading.value) return
-  fetchMessageList()
-}
-
-// 格式化时间
-const formatTime = (timeStr: string) => {
-  const date = new Date(timeStr)
-  const now = new Date()
-  const diff = now.getTime() - date.getTime()
+  // 获取消息列表
+  const fetchMessageList = async (isRefresh = false) => {
+    if (isLoading.value) return
   
-  // 今天
-  if (date.toDateString() === now.toDateString()) {
-    return date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
-  }
+    isLoading.value = true
   
-  // 昨天
-  const yesterday = new Date(now)
-  yesterday.setDate(yesterday.getDate() - 1)
-  if (date.toDateString() === yesterday.toDateString()) {
-    return '昨天'
-  }
-  
-  // 一周内
-  if (diff < 7 * 24 * 60 * 60 * 1000) {
-    const days = ['周日', '周一', '周二', '周三', '周四', '周五', '周六']
-    return days[date.getDay()]
-  }
-  
-  // 更早
-  return date.toLocaleDateString('zh-CN', { month: '2-digit', day: '2-digit' })
-}
-
-// 点击系统消息
-const handleSystemMessageClick = async (message: Message) => {
-  // 标记为已读
-  if (!message.isRead) {
     try {
-      await markAsRead(message.id)
-      message.isRead = true
-    } catch (error) {
-      console.error('标记已读失败', error)
-    }
-  }
-  
-  // 系统通知，如果有相关订单则跳转到订单详情
-  if (message.relatedId && message.relatedType === 'order') {
-    uni.navigateTo({
-      url: `/pages/order/detail?id=${message.relatedId}`
-    })
-  }
-}
-
-// 点击聊天会话
-const handleChatClick = (conversation: ChatConversation) => {
-  // 跳转到对应物品的聊天页面，携带 itemId 和 userId 参数
-  const itemId = conversation.itemId
-  const userId = conversation.otherUserId
-  
-  uni.navigateTo({
-    url: `/pages/chat/chat?itemId=${itemId}&userId=${userId}`
-  })
-}
-
-// 标记全部已读
-const handleMarkAllAsRead = async () => {
-  try {
-    await markAllAsRead()
-    // 更新本地状态
-    if (currentType.value === 'system') {
-      systemMessageList.value.forEach(msg => {
-        msg.isRead = true
-      })
-    } else {
-      chatConversationList.value.forEach(conv => {
-        conv.unreadCount = 0
-      })
-    }
-    uni.showToast({
-      title: '已全部标记为已读',
-      icon: 'success'
-    })
-  } catch (error) {
-    uni.showToast({
-      title: '操作失败',
-      icon: 'none'
-    })
-  }
-}
-
-// 长按消息（仅系统消息支持删除）
-const handleLongPress = (message: Message) => {
-  uni.showActionSheet({
-    itemList: ['删除消息'],
-    success: (res) => {
-      if (res.tapIndex === 0) {
-        handleDelete(message)
+      const params: { page: number; limit: number; type: 'system' | 'chat' } = {
+        page: isRefresh ? 1 : page.value,
+        limit: limit.value,
+        type: currentType.value
       }
-    }
-  })
-}
-
-// 删除消息
-const handleDelete = async (message: Message) => {
-  uni.showModal({
-    title: '提示',
-    content: '确定删除这条消息吗？',
-    success: async (res) => {
-      if (res.confirm) {
-        try {
-          await deleteMessage(message.id)
-          // 从列表中移除
-          const index = systemMessageList.value.findIndex(m => m.id === message.id)
-          if (index > -1) {
-            systemMessageList.value.splice(index, 1)
-          }
-          uni.showToast({
-            title: '删除成功',
-            icon: 'success'
-          })
-        } catch (error) {
-          uni.showToast({
-            title: '删除失败',
-            icon: 'none'
-          })
+    
+      const res = await getMessageList(params)
+      const resData = res.messages || []
+    
+      if (currentType.value === 'system') {
+        // 系统消息
+        if (isRefresh) {
+          systemMessageList.value = resData as Message[]
+          page.value = 2
+        } else {
+          systemMessageList.value = [...systemMessageList.value, ...(resData as Message[])]
+          page.value++
+        }
+      } else {
+        // 聊天会话
+        if (isRefresh) {
+          chatConversationList.value = resData as ChatConversation[]
+          page.value = 2
+        } else {
+          chatConversationList.value = [...chatConversationList.value, ...(resData as ChatConversation[])]
+          page.value++
         }
       }
+    
+      // 判断是否还有更多数据
+      hasMore.value = res.pagination.page < res.pagination.totalPages
+    } catch (error) {
+      uni.showToast({
+        title: '获取消息失败',
+        icon: 'none'
+      })
+    } finally {
+      isLoading.value = false
+      isRefreshing.value = false
+    }
+  }
+
+  // 切换消息类型
+  const switchType = (type: 'system' | 'chat') => {
+    if (currentType.value === type) return
+    currentType.value = type
+    page.value = 1
+    hasMore.value = true
+    fetchMessageList(true)
+  }
+
+  // 下拉刷新
+  const onRefresh = () => {
+    isRefreshing.value = true
+    page.value = 1
+    hasMore.value = true
+    fetchMessageList(true)
+  }
+
+  // 加载更多
+  const onLoadMore = () => {
+    if (!hasMore.value || isLoading.value) return
+    fetchMessageList()
+  }
+
+  // 格式化时间
+  const formatTime = (timeStr: string) => {
+    const date = new Date(timeStr)
+    const now = new Date()
+    const diff = now.getTime() - date.getTime()
+  
+    // 今天
+    if (date.toDateString() === now.toDateString()) {
+      return date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
+    }
+  
+    // 昨天
+    const yesterday = new Date(now)
+    yesterday.setDate(yesterday.getDate() - 1)
+    if (date.toDateString() === yesterday.toDateString()) {
+      return '昨天'
+    }
+  
+    // 一周内
+    if (diff < 7 * 24 * 60 * 60 * 1000) {
+      const days = ['周日', '周一', '周二', '周三', '周四', '周五', '周六']
+      return days[date.getDay()]
+    }
+  
+    // 更早
+    return date.toLocaleDateString('zh-CN', { month: '2-digit', day: '2-digit' })
+  }
+
+  // 点击系统消息
+  const handleSystemMessageClick = async (message: Message) => {
+    // 标记为已读
+    if (!message.isRead) {
+      try {
+        await markAsRead(message.id)
+        message.isRead = true
+      } catch (error) {
+        console.error('标记已读失败', error)
+      }
+    }
+  
+    // 系统通知，如果有相关订单则跳转到订单详情
+    if (message.relatedId && message.relatedType === 'order') {
+      uni.navigateTo({
+        url: `/pages/order/detail?id=${message.relatedId}`
+      })
+    }
+  }
+
+  // 点击聊天会话
+  const handleChatClick = (conversation: ChatConversation) => {
+    // 跳转到对应物品的聊天页面，携带 itemId 和 userId 参数
+    const itemId = conversation.itemId
+    const userId = conversation.otherUserId
+  
+    uni.navigateTo({
+      url: `/pages/chat/chat?itemId=${itemId}&userId=${userId}`
+    })
+  }
+
+  // 标记全部已读
+  const handleMarkAllAsRead = async () => {
+    try {
+      await markAllAsRead()
+      // 更新本地状态
+      if (currentType.value === 'system') {
+        systemMessageList.value.forEach(msg => {
+          msg.isRead = true
+        })
+      } else {
+        chatConversationList.value.forEach(conv => {
+          conv.unreadCount = 0
+        })
+      }
+      uni.showToast({
+        title: '已全部标记为已读',
+        icon: 'success'
+      })
+    } catch (error) {
+      uni.showToast({
+        title: '操作失败',
+        icon: 'none'
+      })
+    }
+  }
+
+  // 长按消息（仅系统消息支持删除）
+  const handleLongPress = (message: Message) => {
+    uni.showActionSheet({
+      itemList: ['删除消息'],
+      success: (res) => {
+        if (res.tapIndex === 0) {
+          handleDelete(message)
+        }
+      }
+    })
+  }
+
+  // 删除消息
+  const handleDelete = async (message: Message) => {
+    uni.showModal({
+      title: '提示',
+      content: '确定删除这条消息吗？',
+      success: async (res) => {
+        if (res.confirm) {
+          try {
+            await deleteMessage(message.id)
+            // 从列表中移除
+            const index = systemMessageList.value.findIndex(m => m.id === message.id)
+            if (index > -1) {
+              systemMessageList.value.splice(index, 1)
+            }
+            uni.showToast({
+              title: '删除成功',
+              icon: 'success'
+            })
+          } catch (error) {
+            uni.showToast({
+              title: '删除失败',
+              icon: 'none'
+            })
+          }
+        }
+      }
+    })
+  }
+
+  // 检查登录状态
+  const checkLoginStatus = () => {
+    const token = uni.getStorageSync('token')
+    if (!token) {
+      uni.navigateTo({ url: '/pages/login/login' })
+      return false
+    }
+    return true
+  }
+
+  // 页面加载时获取消息列表
+  onMounted(() => {
+    if (checkLoginStatus()) {
+      fetchMessageList(true)
     }
   })
-}
 
-// 检查登录状态
-const checkLoginStatus = () => {
-  const token = uni.getStorageSync('token')
-  if (!token) {
-    uni.navigateTo({ url: '/pages/login/login' })
-    return false
-  }
-  return true
-}
-
-// 页面加载时获取消息列表
-onMounted(() => {
-  if (checkLoginStatus()) {
-    fetchMessageList(true)
-  }
-})
-
-// 页面显示时重新加载数据
-onShow(() => {
-  if (checkLoginStatus()) {
-    fetchMessageList(true)
-  }
-})
+  // 页面显示时重新加载数据
+  onShow(() => {
+    if (checkLoginStatus()) {
+      fetchMessageList(true)
+    }
+  })
 </script>
 
 <style scoped>

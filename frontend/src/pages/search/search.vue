@@ -9,7 +9,7 @@
           v-model="searchQuery"
           @confirm="handleSearch"
           @input="handleInput"
-        />
+        >
         <text class="clear-button" @click="clearSearch" v-if="searchQuery">✕</text>
       </view>
       <button class="cancel-button" @click="cancelSearch">取消</button>
@@ -91,7 +91,7 @@
               class="result-image"
               :src="item.images && item.images.length > 0 ? item.images[0] : '/static/logo.png'"
               mode="aspectFill"
-            ></image>
+            />
             <view class="result-info">
               <text class="result-title">{{ item.title }}</text>
               <text class="result-price">¥{{ item.price.toFixed(2) }}/天</text>
@@ -116,232 +116,232 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
-import { getItemList, getCategories, type Item } from '@/api/items';
+  import { ref, onMounted } from 'vue'
+  import { getItemList, getCategories, type Item } from '@/api/items'
 
-const searchQuery = ref('');
-const showResults = ref(false);
-const searchResults = ref<Item[]>([]);
-const searchHistory = ref<string[]>([]);
-const hotTags = ref(['数码产品', '体育用品', '考研资料', '生活用品', '乐器']);
+  const searchQuery = ref('')
+  const showResults = ref(false)
+  const searchResults = ref<Item[]>([])
+  const searchHistory = ref<string[]>([])
+  const hotTags = ref(['数码产品', '体育用品', '考研资料', '生活用品', '乐器'])
 
-// 分类相关
-const categories = ref<string[]>([]);
-const currentCategory = ref('');
+  // 分类相关
+  const categories = ref<string[]>([])
+  const currentCategory = ref('')
 
-// 分页相关
-const currentPage = ref(1);
-const pageSize = ref(10);
-const hasMore = ref(true);
-const loading = ref(false);
-const isRefreshing = ref(false);
+  // 分页相关
+  const currentPage = ref(1)
+  const pageSize = ref(10)
+  const hasMore = ref(true)
+  const loading = ref(false)
+  const isRefreshing = ref(false)
 
-// 本地存储键名
-const HISTORY_KEY = 'search_history';
+  // 本地存储键名
+  const HISTORY_KEY = 'search_history'
 
-// 页面加载时获取搜索历史和分类
-onMounted(() => {
-  loadSearchHistory();
-  loadCategories();
-  // 检查是否有分类参数
-  const pages = getCurrentPages();
-  const currentPage = pages[pages.length - 1];
-  const category = currentPage.$page?.options?.category;
-  if (category && category !== '全部') {
-    currentCategory.value = category;
-    showResults.value = true;
-    fetchSearchResults();
-  }
-});
-
-// 加载分类
-const loadCategories = async () => {
-  try {
-    const cats = await getCategories();
-    categories.value = cats.filter(cat => cat !== '全部');
-  } catch (error) {
-    console.error('加载分类失败', error);
-  }
-};
-
-// 选择分类
-const selectCategory = (category: string) => {
-  currentCategory.value = category;
-  // 重置分页并搜索
-  currentPage.value = 1;
-  hasMore.value = true;
-  searchResults.value = [];
-  showResults.value = true;
-  fetchSearchResults();
-};
-
-// 加载搜索历史
-const loadSearchHistory = () => {
-  try {
-    const history = uni.getStorageSync(HISTORY_KEY);
-    if (history) {
-      searchHistory.value = JSON.parse(history);
+  // 页面加载时获取搜索历史和分类
+  onMounted(() => {
+    loadSearchHistory()
+    loadCategories()
+    // 检查是否有分类参数
+    const pages = getCurrentPages()
+    const currentPage = pages[pages.length - 1]
+    const category = currentPage.$page?.options?.category
+    if (category && category !== '全部') {
+      currentCategory.value = category
+      showResults.value = true
+      fetchSearchResults()
     }
-  } catch (e) {
-    console.error('加载搜索历史失败', e);
+  })
+
+  // 加载分类
+  const loadCategories = async () => {
+    try {
+      const cats = await getCategories()
+      categories.value = cats.filter(cat => cat !== '全部')
+    } catch (error) {
+      console.error('加载分类失败', error)
+    }
   }
-};
 
-// 保存搜索历史
-const saveSearchHistory = (keyword: string) => {
-  if (!keyword.trim()) return;
-
-  // 去重并移到最前面
-  const newHistory = [keyword, ...searchHistory.value.filter(item => item !== keyword)];
-  // 最多保存 10 条
-  searchHistory.value = newHistory.slice(0, 10);
-
-  try {
-    uni.setStorageSync(HISTORY_KEY, JSON.stringify(searchHistory.value));
-  } catch (e) {
-    console.error('保存搜索历史失败', e);
+  // 选择分类
+  const selectCategory = (category: string) => {
+    currentCategory.value = category
+    // 重置分页并搜索
+    currentPage.value = 1
+    hasMore.value = true
+    searchResults.value = []
+    showResults.value = true
+    fetchSearchResults()
   }
-};
 
-// 清空搜索历史
-const clearHistory = () => {
-  uni.showModal({
-    title: '提示',
-    content: '确定要清空搜索历史吗？',
-    success: (res) => {
-      if (res.confirm) {
-        searchHistory.value = [];
-        try {
-          uni.removeStorageSync(HISTORY_KEY);
-        } catch (e) {
-          console.error('清空搜索历史失败', e);
-        }
+  // 加载搜索历史
+  const loadSearchHistory = () => {
+    try {
+      const history = uni.getStorageSync(HISTORY_KEY)
+      if (history) {
+        searchHistory.value = JSON.parse(history)
       }
+    } catch (e) {
+      console.error('加载搜索历史失败', e)
     }
-  });
-};
-
-// 从历史记录搜索
-const searchFromHistory = (keyword: string) => {
-  searchQuery.value = keyword;
-  handleSearch();
-};
-
-// 输入处理（防抖）
-let debounceTimer: ReturnType<typeof setTimeout> | null = null;
-const handleInput = () => {
-  if (debounceTimer) {
-    clearTimeout(debounceTimer);
-  }
-  debounceTimer = setTimeout(() => {
-    if (!searchQuery.value.trim()) {
-      showResults.value = false;
-      searchResults.value = [];
-    }
-  }, 300);
-};
-
-// 执行搜索
-const handleSearch = async () => {
-  const keyword = searchQuery.value.trim();
-  if (!keyword) {
-    uni.showToast({
-      title: '请输入搜索关键词',
-      icon: 'none'
-    });
-    return;
   }
 
   // 保存搜索历史
-  saveSearchHistory(keyword);
+  const saveSearchHistory = (keyword: string) => {
+    if (!keyword.trim()) return
 
-  // 重置分页
-  currentPage.value = 1;
-  hasMore.value = true;
-  searchResults.value = [];
-  showResults.value = true;
+    // 去重并移到最前面
+    const newHistory = [keyword, ...searchHistory.value.filter(item => item !== keyword)]
+    // 最多保存 10 条
+    searchHistory.value = newHistory.slice(0, 10)
 
-  await fetchSearchResults();
-};
-
-// 获取搜索结果
-const fetchSearchResults = async () => {
-  if (loading.value) return;
-
-  loading.value = true;
-  try {
-    const params: any = {
-      page: currentPage.value,
-      limit: pageSize.value
-    };
-    
-    // 添加关键词搜索
-    if (searchQuery.value.trim()) {
-      params.keyword = searchQuery.value.trim();
+    try {
+      uni.setStorageSync(HISTORY_KEY, JSON.stringify(searchHistory.value))
+    } catch (e) {
+      console.error('保存搜索历史失败', e)
     }
-    
-    // 添加分类筛选
-    if (currentCategory.value) {
-      params.category = currentCategory.value;
-    }
-    
-    const res = await getItemList(params);
-    
-    const resItems = res.items || [];
-
-    if (currentPage.value === 1) {
-      searchResults.value = resItems;
-    } else {
-      searchResults.value = [...searchResults.value, ...resItems];
-    }
-
-    // 判断是否还有更多
-    hasMore.value = resItems.length === pageSize.value;
-  } catch (error) {
-    console.error('搜索失败', error);
-    uni.showToast({
-      title: '搜索失败，请重试',
-      icon: 'none'
-    });
-  } finally {
-    loading.value = false;
-    isRefreshing.value = false;
   }
-};
 
-// 加载更多
-const loadMore = () => {
-  if (!hasMore.value || loading.value) return;
-  currentPage.value++;
-  fetchSearchResults();
-};
+  // 清空搜索历史
+  const clearHistory = () => {
+    uni.showModal({
+      title: '提示',
+      content: '确定要清空搜索历史吗？',
+      success: (res) => {
+        if (res.confirm) {
+          searchHistory.value = []
+          try {
+            uni.removeStorageSync(HISTORY_KEY)
+          } catch (e) {
+            console.error('清空搜索历史失败', e)
+          }
+        }
+      }
+    })
+  }
 
-// 下拉刷新
-const onRefresh = () => {
-  isRefreshing.value = true;
-  currentPage.value = 1;
-  hasMore.value = true;
-  fetchSearchResults();
-};
+  // 从历史记录搜索
+  const searchFromHistory = (keyword: string) => {
+    searchQuery.value = keyword
+    handleSearch()
+  }
 
-// 清空搜索
-const clearSearch = () => {
-  searchQuery.value = '';
-  showResults.value = false;
-  searchResults.value = [];
-};
+  // 输入处理（防抖）
+  let debounceTimer: ReturnType<typeof setTimeout> | null = null
+  const handleInput = () => {
+    if (debounceTimer) {
+      clearTimeout(debounceTimer)
+    }
+    debounceTimer = setTimeout(() => {
+      if (!searchQuery.value.trim()) {
+        showResults.value = false
+        searchResults.value = []
+      }
+    }, 300)
+  }
 
-// 取消搜索，返回上一页
-const cancelSearch = () => {
-  uni.navigateBack();
-};
+  // 执行搜索
+  const handleSearch = async () => {
+    const keyword = searchQuery.value.trim()
+    if (!keyword) {
+      uni.showToast({
+        title: '请输入搜索关键词',
+        icon: 'none'
+      })
+      return
+    }
 
-// 跳转到物品详情页
-const goToDetail = (id: number) => {
-  uni.navigateTo({
-    url: `/pages/item/detail?id=${id}`
-  });
-};
+    // 保存搜索历史
+    saveSearchHistory(keyword)
+
+    // 重置分页
+    currentPage.value = 1
+    hasMore.value = true
+    searchResults.value = []
+    showResults.value = true
+
+    await fetchSearchResults()
+  }
+
+  // 获取搜索结果
+  const fetchSearchResults = async () => {
+    if (loading.value) return
+
+    loading.value = true
+    try {
+      const params: any = {
+        page: currentPage.value,
+        limit: pageSize.value
+      }
+    
+      // 添加关键词搜索
+      if (searchQuery.value.trim()) {
+        params.keyword = searchQuery.value.trim()
+      }
+    
+      // 添加分类筛选
+      if (currentCategory.value) {
+        params.category = currentCategory.value
+      }
+    
+      const res = await getItemList(params)
+    
+      const resItems = res.items || []
+
+      if (currentPage.value === 1) {
+        searchResults.value = resItems
+      } else {
+        searchResults.value = [...searchResults.value, ...resItems]
+      }
+
+      // 判断是否还有更多
+      hasMore.value = resItems.length === pageSize.value
+    } catch (error) {
+      console.error('搜索失败', error)
+      uni.showToast({
+        title: '搜索失败，请重试',
+        icon: 'none'
+      })
+    } finally {
+      loading.value = false
+      isRefreshing.value = false
+    }
+  }
+
+  // 加载更多
+  const loadMore = () => {
+    if (!hasMore.value || loading.value) return
+    currentPage.value++
+    fetchSearchResults()
+  }
+
+  // 下拉刷新
+  const onRefresh = () => {
+    isRefreshing.value = true
+    currentPage.value = 1
+    hasMore.value = true
+    fetchSearchResults()
+  }
+
+  // 清空搜索
+  const clearSearch = () => {
+    searchQuery.value = ''
+    showResults.value = false
+    searchResults.value = []
+  }
+
+  // 取消搜索，返回上一页
+  const cancelSearch = () => {
+    uni.navigateBack()
+  }
+
+  // 跳转到物品详情页
+  const goToDetail = (id: number) => {
+    uni.navigateTo({
+      url: `/pages/item/detail?id=${id}`
+    })
+  }
 </script>
 
 <style scoped>

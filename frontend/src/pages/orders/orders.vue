@@ -110,289 +110,289 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
-import { onShow } from '@dcloudio/uni-app'
-import { getOrderList, getOrderStats, type Order, approveOrder, rejectOrder, confirmPickup, completeOrder, cancelOrder } from '@/api/orders'
-import { useAuthStore } from '@/stores/auth'
-import { isLoggedIn } from '@/utils/auth'
+  import { ref, onMounted, computed } from 'vue'
+  import { onShow } from '@dcloudio/uni-app'
+  import { getOrderList, getOrderStats, type Order, approveOrder, rejectOrder, confirmPickup, completeOrder, cancelOrder } from '@/api/orders'
+  import { useAuthStore } from '@/stores/auth'
+  import { isLoggedIn } from '@/utils/auth'
 
-const authStore = useAuthStore()
+  const authStore = useAuthStore()
 
-// 从authStore获取当前用户ID
-const currentUserId = computed(() => {
-  return authStore.userInfo?.id || 0
-})
+  // 从authStore获取当前用户ID
+  const currentUserId = computed(() => {
+    return authStore.userInfo?.id || 0
+  })
 
-// 角色切换：borrower = 我借入的, lender = 我借出的
-const currentRole = ref<'borrower' | 'lender'>('borrower')
+  // 角色切换：borrower = 我借入的, lender = 我借出的
+  const currentRole = ref<'borrower' | 'lender'>('borrower')
 
-const tabs = [
-  { label: '全部', value: 'all', count: 0 },
-  { label: '待处理', value: 'pending', count: 0 },
-  { label: '进行中', value: 'in_progress', count: 0 },
-  { label: '已完成', value: 'completed', count: 0 }
-]
-const currentTab = ref('all')
+  const tabs = [
+    { label: '全部', value: 'all', count: 0 },
+    { label: '待处理', value: 'pending', count: 0 },
+    { label: '进行中', value: 'in_progress', count: 0 },
+    { label: '已完成', value: 'completed', count: 0 }
+  ]
+  const currentTab = ref('all')
 
-const orders = ref<Order[]>([])
-const loading = ref(false)
-const refreshing = ref(false)
-const hasMore = ref(true)
-const page = ref(1)
-const limit = 10
+  const orders = ref<Order[]>([])
+  const loading = ref(false)
+  const refreshing = ref(false)
+  const hasMore = ref(true)
+  const page = ref(1)
+  const limit = 10
 
-onMounted(() => {
-  if (!isLoggedIn()) {
-    uni.reLaunch({
-      url: '/pages/login/login'
-    })
-    return
-  }
-  loadOrderStats()
-  loadOrders()
-})
-
-onShow(() => {
-  if (!isLoggedIn()) {
-    uni.reLaunch({
-      url: '/pages/login/login'
-    })
-    return
-  }
-  const savedRole = uni.getStorageSync('orderRole')
-  if (savedRole && (savedRole === 'lender' || savedRole === 'borrower')) {
-    if (currentRole.value !== savedRole) {
-      currentRole.value = savedRole
-      page.value = 1
-      orders.value = []
-      hasMore.value = true
-      loadOrders()
+  onMounted(() => {
+    if (!isLoggedIn()) {
+      uni.reLaunch({
+        url: '/pages/login/login'
+      })
+      return
     }
-    uni.removeStorageSync('orderRole')
-  }
-})
+    loadOrderStats()
+    loadOrders()
+  })
 
-// 加载订单统计
-const loadOrderStats = async () => {
-  try {
-    const stats = await getOrderStats()
-    tabs[0].count = 0
-    tabs[1].count = stats.pendingCount || 0
-    tabs[2].count = stats.inProgressCount || 0
-    tabs[3].count = stats.completedCount || 0
-  } catch (error) {
-    console.error('获取订单统计失败:', error)
-  }
-}
-
-// 加载订单列表
-const loadOrders = async () => {
-  if (loading.value) return
-  
-  loading.value = true
-  
-  try {
-    const params: { page: number; limit: number; status?: string; role?: 'lender' | 'borrower' } = {
-      page: page.value,
-      limit: limit,
-      role: currentRole.value
+  onShow(() => {
+    if (!isLoggedIn()) {
+      uni.reLaunch({
+        url: '/pages/login/login'
+      })
+      return
     }
-    
-    // 根据当前标签添加状态筛选
-    if (currentTab.value !== 'all') {
-      if (currentTab.value === 'pending') {
-        params.status = 'pending'
-      } else if (currentTab.value === 'in_progress') {
-        params.status = 'in_progress'
-      } else if (currentTab.value === 'completed') {
-        params.status = 'completed'
+    const savedRole = uni.getStorageSync('orderRole')
+    if (savedRole && (savedRole === 'lender' || savedRole === 'borrower')) {
+      if (currentRole.value !== savedRole) {
+        currentRole.value = savedRole
+        page.value = 1
+        orders.value = []
+        hasMore.value = true
+        loadOrders()
       }
+      uni.removeStorageSync('orderRole')
     }
-    
-    const res = await getOrderList(params)
-    
-    if (page.value === 1) {
-      orders.value = res.orders || []
-    } else {
-      orders.value = [...orders.value, ...(res.orders || [])]
-    }
-    
-    // 判断是否还有更多数据
-    hasMore.value = res.orders?.length === limit && page.value < (res.pagination?.totalPages || 1)
-  } catch (error) {
-    console.error('获取订单列表失败:', error)
-    uni.showToast({ title: '获取订单失败', icon: 'none' })
-  } finally {
-    loading.value = false
-  }
-}
+  })
 
-// 切换角色
-const selectRole = (role: 'borrower' | 'lender') => {
-  currentRole.value = role
-  page.value = 1
-  orders.value = []
-  hasMore.value = true
-  loadOrders()
-}
-
-// 切换标签
-const selectTab = (tab: string) => {
-  currentTab.value = tab
-  page.value = 1
-  orders.value = []
-  hasMore.value = true
-  loadOrders()
-}
-
-// 获取状态文本
-const getStatusText = (status: string) => {
-  const statusMap: Record<string, string> = {
-    pending: '待处理',
-    approved: '已同意',
-    rejected: '已拒绝',
-    in_progress: '进行中',
-    completed: '已完成',
-    cancelled: '已取消'
-  }
-  return statusMap[status] || status
-}
-
-// 格式化时间
-const formatTime = (time: string) => {
-  if (!time) return ''
-  const date = new Date(time)
-  return `${date.getMonth() + 1}月${date.getDate()}日`
-}
-
-// 获取对方用户信息
-const getOtherUser = (order: Order) => {
-  if (!currentUserId.value) return order.lender
-  return order.lenderId === currentUserId.value ? order.borrower : order.lender
-}
-
-// 是否显示主要操作按钮
-const showPrimaryAction = (order: Order) => {
-  const actions = ['pending', 'approved', 'in_progress']
-  return actions.includes(order.status)
-}
-
-// 获取主要操作按钮文本
-const getPrimaryActionText = (order: Order) => {
-  const isLender = order.lenderId === currentUserId.value
-  const actionMap: Record<string, string> = {
-    pending: isLender ? '同意' : '取消',
-    approved: isLender ? '等待取货' : '确认取货',
-    in_progress: isLender ? '等待归还' : '确认归还'
-  }
-  return actionMap[order.status] || '处理'
-}
-
-// 处理主要操作
-const handlePrimaryAction = async (order: Order) => {
-  const isLender = order.lenderId === currentUserId.value
-  
-  try {
-    if (order.status === 'pending') {
-      if (isLender) {
-        // 同意订单
-        await approveOrder(order.id)
-        uni.showToast({ title: '已同意订单', icon: 'success' })
-      } else {
-        // 取消订单
-        await cancelOrder(order.id)
-        uni.showToast({ title: '已取消订单', icon: 'success' })
-      }
-    } else if (order.status === 'approved') {
-      if (!isLender) {
-        // 确认取货
-        await confirmPickup(order.id)
-        uni.showToast({ title: '已确认取货', icon: 'success' })
-      }
-    } else if (order.status === 'in_progress') {
-      if (isLender) {
-        // 出借方等待归还
-        uni.showToast({ title: '等待借入方归还', icon: 'none' })
-        return
-      } else {
-        // 确认归还
-        await completeOrder(order.id)
-        uni.showToast({ title: '已确认归还', icon: 'success' })
-      }
-    }
-    // 刷新订单列表
-    onRefresh()
-  } catch (error: any) {
-    uni.showToast({ title: error?.message || '操作失败', icon: 'none' })
-  }
-}
-
-// 是否显示次要操作按钮
-const showSecondaryAction = (order: Order) => {
-  return order.status === 'pending' || order.status === 'approved' || order.status === 'in_progress'
-}
-
-// 获取次要操作按钮文本
-const getSecondaryActionText = (order: Order) => {
-  const isLender = order.lenderId === currentUserId.value
-  if (order.status === 'pending' && isLender) {
-    return '拒绝'
-  }
-  return '联系对方'
-}
-
-// 处理次要操作
-const handleSecondaryAction = async (order: Order) => {
-  const isLender = order.lenderId === currentUserId.value
-  
-  if (order.status === 'pending' && isLender) {
-    // 拒绝订单
+  // 加载订单统计
+  const loadOrderStats = async () => {
     try {
-      await rejectOrder(order.id)
-      uni.showToast({ title: '已拒绝订单', icon: 'success' })
+      const stats = await getOrderStats()
+      tabs[0].count = 0
+      tabs[1].count = stats.pendingCount || 0
+      tabs[2].count = stats.inProgressCount || 0
+      tabs[3].count = stats.completedCount || 0
+    } catch (error) {
+      console.error('获取订单统计失败:', error)
+    }
+  }
+
+  // 加载订单列表
+  const loadOrders = async () => {
+    if (loading.value) return
+  
+    loading.value = true
+  
+    try {
+      const params: { page: number; limit: number; status?: string; role?: 'lender' | 'borrower' } = {
+        page: page.value,
+        limit: limit,
+        role: currentRole.value
+      }
+    
+      // 根据当前标签添加状态筛选
+      if (currentTab.value !== 'all') {
+        if (currentTab.value === 'pending') {
+          params.status = 'pending'
+        } else if (currentTab.value === 'in_progress') {
+          params.status = 'in_progress'
+        } else if (currentTab.value === 'completed') {
+          params.status = 'completed'
+        }
+      }
+    
+      const res = await getOrderList(params)
+    
+      if (page.value === 1) {
+        orders.value = res.orders || []
+      } else {
+        orders.value = [...orders.value, ...(res.orders || [])]
+      }
+    
+      // 判断是否还有更多数据
+      hasMore.value = res.orders?.length === limit && page.value < (res.pagination?.totalPages || 1)
+    } catch (error) {
+      console.error('获取订单列表失败:', error)
+      uni.showToast({ title: '获取订单失败', icon: 'none' })
+    } finally {
+      loading.value = false
+    }
+  }
+
+  // 切换角色
+  const selectRole = (role: 'borrower' | 'lender') => {
+    currentRole.value = role
+    page.value = 1
+    orders.value = []
+    hasMore.value = true
+    loadOrders()
+  }
+
+  // 切换标签
+  const selectTab = (tab: string) => {
+    currentTab.value = tab
+    page.value = 1
+    orders.value = []
+    hasMore.value = true
+    loadOrders()
+  }
+
+  // 获取状态文本
+  const getStatusText = (status: string) => {
+    const statusMap: Record<string, string> = {
+      pending: '待处理',
+      approved: '已同意',
+      rejected: '已拒绝',
+      in_progress: '进行中',
+      completed: '已完成',
+      cancelled: '已取消'
+    }
+    return statusMap[status] || status
+  }
+
+  // 格式化时间
+  const formatTime = (time: string) => {
+    if (!time) return ''
+    const date = new Date(time)
+    return `${date.getMonth() + 1}月${date.getDate()}日`
+  }
+
+  // 获取对方用户信息
+  const getOtherUser = (order: Order) => {
+    if (!currentUserId.value) return order.lender
+    return order.lenderId === currentUserId.value ? order.borrower : order.lender
+  }
+
+  // 是否显示主要操作按钮
+  const showPrimaryAction = (order: Order) => {
+    const actions = ['pending', 'approved', 'in_progress']
+    return actions.includes(order.status)
+  }
+
+  // 获取主要操作按钮文本
+  const getPrimaryActionText = (order: Order) => {
+    const isLender = order.lenderId === currentUserId.value
+    const actionMap: Record<string, string> = {
+      pending: isLender ? '同意' : '取消',
+      approved: isLender ? '等待取货' : '确认取货',
+      in_progress: isLender ? '等待归还' : '确认归还'
+    }
+    return actionMap[order.status] || '处理'
+  }
+
+  // 处理主要操作
+  const handlePrimaryAction = async (order: Order) => {
+    const isLender = order.lenderId === currentUserId.value
+  
+    try {
+      if (order.status === 'pending') {
+        if (isLender) {
+          // 同意订单
+          await approveOrder(order.id)
+          uni.showToast({ title: '已同意订单', icon: 'success' })
+        } else {
+          // 取消订单
+          await cancelOrder(order.id)
+          uni.showToast({ title: '已取消订单', icon: 'success' })
+        }
+      } else if (order.status === 'approved') {
+        if (!isLender) {
+          // 确认取货
+          await confirmPickup(order.id)
+          uni.showToast({ title: '已确认取货', icon: 'success' })
+        }
+      } else if (order.status === 'in_progress') {
+        if (isLender) {
+          // 出借方等待归还
+          uni.showToast({ title: '等待借入方归还', icon: 'none' })
+          return
+        } else {
+          // 确认归还
+          await completeOrder(order.id)
+          uni.showToast({ title: '已确认归还', icon: 'success' })
+        }
+      }
+      // 刷新订单列表
       onRefresh()
     } catch (error: any) {
       uni.showToast({ title: error?.message || '操作失败', icon: 'none' })
     }
-  } else {
-    // 联系对方
-    const otherUser = getOtherUser(order)
-    if (otherUser?.id) {
-      uni.navigateTo({
-        url: `/pages/chat/chat?userId=${otherUser.id}`
-      })
+  }
+
+  // 是否显示次要操作按钮
+  const showSecondaryAction = (order: Order) => {
+    return order.status === 'pending' || order.status === 'approved' || order.status === 'in_progress'
+  }
+
+  // 获取次要操作按钮文本
+  const getSecondaryActionText = (order: Order) => {
+    const isLender = order.lenderId === currentUserId.value
+    if (order.status === 'pending' && isLender) {
+      return '拒绝'
+    }
+    return '联系对方'
+  }
+
+  // 处理次要操作
+  const handleSecondaryAction = async (order: Order) => {
+    const isLender = order.lenderId === currentUserId.value
+  
+    if (order.status === 'pending' && isLender) {
+      // 拒绝订单
+      try {
+        await rejectOrder(order.id)
+        uni.showToast({ title: '已拒绝订单', icon: 'success' })
+        onRefresh()
+      } catch (error: any) {
+        uni.showToast({ title: error?.message || '操作失败', icon: 'none' })
+      }
     } else {
-      uni.showToast({ title: '无法联系对方', icon: 'none' })
+      // 联系对方
+      const otherUser = getOtherUser(order)
+      if (otherUser?.id) {
+        uni.navigateTo({
+          url: `/pages/chat/chat?userId=${otherUser.id}`
+        })
+      } else {
+        uni.showToast({ title: '无法联系对方', icon: 'none' })
+      }
     }
   }
-}
 
-// 加载更多
-const loadMore = () => {
-  if (!hasMore.value || loading.value) return
+  // 加载更多
+  const loadMore = () => {
+    if (!hasMore.value || loading.value) return
   
-  page.value++
-  loadOrders()
-}
+    page.value++
+    loadOrders()
+  }
 
-// 下拉刷新
-const onRefresh = async () => {
-  refreshing.value = true
-  page.value = 1
-  hasMore.value = true
+  // 下拉刷新
+  const onRefresh = async () => {
+    refreshing.value = true
+    page.value = 1
+    hasMore.value = true
   
-  await loadOrderStats()
-  await loadOrders()
+    await loadOrderStats()
+    await loadOrders()
   
-  refreshing.value = false
-}
+    refreshing.value = false
+  }
 
-// 跳转到订单详情
-const goToDetail = (id: number) => {
-  uni.navigateTo({
-    url: `/pages/order-detail/order-detail?id=${id}`
-  })
-}
+  // 跳转到订单详情
+  const goToDetail = (id: number) => {
+    uni.navigateTo({
+      url: `/pages/order-detail/order-detail?id=${id}`
+    })
+  }
 </script>
 
 <style lang="scss">

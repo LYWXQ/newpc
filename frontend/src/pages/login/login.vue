@@ -31,7 +31,7 @@
           v-model="account" 
           :placeholder="loginTab === 'user' ? '请输入学号或用户名' : '请输入用户名'"
           maxlength="50"
-        />
+        >
       </view>
 
       <view class="form-item">
@@ -41,10 +41,13 @@
           v-model="password" 
           placeholder="请输入密码"
           maxlength="20"
-        />
+        >
       </view>
 
-      <button class="login-btn" @click="handleLogin" :loading="loading" :disabled="loading">
+      <button class="login-btn"
+              @click="handleLogin"
+              :loading="loading"
+              :disabled="loading">
         登录
       </button>
 
@@ -64,104 +67,104 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
-import { login, type UserInfo } from '@/api/auth'
-import { useAuthStore } from '@/stores/auth'
+  import { ref } from 'vue'
+  import { login, type UserInfo } from '@/api/auth'
+  import { useAuthStore } from '@/stores/auth'
 
-const authStore = useAuthStore()
-const loginTab = ref<'user' | 'admin'>('user')
-const account = ref('')
-const password = ref('')
-const loading = ref(false)
+  const authStore = useAuthStore()
+  const loginTab = ref<'user' | 'admin'>('user')
+  const account = ref('')
+  const password = ref('')
+  const loading = ref(false)
 
-const handleLogin = async () => {
-  if (!account.value.trim()) {
-    uni.showToast({ 
-      title: loginTab.value === 'user' ? '请输入学号或用户名' : '请输入用户名', 
-      icon: 'none' 
-    })
-    return
-  }
-  if (!password.value.trim()) {
-    uni.showToast({ title: '请输入密码', icon: 'none' })
-    return
-  }
-
-  loading.value = true
-  
-  try {
-    console.log('登录请求参数:', { account: account.value, password: password.value })
-    
-    const res = await login({
-      account: account.value,
-      password: password.value
-    })
-    
-    console.log('登录响应:', res)
-    
-    const user = res.user as UserInfo
-    
-    // 根据选择的tab验证用户角色
-    if (loginTab.value === 'user') {
-      // 普通用户tab：只能登录普通用户
-      if (user.role !== 'user') {
-        uni.showToast({ 
-          title: '该账号不是普通用户，请在管理员tab登录', 
-          icon: 'none',
-          duration: 2000
-        })
-        return
-      }
-    } else {
-      // 管理员tab：只能登录管理员或超级用户
-      if (user.role !== 'admin' && user.role !== 'root') {
-        uni.showToast({ 
-          title: '该账号不是管理员，请在普通用户tab登录', 
-          icon: 'none',
-          duration: 2000
-        })
-        return
-      }
+  const handleLogin = async () => {
+    if (!account.value.trim()) {
+      uni.showToast({ 
+        title: loginTab.value === 'user' ? '请输入学号或用户名' : '请输入用户名', 
+        icon: 'none' 
+      })
+      return
     }
+    if (!password.value.trim()) {
+      uni.showToast({ title: '请输入密码', icon: 'none' })
+      return
+    }
+
+    loading.value = true
+  
+    try {
+      console.log('登录请求参数:', { account: account.value, password: password.value })
     
-    authStore.login(res.token, res.user)
+      const res = await login({
+        account: account.value,
+        password: password.value
+      })
     
-    uni.showToast({ title: '登录成功', icon: 'success' })
+      console.log('登录响应:', res)
     
-    setTimeout(() => {
-      if (user.role === 'admin' || user.role === 'root') {
-        uni.navigateTo({ url: '/pages/admin/admin' })
+      const user = res.user as UserInfo
+    
+      // 根据选择的tab验证用户角色
+      if (loginTab.value === 'user') {
+        // 普通用户tab：只能登录普通用户
+        if (user.role !== 'user') {
+          uni.showToast({ 
+            title: '该账号不是普通用户，请在管理员tab登录', 
+            icon: 'none',
+            duration: 2000
+          })
+          return
+        }
       } else {
-        uni.switchTab({ url: '/pages/index/index' })
+        // 管理员tab：只能登录管理员或超级用户
+        if (user.role !== 'admin' && user.role !== 'root') {
+          uni.showToast({ 
+            title: '该账号不是管理员，请在普通用户tab登录', 
+            icon: 'none',
+            duration: 2000
+          })
+          return
+        }
       }
-    }, 1500)
-  } catch (error: any) {
-    console.error('登录失败:', error)
-    uni.showToast({ 
-      title: error.message || '登录失败，请检查账号和密码', 
-      icon: 'none',
-      duration: 2000
-    })
-  } finally {
-    loading.value = false
+    
+      authStore.login(res.token, res.user)
+    
+      uni.showToast({ title: '登录成功', icon: 'success' })
+    
+      setTimeout(() => {
+        if (user.role === 'admin' || user.role === 'root') {
+          uni.navigateTo({ url: '/pages/admin/admin' })
+        } else {
+          uni.switchTab({ url: '/pages/index/index' })
+        }
+      }, 1500)
+    } catch (error: any) {
+      console.error('登录失败:', error)
+      uni.showToast({ 
+        title: error.message || '登录失败，请检查账号和密码', 
+        icon: 'none',
+        duration: 2000
+      })
+    } finally {
+      loading.value = false
+    }
   }
-}
 
-const goToRegister = () => {
-  uni.navigateTo({ url: '/pages/register/register' })
-}
+  const goToRegister = () => {
+    uni.navigateTo({ url: '/pages/register/register' })
+  }
 
-const goToForgot = () => {
-  uni.showToast({ title: '功能开发中', icon: 'none' })
-}
+  const goToForgot = () => {
+    uni.showToast({ title: '功能开发中', icon: 'none' })
+  }
 
-const showAgreement = () => {
-  uni.showToast({ title: '用户协议', icon: 'none' })
-}
+  const showAgreement = () => {
+    uni.showToast({ title: '用户协议', icon: 'none' })
+  }
 
-const showPrivacy = () => {
-  uni.showToast({ title: '隐私政策', icon: 'none' })
-}
+  const showPrivacy = () => {
+    uni.showToast({ title: '隐私政策', icon: 'none' })
+  }
 </script>
 
 <style lang="scss">

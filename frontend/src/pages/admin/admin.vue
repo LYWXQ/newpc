@@ -64,7 +64,7 @@
             v-model="userSearch" 
             placeholder="搜索用户" 
             @confirm="loadUsers"
-          />
+          >
         </view>
         <view class="user-list" v-if="users.length > 0">
           <view class="user-item" v-for="user in users" :key="user.id">
@@ -128,7 +128,7 @@
             v-model="itemSearch" 
             placeholder="搜索物品" 
             @confirm="loadItems"
-          />
+          >
         </view>
         <view class="item-list" v-if="items.length > 0">
           <view class="item-row" v-for="item in items" :key="item.id">
@@ -226,11 +226,14 @@
         <view class="modal-body">
           <view class="form-item">
             <text class="label">用户名</text>
-            <input class="input" v-model="newAdmin.username" placeholder="请输入用户名" />
+            <input class="input" v-model="newAdmin.username" placeholder="请输入用户名" >
           </view>
           <view class="form-item">
             <text class="label">密码</text>
-            <input class="input" type="password" v-model="newAdmin.password" placeholder="请输入密码" />
+            <input class="input"
+                   type="password"
+                   v-model="newAdmin.password"
+                   placeholder="请输入密码" >
           </view>
         </view>
         <view class="modal-footer">
@@ -245,191 +248,191 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
-import { onLoad } from '@dcloudio/uni-app'
-import { request, get, post, put } from '@/utils/request'
+  import { ref, computed, onMounted } from 'vue'
+  import { onLoad } from '@dcloudio/uni-app'
+  import { request, get, post, put } from '@/utils/request'
 
-const currentTab = ref('dashboard')
-const showCreateModal = ref(false)
-const creating = ref(false)
+  const currentTab = ref('dashboard')
+  const showCreateModal = ref(false)
+  const creating = ref(false)
 
-const userInfo = ref<any>(null)
-const stats = ref<any>({})
-const recentOrders = ref<any[]>([])
-const users = ref<any[]>([])
-const admins = ref<any[]>([])
-const items = ref<any[]>([])
-const orders = ref<any[]>([])
-const userSearch = ref('')
-const itemSearch = ref('')
-const orderStatusFilter = ref('')
+  const userInfo = ref<any>(null)
+  const stats = ref<any>({})
+  const recentOrders = ref<any[]>([])
+  const users = ref<any[]>([])
+  const admins = ref<any[]>([])
+  const items = ref<any[]>([])
+  const orders = ref<any[]>([])
+  const userSearch = ref('')
+  const itemSearch = ref('')
+  const orderStatusFilter = ref('')
 
-const newAdmin = ref({
-  username: '',
-  password: ''
-})
+  const newAdmin = ref({
+    username: '',
+    password: ''
+  })
 
-const statusOptions = ['active', 'inactive', 'banned']
-const orderStatusOptions = ['全部', 'pending', 'approved', 'rejected', 'in_progress', 'completed', 'cancelled']
-const orderStatusIndex = ref(0)
+  const statusOptions = ['active', 'inactive', 'banned']
+  const orderStatusOptions = ['全部', 'pending', 'approved', 'rejected', 'in_progress', 'completed', 'cancelled']
+  const orderStatusIndex = ref(0)
 
-const statusText: Record<string, string> = {
-  active: '正常',
-  inactive: '停用',
-  banned: '禁用',
-  pending: '待处理',
-  approved: '已同意',
-  rejected: '已拒绝',
-  in_progress: '进行中',
-  completed: '已完成',
-  cancelled: '已取消'
-}
-
-const itemStatusText: Record<string, string> = {
-  available: '可租',
-  rented: '已租',
-  offline: '下架'
-}
-
-const roleText = computed(() => {
-  if (!userInfo.value) return ''
-  return userInfo.value.role === 'root' ? '超级用户' : userInfo.value.role === 'admin' ? '管理员' : '用户'
-})
-
-const getImageUrl = (url?: string) => {
-  if (!url) return '/static/logo.png'
-  if (url.startsWith('http')) return url
-  return `http://localhost:3000${url}`
-}
-
-const formatTime = (timeStr: string) => {
-  if (!timeStr) return ''
-  const date = new Date(timeStr)
-  return `${date.getMonth() + 1}/${date.getDate()} ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`
-}
-
-const statusIndex = (status: string) => {
-  return statusOptions.indexOf(status)
-}
-
-const loadDashboard = async () => {
-  try {
-    const res = await get('/admin/dashboard')
-    stats.value = res.stats || {}
-    recentOrders.value = res.recentOrders || []
-  } catch (error) {
-    console.error('加载仪表板失败:', error)
-  }
-}
-
-const loadUsers = async () => {
-  try {
-    const res = await get('/admin/users', { keyword: userSearch.value || undefined })
-    users.value = res.users || []
-  } catch (error) {
-    console.error('加载用户列表失败:', error)
-  }
-}
-
-const loadAdmins = async () => {
-  try {
-    const res = await get('/admin/admins')
-    admins.value = res.admins || []
-  } catch (error) {
-    console.error('加载管理员列表失败:', error)
-  }
-}
-
-const loadItems = async () => {
-  try {
-    const res = await get('/admin/items', { keyword: itemSearch.value || undefined })
-    items.value = res.items || []
-  } catch (error) {
-    console.error('加载物品列表失败:', error)
-  }
-}
-
-const loadOrders = async () => {
-  try {
-    const status = orderStatusIndex.value > 0 ? orderStatusOptions[orderStatusIndex.value] : undefined
-    const res = await get('/admin/orders', { status })
-    orders.value = res.orders || []
-  } catch (error) {
-    console.error('加载订单列表失败:', error)
-  }
-}
-
-const switchTab = (tab: string) => {
-  currentTab.value = tab
-  if (tab === 'dashboard') loadDashboard()
-  else if (tab === 'users') loadUsers()
-  else if (tab === 'admins') loadAdmins()
-  else if (tab === 'items') loadItems()
-  else if (tab === 'orders') loadOrders()
-}
-
-const changeUserStatus = async (userId: number, e: any) => {
-  const newStatus = statusOptions[e.detail.value]
-  try {
-    await put(`/admin/users/${userId}/status`, { status: newStatus })
-    uni.showToast({ title: '状态更新成功', icon: 'success' })
-    loadUsers()
-  } catch (error) {
-    console.error('更新用户状态失败:', error)
-    uni.showToast({ title: '更新失败', icon: 'none' })
-  }
-}
-
-const changeOrderStatusFilter = (e: any) => {
-  orderStatusIndex.value = e.detail.value
-  loadOrders()
-}
-
-const createAdmin = async () => {
-  if (!newAdmin.value.username || !newAdmin.value.password) {
-    uni.showToast({ title: '用户名和密码不能为空', icon: 'none' })
-    return
+  const statusText: Record<string, string> = {
+    active: '正常',
+    inactive: '停用',
+    banned: '禁用',
+    pending: '待处理',
+    approved: '已同意',
+    rejected: '已拒绝',
+    in_progress: '进行中',
+    completed: '已完成',
+    cancelled: '已取消'
   }
 
-  creating.value = true
-  try {
-    await post('/admin/users', newAdmin.value)
-    uni.showToast({ title: '创建成功', icon: 'success' })
-    showCreateModal.value = false
-    newAdmin.value = { username: '', password: '' }
-    loadAdmins()
-  } catch (error: any) {
-    console.error('创建管理员失败:', error)
-    uni.showToast({ title: error.message || '创建失败', icon: 'none' })
-  } finally {
-    creating.value = false
+  const itemStatusText: Record<string, string> = {
+    available: '可租',
+    rented: '已租',
+    offline: '下架'
   }
-}
 
-const handleLogout = () => {
-  uni.showModal({
-    title: '确认退出',
-    content: '确定要退出登录吗？',
-    success: (res) => {
-      if (res.confirm) {
-        uni.removeStorageSync('token')
-        uni.removeStorageSync('userInfo')
-        uni.redirectTo({ url: '/pages/login/login' })
+  const roleText = computed(() => {
+    if (!userInfo.value) return ''
+    return userInfo.value.role === 'root' ? '超级用户' : userInfo.value.role === 'admin' ? '管理员' : '用户'
+  })
+
+  const getImageUrl = (url?: string) => {
+    if (!url) return '/static/logo.png'
+    if (url.startsWith('http')) return url
+    return `http://localhost:3000${url}`
+  }
+
+  const formatTime = (timeStr: string) => {
+    if (!timeStr) return ''
+    const date = new Date(timeStr)
+    return `${date.getMonth() + 1}/${date.getDate()} ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`
+  }
+
+  const statusIndex = (status: string) => {
+    return statusOptions.indexOf(status)
+  }
+
+  const loadDashboard = async () => {
+    try {
+      const res = await get('/admin/dashboard')
+      stats.value = res.stats || {}
+      recentOrders.value = res.recentOrders || []
+    } catch (error) {
+      console.error('加载仪表板失败:', error)
+    }
+  }
+
+  const loadUsers = async () => {
+    try {
+      const res = await get('/admin/users', { keyword: userSearch.value || undefined })
+      users.value = res.users || []
+    } catch (error) {
+      console.error('加载用户列表失败:', error)
+    }
+  }
+
+  const loadAdmins = async () => {
+    try {
+      const res = await get('/admin/admins')
+      admins.value = res.admins || []
+    } catch (error) {
+      console.error('加载管理员列表失败:', error)
+    }
+  }
+
+  const loadItems = async () => {
+    try {
+      const res = await get('/admin/items', { keyword: itemSearch.value || undefined })
+      items.value = res.items || []
+    } catch (error) {
+      console.error('加载物品列表失败:', error)
+    }
+  }
+
+  const loadOrders = async () => {
+    try {
+      const status = orderStatusIndex.value > 0 ? orderStatusOptions[orderStatusIndex.value] : undefined
+      const res = await get('/admin/orders', { status })
+      orders.value = res.orders || []
+    } catch (error) {
+      console.error('加载订单列表失败:', error)
+    }
+  }
+
+  const switchTab = (tab: string) => {
+    currentTab.value = tab
+    if (tab === 'dashboard') loadDashboard()
+    else if (tab === 'users') loadUsers()
+    else if (tab === 'admins') loadAdmins()
+    else if (tab === 'items') loadItems()
+    else if (tab === 'orders') loadOrders()
+  }
+
+  const changeUserStatus = async (userId: number, e: any) => {
+    const newStatus = statusOptions[e.detail.value]
+    try {
+      await put(`/admin/users/${userId}/status`, { status: newStatus })
+      uni.showToast({ title: '状态更新成功', icon: 'success' })
+      loadUsers()
+    } catch (error) {
+      console.error('更新用户状态失败:', error)
+      uni.showToast({ title: '更新失败', icon: 'none' })
+    }
+  }
+
+  const changeOrderStatusFilter = (e: any) => {
+    orderStatusIndex.value = e.detail.value
+    loadOrders()
+  }
+
+  const createAdmin = async () => {
+    if (!newAdmin.value.username || !newAdmin.value.password) {
+      uni.showToast({ title: '用户名和密码不能为空', icon: 'none' })
+      return
+    }
+
+    creating.value = true
+    try {
+      await post('/admin/users', newAdmin.value)
+      uni.showToast({ title: '创建成功', icon: 'success' })
+      showCreateModal.value = false
+      newAdmin.value = { username: '', password: '' }
+      loadAdmins()
+    } catch (error: any) {
+      console.error('创建管理员失败:', error)
+      uni.showToast({ title: error.message || '创建失败', icon: 'none' })
+    } finally {
+      creating.value = false
+    }
+  }
+
+  const handleLogout = () => {
+    uni.showModal({
+      title: '确认退出',
+      content: '确定要退出登录吗？',
+      success: (res) => {
+        if (res.confirm) {
+          uni.removeStorageSync('token')
+          uni.removeStorageSync('userInfo')
+          uni.redirectTo({ url: '/pages/login/login' })
+        }
       }
+    })
+  }
+
+  onLoad(() => {
+    const savedUser = uni.getStorageSync('userInfo')
+    if (savedUser) {
+      userInfo.value = savedUser
     }
   })
-}
 
-onLoad(() => {
-  const savedUser = uni.getStorageSync('userInfo')
-  if (savedUser) {
-    userInfo.value = savedUser
-  }
-})
-
-onMounted(() => {
-  loadDashboard()
-})
+  onMounted(() => {
+    loadDashboard()
+  })
 </script>
 
 <style lang="scss">
