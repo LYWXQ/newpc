@@ -32,7 +32,8 @@ const User = sequelize.define('User', {
   phone: {
     type: DataTypes.STRING(20),
     allowNull: true,
-    comment: '手机号'
+    unique: true,
+    comment: '手机号（普通用户必填，可用于登录）'
   },
   qq: {
     type: DataTypes.STRING(20),

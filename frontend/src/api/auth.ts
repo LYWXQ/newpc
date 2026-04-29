@@ -1,7 +1,7 @@
 /**
  * 用户认证相关 API
  */
-import { get, post } from '@/utils/request'
+import { get, post, upload } from '@/utils/request'
 
 // 用户信息接口
 export interface UserInfo {
@@ -25,6 +25,7 @@ export interface UserInfo {
 export interface LoginParams {
   account: string
   password: string
+  loginType: 'user' | 'admin'
 }
 
 // 注册参数
@@ -32,7 +33,7 @@ export interface RegisterParams {
   studentId: string
   username: string
   password: string
-  phone?: string
+  phone: string
   email?: string
   school?: string
   major?: string
@@ -75,29 +76,7 @@ export const updateUserInfo = (data: Partial<UserInfo>): Promise<UserInfo> => {
 /**
  * 上传头像
  */
-export const uploadAvatar = (filePath: string): Promise<{ url: string }> => {
-  return new Promise((resolve, reject) => {
-    const token = uni.getStorageSync('token')
-    uni.uploadFile({
-      url: 'http://localhost:3000/api/users/avatar',
-      filePath,
-      name: 'avatar',
-      header: {
-        'Authorization': `Bearer ${token}`
-      },
-      success: (res) => {
-        if (res.statusCode === 200) {
-          try {
-            const data = JSON.parse(res.data)
-            resolve(data)
-          } catch {
-            reject(new Error('解析响应失败'))
-          }
-        } else {
-          reject(new Error('上传失败'))
-        }
-      },
-      fail: reject
-    })
-  })
+export const uploadAvatar = async (filePath: string): Promise<{ url: string }> => {
+  const uploadResult = await upload<{ url: string }>('/upload/avatar', filePath, undefined, 'avatar')
+  return post<{ url: string }>('/users/avatar', { avatar: uploadResult.url })
 }

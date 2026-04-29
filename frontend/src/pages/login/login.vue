@@ -25,11 +25,11 @@
 
     <view class="login-form">
       <view class="form-item">
-        <text class="label">{{ loginTab === 'user' ? '学号/用户名' : '用户名' }}</text>
-        <input 
-          type="text" 
-          v-model="account" 
-          :placeholder="loginTab === 'user' ? '请输入学号或用户名' : '请输入用户名'"
+        <text class="label">{{ loginTab === 'user' ? '学号/手机号' : '用户名' }}</text>
+        <input
+          type="text"
+          v-model="account"
+          :placeholder="loginTab === 'user' ? '请输入学号或手机号' : '请输入用户名'"
           maxlength="50"
         >
       </view>
@@ -79,9 +79,9 @@
 
   const handleLogin = async () => {
     if (!account.value.trim()) {
-      uni.showToast({ 
-        title: loginTab.value === 'user' ? '请输入学号或用户名' : '请输入用户名', 
-        icon: 'none' 
+      uni.showToast({
+        title: loginTab.value === 'user' ? '请输入学号或手机号' : '请输入用户名',
+        icon: 'none'
       })
       return
     }
@@ -97,7 +97,8 @@
     
       const res = await login({
         account: account.value,
-        password: password.value
+        password: password.value,
+        loginType: loginTab.value
       })
     
       console.log('登录响应:', res)
@@ -117,9 +118,9 @@
         }
       } else {
         // 管理员tab：只能登录管理员或超级用户
-        if (user.role !== 'admin' && user.role !== 'root') {
-          uni.showToast({ 
-            title: '该账号不是管理员，请在普通用户tab登录', 
+        if (user.role !== 'admin' && user.role !== 'root' && user.role !== 'superadmin') {
+          uni.showToast({
+            title: '该账号不是管理员，请在普通用户tab登录',
             icon: 'none',
             duration: 2000
           })
@@ -132,7 +133,7 @@
       uni.showToast({ title: '登录成功', icon: 'success' })
     
       setTimeout(() => {
-        if (user.role === 'admin' || user.role === 'root') {
+        if (user.role === 'admin' || user.role === 'root' || user.role === 'superadmin') {
           uni.navigateTo({ url: '/pages/admin/admin' })
         } else {
           uni.switchTab({ url: '/pages/index/index' })

@@ -70,25 +70,39 @@ const register = async (req, res) => {
   }
 };
 
-// 用户登录（支持学号和用户名登录）
+// 用户登录（普通用户支持学号和手机号，管理员支持用户名登录）
 const login = async (req, res) => {
   try {
-    const { account, password } = req.body;
-    console.log('登录请求 - account:', account, 'account type:', typeof account);
+    const { account, password, loginType = 'user' } = req.body;
+    console.log('登录请求 - account:', account, 'loginType:', loginType, 'account type:', typeof account);
 
     if (!account || !password) {
       return res.status(400).json({ message: '账号和密码不能为空' });
     }
 
-    // 使用Op.or同时查询用户名和学号
-    let user = await User.findOne({
-      where: {
-        [Op.or]: [
-          { username: account },
-          { studentId: account }
-        ]
-      }
-    });
+    let user = null;
+
+    if (loginType === 'admin') {
+      user = await User.findOne({
+        where: {
+          username: account,
+          role: {
+            [Op.in]: ['admin', 'root', 'superadmin']
+          }
+        }
+      });
+    } else {
+      user = await User.findOne({
+        where: {
+          role: 'user',
+          [Op.or]: [
+            { studentId: account },
+            { phone: account }
+          ]
+        }
+      });
+    }
+
     console.log('查询结果:', user ? (user.username + ' / ' + user.studentId) : '未找到');
 
     if (!user) {

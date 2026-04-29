@@ -124,7 +124,7 @@ router.get('/:id', async (req, res) => {
       include: [{
         model: User,
         as: 'user',
-        attributes: ['id', 'username', 'avatar', 'creditScore', 'isVerified']
+        attributes: ['id', 'username', 'avatar', 'creditScore', 'isVerified', 'phone', 'qq']
       }]
     });
     
