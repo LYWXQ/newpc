@@ -55,8 +55,9 @@ const startServer = async () => {
     }
     
     // 同步数据库模型（使用 alter: true 来更新表结构，保持现有数据）
-    await sequelize.sync({ alter: true });
-    console.log('Database models synchronized with alter: true.');
+    // 使用 alter: { drop: false } 避免删除字段导致问题
+    await sequelize.sync({ alter: { drop: false } });
+    console.log('Database models synchronized with alter: { drop: false }.');
     
     app.listen(PORT, () => {
       console.log(`Server is running on port ${PORT}`);

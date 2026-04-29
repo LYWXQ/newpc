@@ -66,6 +66,30 @@
             </view>
           </view>
         </view>
+        <!-- 联系方式 -->
+        <view v-if="!isOwnItem" class="contact-info">
+          <view class="contact-header">
+            <text class="contact-title">联系方式</text>
+            <text class="contact-tip">点击可复制</text>
+          </view>
+          <view class="contact-list">
+            <view v-if="item.user.phone" class="contact-item" @click="copyContact(item.user.phone)">
+              <text class="contact-icon">📞</text>
+              <text class="contact-label">手机号</text>
+              <text class="contact-value">{{ item.user.phone }}</text>
+              <text class="copy-icon">📋</text>
+            </view>
+            <view v-if="item.user.qq" class="contact-item" @click="copyContact(item.user.qq)">
+              <text class="contact-icon">💬</text>
+              <text class="contact-label">QQ号</text>
+              <text class="contact-value">{{ item.user.qq }}</text>
+              <text class="copy-icon">📋</text>
+            </view>
+            <view v-if="!item.user.phone && !item.user.qq" class="contact-empty">
+              <text class="empty-text">暂无联系方式</text>
+            </view>
+          </view>
+        </view>
       </view>
 
       <!-- 物品描述 -->
@@ -155,7 +179,13 @@
         >
           {{ isFavorite ? '取消收藏' : '收藏' }}
         </button>
-        <button class="chat-button" @click="contactOwner">联系发布者</button>
+        <button 
+          class="chat-button" 
+          :class="{ 'disabled': !canBorrow }"
+          @click="contactOwner"
+        >
+          {{ canBorrow ? '发起交易' : '暂不可借' }}
+        </button>
       </view>
     </view>
 
@@ -196,6 +226,22 @@
           <view class="form-item" v-if="orderForm.startDate && orderForm.endDate">
             <text class="form-label">借用时长</text>
             <text class="form-value duration">{{ calculateDuration }}</text>
+          </view>
+          <view class="form-item">
+            <text class="form-label">取货地点</text>
+            <input 
+              class="form-input" 
+              v-model="orderForm.pickupLocation" 
+              placeholder="请输入取货地点"
+            />
+          </view>
+          <view class="form-item">
+            <text class="form-label">还货地点</text>
+            <input 
+              class="form-input" 
+              v-model="orderForm.returnLocation" 
+              placeholder="请输入还货地点"
+            />
           </view>
           <view class="form-item">
             <text class="form-label">备注信息</text>
@@ -272,6 +318,8 @@
   const orderForm = ref({
     startDate: '',
     endDate: '',
+    pickupLocation: '',
+    returnLocation: '',
     note: ''
   })
 
@@ -513,14 +561,28 @@
     }
   }
 
-  // 联系发布者
+  // 复制联系方式
+  const copyContact = (value: string) => {
+    uni.setClipboardData({
+      data: value,
+      success: () => {
+        uni.showToast({ title: '复制成功', icon: 'success' })
+      },
+      fail: () => {
+        uni.showToast({ title: '复制失败', icon: 'none' })
+      }
+    })
+  }
+
+  // 联系发布者（跳转到交易流程）
   const contactOwner = () => {
-    if (!item.value?.user) {
-      uni.showToast({ title: '发布者信息不可用', icon: 'none' })
+    if (!canBorrow.value) {
+      uni.showToast({ title: '该物品当前不可借用', icon: 'none' })
       return
     }
     if (!checkLogin()) return
-    uni.navigateTo({ url: `/pages/chat/chat?itemId=${itemId.value}&userId=${item.value.user.id}` })
+    // 打开借用弹窗，进入交易流程
+    openBorrowDialog()
   }
 
   // 打开借用弹窗
@@ -659,11 +721,13 @@
         itemId: itemId.value,
         startDate: orderForm.value.startDate,
         endDate: orderForm.value.endDate,
+        pickupLocation: orderForm.value.pickupLocation || undefined,
+        returnLocation: orderForm.value.returnLocation || undefined,
         note: orderForm.value.note || undefined
       }
       await createOrder(params)
       uni.hideLoading()
-      uni.showToast({ title: '借用申请已提交', icon: 'success' })
+      uni.showToast({ title: '交易请求已提交', icon: 'success' })
       closeBorrowDialog()
       setTimeout(() => {
         uni.switchTab({ url: '/pages/orders/orders' })
@@ -888,6 +952,68 @@
   font-weight: bold;
 }
 
+/* 联系方式 */
+.contact-info {
+  margin-top: 20rpx;
+  padding-top: 20rpx;
+  border-top: 2rpx dashed #e5e5e5;
+}
+
+.contact-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16rpx;
+}
+
+.contact-title {
+  font-size: 26rpx;
+  font-weight: bold;
+  color: #333333;
+}
+
+.contact-tip {
+  font-size: 22rpx;
+  color: #999999;
+}
+
+.contact-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12rpx;
+}
+
+.contact-item {
+  display: flex;
+  align-items: center;
+  padding: 16rpx 20rpx;
+  background-color: #f8f9fa;
+  border-radius: 12rpx;
+}
+
+.contact-icon {
+  font-size: 32rpx;
+  margin-right: 12rpx;
+}
+
+.contact-label {
+  font-size: 24rpx;
+  color: #666666;
+  width: 80rpx;
+}
+
+.contact-value {
+  flex: 1;
+  font-size: 26rpx;
+  color: #333333;
+  font-weight: 500;
+}
+
+.copy-icon {
+  font-size: 28rpx;
+  opacity: 0.6;
+}
+
 /* 物品描述 */
 .item-description {
   background-color: #ffffff;
@@ -976,6 +1102,11 @@
   color: #ffffff;
   font-size: 28rpx;
   border: none;
+}
+
+.chat-button.disabled {
+  background: linear-gradient(135deg, #cccccc 0%, #999999 100%);
+  pointer-events: none;
 }
 
 /* 物品评价 */
@@ -1191,6 +1322,18 @@
   width: 100%;
   height: 160rpx;
   padding: 20rpx 24rpx;
+  background-color: #f5f5f5;
+  border-radius: 12rpx;
+  border: 2rpx solid #e5e5e5;
+  font-size: 28rpx;
+  color: #333333;
+  box-sizing: border-box;
+}
+
+.form-input {
+  width: 100%;
+  height: 80rpx;
+  padding: 0 24rpx;
   background-color: #f5f5f5;
   border-radius: 12rpx;
   border: 2rpx solid #e5e5e5;

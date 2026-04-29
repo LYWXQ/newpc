@@ -58,6 +58,16 @@ const Order = sequelize.define('Order', {
     allowNull: true,
     comment: '备注'
   },
+  pickupLocation: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+    comment: '取货地点'
+  },
+  returnLocation: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+    comment: '还货地点'
+  },
   status: {
     type: DataTypes.ENUM('pending', 'confirmed', 'using', 'returned', 'completed', 'cancelled'),
     defaultValue: 'pending',

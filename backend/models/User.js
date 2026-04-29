@@ -34,6 +34,11 @@ const User = sequelize.define('User', {
     allowNull: true,
     comment: '手机号'
   },
+  qq: {
+    type: DataTypes.STRING(20),
+    allowNull: true,
+    comment: 'QQ号码'
+  },
   email: {
     type: DataTypes.STRING(100),
     allowNull: true,

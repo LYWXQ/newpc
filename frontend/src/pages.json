@@ -68,12 +68,7 @@
         "navigationBarTitleText": "消息中心"
       }
     },
-    {
-      "path": "pages/chat/chat",
-      "style": {
-        "navigationBarTitleText": "聊天"
-      }
-    },
+
     {
       "path": "pages/search/search",
       "style": {
@@ -110,13 +105,17 @@
     "navigationBarTextStyle": "black",
     "navigationBarTitleText": "校园闲置共享",
     "navigationBarBackgroundColor": "#ffffff",
-    "backgroundColor": "#f5f5f5"
+    "backgroundColor": "#f5f5f5",
+    "safeArea": {
+      "bottom": "always"
+    }
   },
   "tabBar": {
     "color": "#999999",
     "selectedColor": "#007aff",
     "backgroundColor": "#ffffff",
     "borderStyle": "black",
+    "safeAreaInsetBottom": true,
     "midButton": {
       "width": "80rpx",
       "height": "80rpx",

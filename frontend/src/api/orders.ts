@@ -4,8 +4,8 @@
 import { get, post, put } from '@/utils/request'
 import type { PaginationData } from './types'
 
-// 订单状态
-type OrderStatus = 'pending' | 'approved' | 'rejected' | 'in_progress' | 'completed' | 'cancelled'
+// 订单状态（与后端保持一致）
+type OrderStatus = 'pending' | 'confirmed' | 'using' | 'returned' | 'completed' | 'cancelled'
 
 // 订单信息接口
 export interface Order {
@@ -20,6 +20,10 @@ export interface Order {
   deposit: number
   note?: string
   cancelReason?: string
+  pickupLocation?: string
+  returnLocation?: string
+  pickupCode?: string
+  pendingConfirmation?: boolean
   createdAt: string
   updatedAt: string
   item?: ItemInfo
@@ -49,6 +53,8 @@ export interface CreateOrderParams {
   itemId: number
   startDate: string
   endDate: string
+  pickupLocation?: string
+  returnLocation?: string
   note?: string
 }
 
@@ -101,10 +107,24 @@ export const rejectOrder = (id: number, reason?: string): Promise<{ message: str
 }
 
 /**
- * 确认取货
+ * 确认取货（输入取件码）
  */
-export const confirmPickup = (id: number): Promise<{ message: string; order: Order }> => {
-  return put(`/orders/${id}/pickup`)
+export const confirmPickup = (id: number, pickupCode: string): Promise<{ message: string; order: Order }> => {
+  return put(`/orders/${id}/pickup`, { pickupCode })
+}
+
+/**
+ * 确认修改（买方确认卖方的修改）
+ */
+export const confirmChanges = (id: number): Promise<{ message: string; order: Order }> => {
+  return put(`/orders/${id}/confirm-changes`)
+}
+
+/**
+ * 确认归还
+ */
+export const returnOrder = (id: number): Promise<{ message: string; order: Order }> => {
+  return put(`/orders/${id}/return`)
 }
 
 /**

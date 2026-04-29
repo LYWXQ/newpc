@@ -1,22 +1,7 @@
 <template>
   <view class="container">
     <view class="message-header">
-      <view class="message-tabs">
-        <view 
-          class="tab" 
-          :class="{ active: currentType === 'system' }"
-          @click="switchType('system')"
-        >
-          系统通知
-        </view>
-        <view 
-          class="tab" 
-          :class="{ active: currentType === 'chat' }"
-          @click="switchType('chat')"
-        >
-          聊天消息
-        </view>
-      </view>
+      <text class="page-title">系统通知</text>
       <view class="mark-all-read" @click="handleMarkAllAsRead">
         <text class="mark-all-text">全部已读</text>
       </view>
@@ -30,83 +15,38 @@
       @refresherrefresh="onRefresh"
       @scrolltolower="onLoadMore"
     >
-      <view v-if="displayList.length === 0 && !isLoading" class="empty-state">
-        <text class="empty-text">暂无消息</text>
+      <view v-if="systemMessageList.length === 0 && !isLoading" class="empty-state">
+        <text class="empty-text">暂无系统通知</text>
       </view>
       
       <!-- 系统消息列表 -->
-      <template v-if="currentType === 'system'">
-        <view 
-          v-for="message in systemMessageList" 
-          :key="message.id"
-          class="message-item"
-          :class="{ unread: !message.isRead }"
-          @click="handleSystemMessageClick(message)"
-          @longpress="handleLongPress(message)"
-        >
-          <view class="message-icon system">
-            <text class="icon">📢</text>
-          </view>
-          <view class="message-content">
-            <text class="message-title">系统通知</text>
-            <text class="message-text">{{ message.content }}</text>
-            <text class="message-time">{{ formatTime(message.createdAt) }}</text>
-          </view>
-          <view v-if="!message.isRead" class="message-badge"/>
-          <view class="delete-btn" @click.stop="handleDelete(message)">
-            <text class="delete-icon">🗑️</text>
-          </view>
+      <view 
+        v-for="message in systemMessageList" 
+        :key="message.id"
+        class="message-item"
+        :class="{ unread: !message.isRead }"
+        @click="handleSystemMessageClick(message)"
+        @longpress="handleLongPress(message)"
+      >
+        <view class="message-icon system">
+          <text class="icon">📢</text>
         </view>
-      </template>
-      
-      <!-- 聊天会话列表 -->
-      <template v-if="currentType === 'chat'">
-        <view 
-          v-for="conversation in chatConversationList" 
-          :key="conversation.id"
-          class="chat-item"
-          :class="{ unread: conversation.unreadCount > 0 }"
-          @click="handleChatClick(conversation)"
-        >
-          <!-- 物品封面图 -->
-          <view class="item-cover">
-            <image 
-              v-if="conversation.item?.images" 
-              :src="getImageUrl(conversation.item.images)" 
-              mode="aspectFill"
-              class="cover-image"
-            />
-            <view v-else class="cover-placeholder">
-              <text class="placeholder-icon">📦</text>
-            </view>
-          </view>
-          
-          <view class="chat-content">
-            <!-- 物品名称和发布者 -->
-            <view class="chat-header">
-              <text class="item-title">{{ conversation.item?.title || '未知物品' }}</text>
-              <text class="chat-time">{{ formatTime(conversation.lastMessageTime) }}</text>
-            </view>
-            
-            <!-- 发布者用户名 -->
-            <text class="publisher-name">{{ conversation.otherUser?.username || '未知用户' }}</text>
-            
-            <!-- 最新消息 -->
-            <view class="chat-footer">
-              <text class="last-message">{{ conversation.lastMessage }}</text>
-              <view v-if="conversation.unreadCount > 0" class="unread-count">
-                <text class="unread-text">{{ conversation.unreadCount > 99 ? '99+' : conversation.unreadCount }}</text>
-              </view>
-            </view>
-          </view>
+        <view class="message-content">
+          <text class="message-title">系统通知</text>
+          <text class="message-text">{{ message.content }}</text>
+          <text class="message-time">{{ formatTime(message.createdAt) }}</text>
         </view>
-      </template>
+        <view v-if="!message.isRead" class="message-badge"/>
+        <view class="delete-btn" @click.stop="handleDelete(message)">
+          <text class="delete-icon">🗑️</text>
+        </view>
+      </view>
       
-      <view v-if="isLoading && displayList.length > 0" class="loading-more">
+      <view v-if="isLoading && systemMessageList.length > 0" class="loading-more">
         <text>加载中...</text>
       </view>
       
-      <view v-if="!hasMore && displayList.length > 0" class="no-more">
+      <view v-if="!hasMore && systemMessageList.length > 0" class="no-more">
         <text>没有更多了</text>
       </view>
     </scroll-view>
@@ -114,18 +54,12 @@
 </template>
 
 <script setup lang="ts">
-  import { ref, onMounted, computed } from 'vue'
+  import { ref, onMounted } from 'vue'
   import { onShow } from '@dcloudio/uni-app'
-  import { getMessageList, markAsRead, markAllAsRead, deleteMessage, type Message, type ChatConversation } from '@/api/messages'
-  import { getImageUrl as getImgUrl } from '@/utils/image'
-
-  // 当前选中的消息类型
-  const currentType = ref<'system' | 'chat'>('system')
+  import { getMessageList, markAsRead, markAllAsRead, deleteMessage, type Message } from '@/api/messages'
 
   // 系统消息列表
   const systemMessageList = ref<Message[]>([])
-  // 聊天会话列表
-  const chatConversationList = ref<ChatConversation[]>([])
 
   // 分页参数
   const page = ref(1)
@@ -134,16 +68,6 @@
   const isLoading = ref(false)
   const isRefreshing = ref(false)
 
-  // 计算当前显示列表（用于空状态判断）
-  const displayList = computed(() => {
-    return currentType.value === 'system' ? systemMessageList.value : chatConversationList.value
-  })
-
-  // 获取图片URL
-  const getImageUrl = (imagePath: string) => {
-    return getImgUrl(imagePath)
-  }
-
   // 获取消息列表
   const fetchMessageList = async (isRefresh = false) => {
     if (isLoading.value) return
@@ -151,33 +75,22 @@
     isLoading.value = true
   
     try {
-      const params: { page: number; limit: number; type: 'system' | 'chat' } = {
+      const params: { page: number; limit: number; type: 'system' } = {
         page: isRefresh ? 1 : page.value,
         limit: limit.value,
-        type: currentType.value
+        type: 'system'
       }
     
       const res = await getMessageList(params)
       const resData = res.messages || []
     
-      if (currentType.value === 'system') {
-        // 系统消息
-        if (isRefresh) {
-          systemMessageList.value = resData as Message[]
-          page.value = 2
-        } else {
-          systemMessageList.value = [...systemMessageList.value, ...(resData as Message[])]
-          page.value++
-        }
+      // 系统消息
+      if (isRefresh) {
+        systemMessageList.value = resData as Message[]
+        page.value = 2
       } else {
-        // 聊天会话
-        if (isRefresh) {
-          chatConversationList.value = resData as ChatConversation[]
-          page.value = 2
-        } else {
-          chatConversationList.value = [...chatConversationList.value, ...(resData as ChatConversation[])]
-          page.value++
-        }
+        systemMessageList.value = [...systemMessageList.value, ...(resData as Message[])]
+        page.value++
       }
     
       // 判断是否还有更多数据
@@ -191,15 +104,6 @@
       isLoading.value = false
       isRefreshing.value = false
     }
-  }
-
-  // 切换消息类型
-  const switchType = (type: 'system' | 'chat') => {
-    if (currentType.value === type) return
-    currentType.value = type
-    page.value = 1
-    hasMore.value = true
-    fetchMessageList(true)
   }
 
   // 下拉刷新
@@ -259,20 +163,9 @@
     // 系统通知，如果有相关订单则跳转到订单详情
     if (message.relatedId && message.relatedType === 'order') {
       uni.navigateTo({
-        url: `/pages/order/detail?id=${message.relatedId}`
+        url: `/pages/order-detail/order-detail?id=${message.relatedId}`
       })
     }
-  }
-
-  // 点击聊天会话
-  const handleChatClick = (conversation: ChatConversation) => {
-    // 跳转到对应物品的聊天页面，携带 itemId 和 userId 参数
-    const itemId = conversation.itemId
-    const userId = conversation.otherUserId
-  
-    uni.navigateTo({
-      url: `/pages/chat/chat?itemId=${itemId}&userId=${userId}`
-    })
   }
 
   // 标记全部已读
@@ -280,15 +173,9 @@
     try {
       await markAllAsRead()
       // 更新本地状态
-      if (currentType.value === 'system') {
-        systemMessageList.value.forEach(msg => {
-          msg.isRead = true
-        })
-      } else {
-        chatConversationList.value.forEach(conv => {
-          conv.unreadCount = 0
-        })
-      }
+      systemMessageList.value.forEach(msg => {
+        msg.isRead = true
+      })
       uni.showToast({
         title: '已全部标记为已读',
         icon: 'success'
@@ -301,7 +188,7 @@
     }
   }
 
-  // 长按消息（仅系统消息支持删除）
+  // 长按消息
   const handleLongPress = (message: Message) => {
     uni.showActionSheet({
       itemList: ['删除消息'],
@@ -378,45 +265,24 @@
 .message-header {
   background-color: #ffffff;
   border-bottom: 2rpx solid #f0f0f0;
-}
-
-.message-tabs {
-  display: flex;
-}
-
-.tab {
-  flex: 1;
-  text-align: center;
   padding: 24rpx;
-  font-size: 28rpx;
-  color: #666666;
-  position: relative;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
-.tab.active {
-  color: #007aff;
+.page-title {
+  font-size: 32rpx;
   font-weight: bold;
-}
-
-.tab.active::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 25%;
-  width: 50%;
-  height: 4rpx;
-  background-color: #007aff;
+  color: #333333;
 }
 
 .mark-all-read {
-  display: flex;
-  justify-content: flex-end;
-  padding: 16rpx 24rpx;
-  border-top: 2rpx solid #f5f5f5;
+  padding: 12rpx 24rpx;
 }
 
 .mark-all-text {
-  font-size: 24rpx;
+  font-size: 26rpx;
   color: #007aff;
 }
 
@@ -518,122 +384,6 @@
 .delete-icon {
   font-size: 32rpx;
   opacity: 0.6;
-}
-
-/* 聊天会话样式 */
-.chat-item {
-  display: flex;
-  align-items: center;
-  background-color: #ffffff;
-  border-radius: 12rpx;
-  padding: 24rpx;
-  margin-bottom: 16rpx;
-  position: relative;
-}
-
-.chat-item.unread {
-  background-color: #f0f7ff;
-}
-
-.item-cover {
-  width: 120rpx;
-  height: 120rpx;
-  border-radius: 12rpx;
-  overflow: hidden;
-  margin-right: 20rpx;
-  flex-shrink: 0;
-  background-color: #f5f5f5;
-}
-
-.cover-image {
-  width: 100%;
-  height: 100%;
-}
-
-.cover-placeholder {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.placeholder-icon {
-  font-size: 48rpx;
-}
-
-.chat-content {
-  flex: 1;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  height: 120rpx;
-}
-
-.chat-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.item-title {
-  font-size: 30rpx;
-  font-weight: bold;
-  color: #333333;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  flex: 1;
-  margin-right: 16rpx;
-}
-
-.chat-time {
-  font-size: 22rpx;
-  color: #999999;
-  flex-shrink: 0;
-}
-
-.publisher-name {
-  font-size: 26rpx;
-  color: #666666;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.chat-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.last-message {
-  font-size: 26rpx;
-  color: #999999;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  flex: 1;
-  margin-right: 16rpx;
-}
-
-.unread-count {
-  min-width: 36rpx;
-  height: 36rpx;
-  background-color: #ff4d4f;
-  border-radius: 18rpx;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0 10rpx;
-  flex-shrink: 0;
-}
-
-.unread-text {
-  font-size: 22rpx;
-  color: #ffffff;
-  font-weight: bold;
 }
 
 .loading-more,

@@ -70,14 +70,24 @@
           <button class="reject-button" @click="handleReject">拒绝</button>
         </template>
 
-        <!-- approved 状态：借用方显示确认取货按钮 -->
-        <template v-if="order.status === 'approved' && isBorrower">
+        <!-- confirmed 状态：借用方显示确认取货按钮（输入取件码） -->
+        <template v-if="order.status === 'confirmed' && !order.pendingConfirmation && isBorrower">
           <button class="confirm-button" @click="handleConfirmPickup">确认取货</button>
         </template>
 
-        <!-- in_progress 状态：双方都可操作完成订单 -->
-        <template v-if="order.status === 'in_progress'">
-          <button class="complete-button" @click="handleComplete">完成订单</button>
+        <!-- confirmed 状态且有待确认修改：借用方显示确认修改按钮 -->
+        <template v-if="order.status === 'confirmed' && order.pendingConfirmation && isBorrower">
+          <button class="confirm-button" @click="handleConfirmChanges">确认修改</button>
+        </template>
+
+        <!-- using 状态：显示确认归还按钮 -->
+        <template v-if="order.status === 'using'">
+          <button class="return-button" @click="handleReturn">确认归还</button>
+        </template>
+
+        <!-- returned 状态：出借方显示确认完成按钮 -->
+        <template v-if="order.status === 'returned' && isLender">
+          <button class="complete-button" @click="handleComplete">确认完成</button>
         </template>
 
         <!-- completed 状态：显示评价按钮 -->
@@ -85,10 +95,7 @@
           <button class="review-button" @click="goToReview">评价订单</button>
         </template>
 
-        <!-- 联系对方按钮 -->
-        <button class="chat-button" @click="handleChat">联系对方</button>
-
-        <!-- 取消订单按钮（pending、approved 状态可取消） -->
+        <!-- 取消订单按钮（pending、confirmed 状态可取消） -->
         <button
           class="cancel-button"
           v-if="canCancel"
@@ -142,6 +149,8 @@
     approveOrder,
     rejectOrder,
     confirmPickup,
+    confirmChanges,
+    returnOrder,
     completeOrder,
     cancelOrder,
     type Order
@@ -156,12 +165,12 @@
   const authStore = useAuthStore()
   const currentUserId = computed(() => authStore.userInfo?.id || 0)
 
-  // 状态文本映射
+  // 状态文本映射（与后端保持一致）
   const statusMap: Record<string, string> = {
     pending: '待处理',
-    approved: '已同意',
-    rejected: '已拒绝',
-    in_progress: '进行中',
+    confirmed: '已确认',
+    using: '使用中',
+    returned: '已归还',
     completed: '已完成',
     cancelled: '已取消'
   }
@@ -183,8 +192,8 @@
   // 判断是否可以取消订单
   const canCancel = computed(() => {
     if (!order.value) return false
-    // pending 和 approved 状态可以取消
-    const cancellableStatuses = ['pending', 'approved']
+    // pending 和 confirmed 状态可以取消
+    const cancellableStatuses = ['pending', 'confirmed']
     return cancellableStatuses.includes(order.value.status)
   })
 
@@ -288,19 +297,75 @@
     })
   }
 
-  // 确认取货
-  const handleConfirmPickup = async () => {
-    try {
-      uni.showLoading({ title: '处理中...' })
-      await confirmPickup(orderId.value)
-      uni.hideLoading()
-      uni.showToast({ title: '已确认取货', icon: 'success' })
-      loadOrderDetail()
-    } catch (error) {
-      uni.hideLoading()
-      uni.showToast({ title: '操作失败', icon: 'none' })
-      console.error('确认取货失败:', error)
-    }
+  // 确认取货（输入取件码）
+  const handleConfirmPickup = () => {
+    uni.showModal({
+      title: '确认取货',
+      content: '请输入取件码',
+      editable: true,
+      placeholderText: '请输入6位取件码',
+      success: async (res) => {
+        if (res.confirm && res.content) {
+          try {
+            uni.showLoading({ title: '处理中...' })
+            await confirmPickup(orderId.value, res.content)
+            uni.hideLoading()
+            uni.showToast({ title: '取件成功', icon: 'success' })
+            loadOrderDetail()
+          } catch (error) {
+            uni.hideLoading()
+            uni.showToast({ title: '取件失败，请检查取件码', icon: 'none' })
+            console.error('确认取货失败:', error)
+          }
+        }
+      }
+    })
+  }
+
+  // 确认修改（卖方修改后的确认）
+  const handleConfirmChanges = async () => {
+    uni.showModal({
+      title: '确认修改',
+      content: '确认接受卖方修改的时间和地点吗？',
+      success: async (res) => {
+        if (res.confirm) {
+          try {
+            uni.showLoading({ title: '处理中...' })
+            await confirmChanges(orderId.value)
+            uni.hideLoading()
+            uni.showToast({ title: '已确认修改', icon: 'success' })
+            loadOrderDetail()
+          } catch (error) {
+            uni.hideLoading()
+            uni.showToast({ title: '操作失败', icon: 'none' })
+            console.error('确认修改失败:', error)
+          }
+        }
+      }
+    })
+  }
+
+  // 确认归还
+  const handleReturn = async () => {
+    uni.showModal({
+      title: '确认归还',
+      content: '确认物品已归还吗？',
+      success: async (res) => {
+        if (res.confirm) {
+          try {
+            uni.showLoading({ title: '处理中...' })
+            await returnOrder(orderId.value)
+            uni.hideLoading()
+            uni.showToast({ title: '已确认归还', icon: 'success' })
+            loadOrderDetail()
+          } catch (error) {
+            uni.hideLoading()
+            uni.showToast({ title: '操作失败', icon: 'none' })
+            console.error('确认归还失败:', error)
+          }
+        }
+      }
+    })
   }
 
   // 完成订单
@@ -348,17 +413,6 @@
           }
         }
       }
-    })
-  }
-
-  // 联系对方
-  const handleChat = () => {
-    if (!order.value) return
-    const targetUserId = isLender.value ? order.value.borrowerId : order.value.lenderId
-    const targetUser = isLender.value ? order.value.borrower : order.value.lender
-
-    uni.navigateTo({
-      url: `/pages/chat/chat?userId=${targetUserId}&username=${encodeURIComponent(targetUser?.username || '')}`
     })
   }
 

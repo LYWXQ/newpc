@@ -1,6 +1,6 @@
 <template>
   <view class="admin-container">
-    <view class="admin-header">
+    <view class="admin-header" :style="{ paddingTop: statusBarHeight + 'px' }">
       <view class="user-info">
         <image class="avatar" :src="userInfo?.avatar || '/static/logo.png'" mode="aspectFill" />
         <view class="info">
@@ -251,12 +251,16 @@
   import { ref, computed, onMounted } from 'vue'
   import { onLoad } from '@dcloudio/uni-app'
   import { request, get, post, put } from '@/utils/request'
+  import { useDeviceInfo } from '@/utils/device'
 
   const currentTab = ref('dashboard')
   const showCreateModal = ref(false)
   const creating = ref(false)
 
   const userInfo = ref<any>(null)
+  
+  // 获取设备信息
+  const { statusBarHeight } = useDeviceInfo()
   const stats = ref<any>({})
   const recentOrders = ref<any[]>([])
   const users = ref<any[]>([])

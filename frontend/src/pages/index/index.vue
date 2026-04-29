@@ -1,5 +1,12 @@
 <template>
   <view class="container">
+    <!-- 自定义导航栏 -->
+    <view class="custom-navbar" :style="{ paddingTop: statusBarHeight + 'px' }">
+      <view class="navbar-content">
+        <text class="navbar-title">校园闲置共享</text>
+      </view>
+    </view>
+
     <!-- 搜索栏 -->
     <view class="search-bar">
       <view class="search-input">
@@ -185,6 +192,9 @@
   import { onLoad, onShow, onPullDownRefresh } from '@dcloudio/uni-app'
   import { getItemList, getCategories, type Item } from '@/api/items'
   import { isLoggedIn } from '@/utils/auth'
+  import { useDeviceInfo } from '@/utils/device'
+
+  const { statusBarHeight } = useDeviceInfo()
 
   const searchKeyword = ref('')
   const isSearching = ref(false)
@@ -407,13 +417,39 @@
 </script>
 
 <style lang="scss">
+@import '@/uni.scss';
+
 .container {
   min-height: 100vh;
-  background-color: #f5f5f5;
+  background-color: $bg-color;
+  padding-top: calc(var(--status-bar-height) + 88rpx);
+}
+
+/* 自定义导航栏 */
+.custom-navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  background: $primary-gradient;
+  
+  .navbar-content {
+    height: 88rpx;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .navbar-title {
+    font-size: $font-lg;
+    font-weight: bold;
+    color: #fff;
+  }
 }
 
 .search-bar {
-  padding: 20rpx;
+  padding: $spacing-md;
   background-color: #fff;
   display: flex;
   align-items: center;
@@ -423,50 +459,50 @@
   flex: 1;
   display: flex;
   align-items: center;
-  background-color: #f5f5f5;
-  border-radius: 32rpx;
-  padding: 16rpx 24rpx;
+  background-color: $bg-color;
+  border-radius: $radius-xl;
+  padding: $spacing-sm $spacing-lg;
 }
 
 .icon-search {
-  font-size: 28rpx;
-  margin-right: 12rpx;
-  color: #999;
+  font-size: $font-md;
+  margin-right: $spacing-sm;
+  color: $text-hint;
 }
 
 .icon-clear {
-  font-size: 32rpx;
-  color: #999;
-  padding: 4rpx;
-  margin-left: 8rpx;
+  font-size: $font-lg;
+  color: $text-hint;
+  padding: $spacing-xs;
+  margin-left: $spacing-xs;
 }
 
 .search-input input {
   flex: 1;
-  font-size: 28rpx;
-  color: #333;
+  font-size: $font-base;
+  color: $text-primary;
 }
 
 .cancel-btn {
-  margin-left: 20rpx;
-  font-size: 28rpx;
-  color: #007aff;
+  margin-left: $spacing-md;
+  font-size: $font-base;
+  color: $primary-color;
 }
 
 .loading-state {
   padding: 60rpx 0;
   text-align: center;
-  color: #999;
-  font-size: 28rpx;
+  color: $text-hint;
+  font-size: $font-base;
 }
 
 .search-results {
-  padding: 20rpx;
+  padding: $spacing-md;
 }
 
 .category-scroll {
   white-space: nowrap;
-  padding: 20rpx;
+  padding: $spacing-md;
   background-color: #fff;
   scrollbar-width: none;
 }
@@ -477,43 +513,43 @@
 
 .category-item {
   display: inline-block;
-  padding: 12rpx 24rpx;
-  margin-right: 16rpx;
-  background-color: #f5f5f5;
-  border-radius: 28rpx;
-  font-size: 26rpx;
-  color: #666;
+  padding: $spacing-sm $spacing-lg;
+  margin-right: $spacing-sm;
+  background-color: $bg-color;
+  border-radius: $radius-xl;
+  font-size: $font-sm;
+  color: $text-secondary;
 }
 
 .category-item.active {
-  background-color: #007aff;
+  background-color: $primary-color;
   color: #fff;
 }
 
 .transaction-filter {
-  padding: 20rpx;
+  padding: $spacing-md;
   background-color: #fff;
   display: flex;
-  gap: 16rpx;
+  gap: $spacing-sm;
 }
 
 .transaction-item {
-  padding: 12rpx 24rpx;
-  background-color: #f5f5f5;
-  border-radius: 28rpx;
-  font-size: 26rpx;
-  color: #666;
+  padding: $spacing-sm $spacing-lg;
+  background-color: $bg-color;
+  border-radius: $radius-xl;
+  font-size: $font-sm;
+  color: $text-secondary;
 }
 
 .transaction-item.active {
-  background-color: #007aff;
+  background-color: $primary-color;
   color: #fff;
 }
 
 .banner {
   height: 300rpx;
-  margin: 20rpx;
-  border-radius: 16rpx;
+  margin: $spacing-md;
+  border-radius: $radius-lg;
   overflow: hidden;
 }
 
@@ -523,40 +559,40 @@
 }
 
 .section {
-  margin: 20rpx;
+  margin: $spacing-md;
   background-color: #fff;
-  border-radius: 16rpx;
-  padding: 20rpx;
+  border-radius: $radius-lg;
+  padding: $spacing-md;
 }
 
 .section-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20rpx;
+  margin-bottom: $spacing-md;
 }
 
 .section-title {
-  font-size: 32rpx;
+  font-size: $font-lg;
   font-weight: bold;
-  color: #333;
+  color: $text-primary;
 }
 
 .section-more {
-  font-size: 26rpx;
-  color: #999;
+  font-size: $font-sm;
+  color: $text-hint;
 }
 
 .item-grid {
   display: flex;
   flex-wrap: wrap;
-  gap: 20rpx;
+  gap: $spacing-md;
 }
 
 .item-card {
   width: calc(50% - 10rpx);
   background-color: #fff;
-  border-radius: 12rpx;
+  border-radius: $radius-md;
   overflow: hidden;
   box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.1);
 }
@@ -567,38 +603,38 @@
 }
 
 .item-info {
-  padding: 16rpx;
+  padding: $spacing-sm;
 }
 
 .item-title {
-  font-size: 28rpx;
-  color: #333;
+  font-size: $font-base;
+  color: $text-primary;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
-  margin-bottom: 12rpx;
+  margin-bottom: $spacing-sm;
 }
 
 .item-meta {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 12rpx;
+  margin-bottom: $spacing-sm;
 }
 
 .item-price {
-  font-size: 32rpx;
+  font-size: $font-lg;
   color: #ff6b6b;
   font-weight: bold;
 }
 
 .item-credit {
-  font-size: 22rpx;
-  color: #52c41a;
+  font-size: $font-xs;
+  color: $success-color;
   background-color: #f6ffed;
   padding: 4rpx 8rpx;
-  border-radius: 4rpx;
+  border-radius: $radius-sm;
 }
 
 .item-user {
@@ -610,32 +646,32 @@
   width: 40rpx;
   height: 40rpx;
   border-radius: 50%;
-  margin-right: 8rpx;
+  margin-right: $spacing-xs;
 }
 
 .user-name {
-  font-size: 24rpx;
-  color: #666;
+  font-size: $font-sm;
+  color: $text-secondary;
 }
 
 .item-list {
   display: flex;
   flex-direction: column;
-  gap: 20rpx;
+  gap: $spacing-md;
 }
 
 .item-row {
   display: flex;
-  padding: 16rpx;
+  padding: $spacing-sm;
   background-color: #f9f9f9;
-  border-radius: 12rpx;
+  border-radius: $radius-md;
 }
 
 .item-thumb {
   width: 160rpx;
   height: 160rpx;
-  border-radius: 8rpx;
-  margin-right: 20rpx;
+  border-radius: $radius-sm;
+  margin-right: $spacing-md;
 }
 
 .item-detail {
@@ -646,14 +682,14 @@
 }
 
 .item-name {
-  font-size: 30rpx;
-  color: #333;
+  font-size: $font-md;
+  color: $text-primary;
   font-weight: 500;
 }
 
 .item-desc {
-  font-size: 24rpx;
-  color: #999;
+  font-size: $font-sm;
+  color: $text-hint;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
@@ -667,14 +703,14 @@
 }
 
 .item-rent {
-  font-size: 32rpx;
+  font-size: $font-lg;
   color: #ff6b6b;
   font-weight: bold;
 }
 
 .item-deposit {
-  font-size: 24rpx;
-  color: #999;
+  font-size: $font-sm;
+  color: $text-hint;
 }
 
 .empty-state {
@@ -683,7 +719,7 @@
 }
 
 .empty-text {
-  font-size: 28rpx;
-  color: #999;
+  font-size: $font-base;
+  color: $text-hint;
 }
 </style>
