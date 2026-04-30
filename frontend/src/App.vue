@@ -5,8 +5,6 @@ import { getCurrentUser } from '@/api/auth'
 import { initDeviceInfo } from '@/utils/device'
 
 onLaunch(async () => {
-  console.log('App Launch')
-  
   // 初始化设备信息
   await initDeviceInfo()
   
@@ -23,13 +21,9 @@ onLaunch(async () => {
   }
 })
 
-onShow(() => {
-  console.log('App Show')
-})
+onShow(() => {})
 
-onHide(() => {
-  console.log('App Hide')
-})
+onHide(() => {})
 </script>
 
 <style lang="scss">

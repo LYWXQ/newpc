@@ -9,17 +9,24 @@ const generateOrderNo = () => {
   return 'ORD' + Date.now() + Math.random().toString(36).substr(2, 5).toUpperCase();
 };
 
-// 生成取件码
-const generatePickupCode = () => {
+// 生成验证码
+const generateVerificationCode = () => {
   return Math.random().toString(36).substr(2, 6).toUpperCase();
 };
+
+const normalizePickupCode = (value) => String(value || '')
+  .trim()
+  .toUpperCase()
+  .replace(/[\s-]/g, '');
+
+const isValidPickupCode = (value) => /^[A-Z0-9]{6}$/.test(value);
 
 // 发送系统消息
 const sendSystemMessage = async (receiverId, content, relatedId, relatedType) => {
   try {
     const Message = require('../models').Message;
     await Message.create({
-      senderId: 0,
+      senderId: null,
       receiverId,
       content,
       type: 'system',
@@ -45,19 +52,112 @@ const updateCreditScore = async (userId, change) => {
   }
 };
 
+const parseDate = (value) => {
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date;
+};
+
+const isSameDateTime = (valueA, valueB) => {
+  if (!valueA || !valueB) return false;
+  return new Date(valueA).getTime() === new Date(valueB).getTime();
+};
+
+const getOrderInclude = () => ([
+  {
+    model: Item,
+    as: 'item',
+    include: [{
+      model: User,
+      as: 'user',
+      attributes: ['id', 'username', 'avatar', 'creditScore', 'isVerified', 'phone', 'qq']
+    }]
+  },
+  {
+    model: User,
+    as: 'lender',
+    attributes: ['id', 'username', 'avatar', 'creditScore', 'phone', 'qq']
+  },
+  {
+    model: User,
+    as: 'borrower',
+    attributes: ['id', 'username', 'avatar', 'creditScore', 'phone', 'qq']
+  }
+]);
+
+const loadOrderById = async (id) => {
+  return Order.findByPk(id, {
+    include: getOrderInclude()
+  });
+};
+
+const isRentOrder = (order) => order?.item?.transactionType === 'rent';
+const isSellOrder = (order) => order?.item?.transactionType === 'sell';
+const shouldRestoreItemAvailability = (order) => !isSellOrder(order);
+
+const buildVerificationCodes = (order) => {
+  const pickupCode = generateVerificationCode();
+  const returnCode = isRentOrder(order) ? generateVerificationCode() : null;
+
+  return {
+    pickupCode,
+    returnCode
+  };
+};
+
+const resetVerificationProgress = {
+  pickupCodeVerifiedAt: null,
+  pickupConfirmedByLenderAt: null,
+  returnCodeVerifiedAt: null,
+  returnConfirmedByLenderAt: null,
+  actualPickupTime: null,
+  actualReturnTime: null,
+  returnConfirmedTime: null,
+  isEarlyReturn: false
+};
+
+const restoreItemAvailability = async (itemId) => {
+  const item = await Item.findByPk(itemId);
+  if (item) {
+    await item.update({ status: 'available' });
+  }
+};
+
+const completeOrderAndSyncItem = async (order, completedAt = new Date()) => {
+  const updates = {
+    status: 'completed',
+    returnConfirmedTime: completedAt
+  };
+
+  if (!order.pickupConfirmedByLenderAt) {
+    updates.pickupConfirmedByLenderAt = completedAt;
+  }
+
+  if (!order.actualPickupTime) {
+    updates.actualPickupTime = completedAt;
+  }
+
+  await order.update(updates);
+
+  if (shouldRestoreItemAvailability(order)) {
+    await restoreItemAvailability(order.itemId);
+  } else {
+    await order.item.update({ status: 'offline' });
+  }
+};
+
 // 获取订单统计
 router.get('/stats', authenticateToken, async (req, res) => {
   try {
     const userId = req.user.id;
-    
+
     const totalAsLender = await Order.count({
       where: { lenderId: userId }
     });
-    
+
     const totalAsBorrower = await Order.count({
       where: { borrowerId: userId }
     });
-    
+
     const pendingCount = await Order.count({
       where: {
         [Op.or]: [
@@ -66,7 +166,7 @@ router.get('/stats', authenticateToken, async (req, res) => {
         ]
       }
     });
-    
+
     const confirmedCount = await Order.count({
       where: {
         [Op.or]: [
@@ -75,7 +175,7 @@ router.get('/stats', authenticateToken, async (req, res) => {
         ]
       }
     });
-    
+
     const usingCount = await Order.count({
       where: {
         [Op.or]: [
@@ -84,7 +184,16 @@ router.get('/stats', authenticateToken, async (req, res) => {
         ]
       }
     });
-    
+
+    const returnedCount = await Order.count({
+      where: {
+        [Op.or]: [
+          { lenderId: userId, status: 'returned' },
+          { borrowerId: userId, status: 'returned' }
+        ]
+      }
+    });
+
     const completedCount = await Order.count({
       where: {
         [Op.or]: [
@@ -93,13 +202,14 @@ router.get('/stats', authenticateToken, async (req, res) => {
         ]
       }
     });
-    
+
     res.json({
       totalAsLender,
       totalAsBorrower,
       pendingCount,
       confirmedCount,
       usingCount,
+      returnedCount,
       completedCount
     });
   } catch (error) {
@@ -112,10 +222,12 @@ router.get('/', authenticateToken, async (req, res) => {
   try {
     const { page = 1, limit = 10, status, role } = req.query;
     const userId = req.user.id;
-    const offset = (page - 1) * limit;
-    
+    const pageNumber = parseInt(page, 10);
+    const pageLimit = parseInt(limit, 10);
+    const offset = (pageNumber - 1) * pageLimit;
+
     const where = {};
-    
+
     if (role === 'lender') {
       where.lenderId = userId;
     } else if (role === 'borrower') {
@@ -126,42 +238,44 @@ router.get('/', authenticateToken, async (req, res) => {
         { borrowerId: userId }
       ];
     }
-    
+
     if (status) {
-      where.status = status;
+      where.status = status.includes(',')
+        ? { [Op.in]: status.split(',').map(value => value.trim()).filter(Boolean) }
+        : status;
     }
-    
+
     const { count, rows: orders } = await Order.findAndCountAll({
       where,
       include: [
         {
           model: Item,
           as: 'item',
-          attributes: ['id', 'title', 'images', 'price', 'deposit']
+          attributes: ['id', 'title', 'images', 'price', 'deposit', 'transactionType']
         },
         {
           model: User,
           as: 'lender',
-          attributes: ['id', 'username', 'avatar']
+          attributes: ['id', 'username', 'avatar', 'phone', 'qq']
         },
         {
           model: User,
           as: 'borrower',
-          attributes: ['id', 'username', 'avatar']
+          attributes: ['id', 'username', 'avatar', 'phone', 'qq']
         }
       ],
       order: [['createdAt', 'DESC']],
-      limit: parseInt(limit),
-      offset: parseInt(offset)
+      limit: pageLimit,
+      offset
     });
-    
+
     res.json({
       orders,
       pagination: {
         total: count,
-        page: parseInt(page),
-        limit: parseInt(limit),
-        totalPages: Math.ceil(count / limit)
+        page: pageNumber,
+        limit: pageLimit,
+        totalPages: Math.ceil(count / pageLimit)
       }
     });
   } catch (error) {
@@ -172,38 +286,16 @@ router.get('/', authenticateToken, async (req, res) => {
 // 获取订单详情
 router.get('/:id', authenticateToken, async (req, res) => {
   try {
-    const order = await Order.findByPk(req.params.id, {
-      include: [
-        {
-          model: Item,
-          as: 'item',
-          include: [{
-            model: User,
-            as: 'user',
-            attributes: ['id', 'username', 'avatar']
-          }]
-        },
-        {
-          model: User,
-          as: 'lender',
-          attributes: ['id', 'username', 'avatar', 'creditScore']
-        },
-        {
-          model: User,
-          as: 'borrower',
-          attributes: ['id', 'username', 'avatar', 'creditScore']
-        }
-      ]
-    });
-    
+    const order = await loadOrderById(req.params.id);
+
     if (!order) {
       return res.status(404).json({ message: 'Order not found' });
     }
-    
+
     if (order.lenderId !== req.user.id && order.borrowerId !== req.user.id) {
       return res.status(403).json({ message: 'Not authorized to view this order' });
     }
-    
+
     res.json({ order });
   } catch (error) {
     res.status(500).json({ message: 'Failed to get order', error: error.message });
@@ -215,25 +307,34 @@ router.post('/', authenticateToken, async (req, res) => {
   try {
     const { itemId, startDate, endDate, note, pickupLocation, returnLocation } = req.body;
     const borrowerId = req.user.id;
-    
+
     const item = await Item.findByPk(itemId);
     if (!item) {
       return res.status(404).json({ message: 'Item not found' });
     }
-    
+
     if (item.status !== 'available') {
       return res.status(400).json({ message: 'Item is not available' });
     }
-    
+
     if (item.userId === borrowerId) {
       return res.status(400).json({ message: 'Cannot borrow your own item' });
     }
-    
-    const start = new Date(startDate);
-    const end = new Date(endDate);
-    const totalDays = Math.ceil((end - start) / (1000 * 60 * 60 * 24));
-    const totalPrice = item.price * totalDays;
-    
+
+    const start = parseDate(startDate);
+    const end = parseDate(endDate);
+
+    if (!start || !end) {
+      return res.status(400).json({ message: 'Invalid order dates' });
+    }
+
+    if (end <= start) {
+      return res.status(400).json({ message: 'End date must be later than start date' });
+    }
+
+    const totalDays = Math.max(1, Math.ceil((end - start) / (1000 * 60 * 60 * 24)));
+    const totalPrice = Number(item.price) * totalDays;
+
     const order = await Order.create({
       orderNo: generateOrderNo(),
       itemId,
@@ -247,22 +348,29 @@ router.post('/', authenticateToken, async (req, res) => {
       note,
       pickupLocation,
       returnLocation,
-      status: 'pending'
+      status: 'pending',
+      pendingConfirmation: false,
+      pendingExtension: false,
+      pickupCode: null,
+      returnCode: null,
+      ...resetVerificationProgress,
+      cancelReason: null
     });
-    
+
     await item.update({ status: 'reserved' });
-    
-    // 发送系统消息通知卖方
+
     await sendSystemMessage(
       item.userId,
-      `有新的借用请求：${item.title}，请及时处理`,
+      `有新的交易请求：${item.title}，请确认交易时间、交还时间和交接地点。`,
       order.id,
       'order'
     );
-    
+
+    const fullOrder = await loadOrderById(order.id);
+
     res.status(201).json({
       message: 'Order created successfully',
-      order
+      order: fullOrder
     });
   } catch (error) {
     res.status(500).json({ message: 'Failed to create order', error: error.message });
@@ -272,62 +380,101 @@ router.post('/', authenticateToken, async (req, res) => {
 // 卖方确认订单（可修改时间和地点）
 router.put('/:id/confirm', authenticateToken, async (req, res) => {
   try {
-    const { startDate, endDate, pickupLocation, returnLocation } = req.body;
-    const order = await Order.findByPk(req.params.id, {
-      include: [{ model: Item, as: 'item' }]
-    });
-    
+    const { startDate, endDate, pickupLocation, returnLocation } = req.body || {};
+    const order = await loadOrderById(req.params.id);
+
     if (!order) {
       return res.status(404).json({ message: 'Order not found' });
     }
-    
+
     if (order.lenderId !== req.user.id) {
       return res.status(403).json({ message: 'Only lender can confirm order' });
     }
-    
+
     if (order.status !== 'pending') {
       return res.status(400).json({ message: 'Order cannot be confirmed' });
     }
-    
+
     const updates = { status: 'confirmed' };
-    
-    // 如果卖方修改了时间或地点，需要买方确认
-    const hasChanges = (startDate && startDate !== order.startDate.toISOString()) ||
-                       (endDate && endDate !== order.endDate.toISOString()) ||
-                       (pickupLocation && pickupLocation !== order.pickupLocation) ||
-                       (returnLocation && returnLocation !== order.returnLocation);
-    
-    if (hasChanges) {
-      // 标记需要买方确认
-      updates.pendingConfirmation = true;
-      if (startDate) updates.startDate = new Date(startDate);
-      if (endDate) updates.endDate = new Date(endDate);
-      if (pickupLocation) updates.pickupLocation = pickupLocation;
-      if (returnLocation) updates.returnLocation = returnLocation;
+
+    const parsedStartDate = startDate ? parseDate(startDate) : null;
+    const parsedEndDate = endDate ? parseDate(endDate) : null;
+
+    if ((startDate && !parsedStartDate) || (endDate && !parsedEndDate)) {
+      return res.status(400).json({ message: 'Invalid order dates' });
     }
-    
+
+    const nextStartDate = parsedStartDate || order.startDate;
+    const nextEndDate = parsedEndDate || order.endDate;
+
+    if (nextEndDate <= nextStartDate) {
+      return res.status(400).json({ message: 'End date must be later than start date' });
+    }
+
+    const hasChanges = Boolean(
+      (parsedStartDate && !isSameDateTime(parsedStartDate, order.startDate)) ||
+      (parsedEndDate && !isSameDateTime(parsedEndDate, order.endDate)) ||
+      (pickupLocation !== undefined && pickupLocation !== order.pickupLocation) ||
+      (returnLocation !== undefined && returnLocation !== order.returnLocation)
+    );
+
+    if (parsedStartDate) updates.startDate = parsedStartDate;
+    if (parsedEndDate) updates.endDate = parsedEndDate;
+    if (pickupLocation !== undefined) updates.pickupLocation = pickupLocation;
+    if (returnLocation !== undefined) updates.returnLocation = returnLocation;
+
+    const totalDays = Math.max(1, Math.ceil((nextEndDate - nextStartDate) / (1000 * 60 * 60 * 24)));
+    updates.totalDays = totalDays;
+    updates.totalPrice = Number(order.item.price) * totalDays;
+    updates.pendingConfirmation = hasChanges;
+
+    if (hasChanges) {
+      Object.assign(updates, {
+        pickupCode: null,
+        returnCode: null,
+        ...resetVerificationProgress
+      });
+    } else {
+      Object.assign(updates, {
+        ...buildVerificationCodes(order),
+        ...resetVerificationProgress
+      });
+    }
+
     await order.update(updates);
-    
-    // 发送系统消息
+
     if (hasChanges) {
       await sendSystemMessage(
         order.borrowerId,
-        `卖方已修改交易信息，请确认新的时间和地点：${order.item.title}`,
+        `卖方已修改交易信息：${order.item.title}，请确认新的交易时间、交还时间和地点。`,
         order.id,
         'order'
       );
     } else {
+      const codeTip = updates.returnCode
+        ? `取件码 ${updates.pickupCode}，归还码 ${updates.returnCode}`
+        : `取件码 ${updates.pickupCode}`;
+      await sendSystemMessage(
+        order.lenderId,
+        `交易已确认：${order.item.title}。请妥善保管并在交接时向买方出示${codeTip}。`,
+        order.id,
+        'order'
+      );
       await sendSystemMessage(
         order.borrowerId,
-        `卖方已确认您的借用请求：${order.item.title}`,
+        updates.returnCode
+          ? `卖方已确认交易：${order.item.title}。请先向卖方获取取件码完成取件，归还时再向卖方获取归还码。`
+          : `卖方已确认交易：${order.item.title}。请在交接时向卖方获取取件码并完成验码。`,
         order.id,
         'order'
       );
     }
-    
+
+    const refreshedOrder = await loadOrderById(order.id);
+
     res.json({
       message: hasChanges ? 'Order changes pending confirmation' : 'Order confirmed successfully',
-      order
+      order: refreshedOrder
     });
   } catch (error) {
     res.status(500).json({ message: 'Failed to confirm order', error: error.message });
@@ -337,39 +484,52 @@ router.put('/:id/confirm', authenticateToken, async (req, res) => {
 // 买方确认修改
 router.put('/:id/confirm-changes', authenticateToken, async (req, res) => {
   try {
-    const order = await Order.findByPk(req.params.id, {
-      include: [{ model: Item, as: 'item' }]
-    });
-    
+    const order = await loadOrderById(req.params.id);
+
     if (!order) {
       return res.status(404).json({ message: 'Order not found' });
     }
-    
+
     if (order.borrowerId !== req.user.id) {
       return res.status(403).json({ message: 'Only borrower can confirm changes' });
     }
-    
+
     if (order.status !== 'confirmed' || !order.pendingConfirmation) {
       return res.status(400).json({ message: 'No pending changes to confirm' });
     }
-    
-    await order.update({ pendingConfirmation: false });
-    
-    // 生成取件码
-    const pickupCode = generatePickupCode();
-    await order.update({ pickupCode });
-    
-    // 发送系统消息通知卖方
+
+    const codes = buildVerificationCodes(order);
+
+    await order.update({
+      pendingConfirmation: false,
+      ...codes,
+      ...resetVerificationProgress
+    });
+
+    const codeTip = codes.returnCode
+      ? `取件码 ${codes.pickupCode}，归还码 ${codes.returnCode}`
+      : `取件码 ${codes.pickupCode}`;
+
     await sendSystemMessage(
       order.lenderId,
-      `买方已确认修改，交易继续进行：${order.item.title}`,
+      `买方已确认修改：${order.item.title}。请妥善保管并在交接时向买方出示${codeTip}。`,
       order.id,
       'order'
     );
-    
+    await sendSystemMessage(
+      order.borrowerId,
+      codes.returnCode
+        ? `交易信息已确认：${order.item.title}。请先向卖方获取取件码完成取件，归还时再向卖方获取归还码。`
+        : `交易信息已确认：${order.item.title}。请在交接时向卖方获取取件码并完成验码。`,
+      order.id,
+      'order'
+    );
+
+    const refreshedOrder = await loadOrderById(order.id);
+
     res.json({
       message: 'Changes confirmed successfully',
-      order
+      order: refreshedOrder
     });
   } catch (error) {
     res.status(500).json({ message: 'Failed to confirm changes', error: error.message });
@@ -380,237 +540,406 @@ router.put('/:id/confirm-changes', authenticateToken, async (req, res) => {
 router.put('/:id/reject', authenticateToken, async (req, res) => {
   try {
     const { reason } = req.body;
-    const order = await Order.findByPk(req.params.id, {
-      include: [{ model: Item, as: 'item' }]
-    });
-    
+    const order = await loadOrderById(req.params.id);
+
     if (!order) {
       return res.status(404).json({ message: 'Order not found' });
     }
-    
+
     if (order.lenderId !== req.user.id) {
       return res.status(403).json({ message: 'Only lender can reject order' });
     }
-    
+
     if (order.status !== 'pending') {
       return res.status(400).json({ message: 'Order cannot be rejected' });
     }
-    
-    await order.update({ status: 'cancelled', cancelReason: reason });
-    
-    const item = await Item.findByPk(order.itemId);
-    await item.update({ status: 'available' });
-    
-    // 发送系统消息
+
+    await order.update({ status: 'cancelled', cancelReason: reason || null });
+    await restoreItemAvailability(order.itemId);
+
     await sendSystemMessage(
       order.borrowerId,
-      `您的借用请求已被拒绝：${order.item.title}，原因：${reason}`,
+      `您的借用请求已被拒绝：${order.item.title}${reason ? `，原因：${reason}` : ''}`,
       order.id,
       'order'
     );
-    
+
+    const refreshedOrder = await loadOrderById(order.id);
+
     res.json({
       message: 'Order rejected successfully',
-      order
+      order: refreshedOrder
     });
   } catch (error) {
     res.status(500).json({ message: 'Failed to reject order', error: error.message });
   }
 });
 
-// 确认交接（输入取件码）
+// 买方提交取件码
 router.put('/:id/pickup', authenticateToken, async (req, res) => {
   try {
-    const { pickupCode } = req.body;
-    const order = await Order.findByPk(req.params.id, {
-      include: [{ model: Item, as: 'item' }]
-    });
-    
+    const inputPickupCode = normalizePickupCode(req.body.pickupCode);
+    const order = await loadOrderById(req.params.id);
+
     if (!order) {
       return res.status(404).json({ message: 'Order not found' });
     }
-    
-    // 卖方或买方都可以确认交接
-    if (order.borrowerId !== req.user.id && order.lenderId !== req.user.id) {
-      return res.status(403).json({ message: 'Not authorized to confirm pickup' });
+
+    if (order.borrowerId !== req.user.id) {
+      return res.status(403).json({ message: 'Only borrower can submit pickup code' });
     }
-    
+
     if (order.status !== 'confirmed' || order.pendingConfirmation) {
       return res.status(400).json({ message: 'Order cannot be picked up' });
     }
-    
-    // 验证取件码
-    if (order.pickupCode !== pickupCode) {
+
+    if (order.pickupCodeVerifiedAt) {
+      return res.status(400).json({ message: 'Pickup code already submitted' });
+    }
+
+    if (!inputPickupCode) {
+      return res.status(400).json({ message: 'Pickup code is required' });
+    }
+
+    if (!isValidPickupCode(inputPickupCode)) {
+      return res.status(400).json({ message: 'Pickup code format is invalid' });
+    }
+
+    const expectedPickupCode = normalizePickupCode(order.pickupCode);
+    if (!expectedPickupCode || expectedPickupCode !== inputPickupCode) {
       return res.status(400).json({ message: 'Invalid pickup code' });
     }
-    
-    await order.update({ status: 'using' });
-    
-    // 发送系统消息
-    if (req.user.id === order.borrowerId) {
+
+    await order.update({
+      pickupCodeVerifiedAt: new Date()
+    });
+
+    await sendSystemMessage(
+      order.lenderId,
+      `买方已提交取件码：${order.item.title}。请确认已完成交付。`,
+      order.id,
+      'order'
+    );
+    await sendSystemMessage(
+      order.borrowerId,
+      `您已提交取件码：${order.item.title}。等待卖方确认交付。`,
+      order.id,
+      'order'
+    );
+
+    const refreshedOrder = await loadOrderById(order.id);
+
+    res.json({
+      message: 'Pickup code submitted successfully',
+      order: refreshedOrder
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to submit pickup code', error: error.message });
+  }
+});
+
+// 卖方确认已交付
+router.put('/:id/confirm-pickup', authenticateToken, async (req, res) => {
+  try {
+    const order = await loadOrderById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: 'Order not found' });
+    }
+
+    if (order.lenderId !== req.user.id) {
+      return res.status(403).json({ message: 'Only lender can confirm pickup' });
+    }
+
+    if (order.status !== 'confirmed' || order.pendingConfirmation) {
+      return res.status(400).json({ message: 'Order cannot confirm pickup' });
+    }
+
+    if (!order.pickupCodeVerifiedAt) {
+      return res.status(400).json({ message: 'Pickup code has not been submitted yet' });
+    }
+
+    if (order.pickupConfirmedByLenderAt) {
+      return res.status(400).json({ message: 'Pickup already confirmed by lender' });
+    }
+
+    const confirmedAt = new Date();
+
+    await order.update({
+      pickupConfirmedByLenderAt: confirmedAt,
+      actualPickupTime: confirmedAt,
+      status: isRentOrder(order) ? 'using' : 'completed',
+      returnConfirmedTime: isRentOrder(order) ? null : confirmedAt
+    });
+
+    if (isRentOrder(order)) {
+      await order.item.update({ status: 'rented' });
       await sendSystemMessage(
         order.lenderId,
-        `物品已交接给买方：${order.item.title}`,
+        `您已确认交付物品：${order.item.title}。订单已进入使用中。`,
+        order.id,
+        'order'
+      );
+      await sendSystemMessage(
+        order.borrowerId,
+        `卖方已确认交付：${order.item.title}。订单已进入使用中，请保持联系并按时归还。`,
         order.id,
         'order'
       );
     } else {
+      await completeOrderAndSyncItem(order, confirmedAt);
+      await updateCreditScore(order.borrowerId, 5);
+      await updateCreditScore(order.lenderId, 2);
+      await sendSystemMessage(
+        order.lenderId,
+        `您已确认交付物品：${order.item.title}。订单已完成。`,
+        order.id,
+        'order'
+      );
       await sendSystemMessage(
         order.borrowerId,
-        `物品交接成功，开始使用：${order.item.title}`,
+        `卖方已确认交付：${order.item.title}。订单已完成，双方现在可以互相评价了。`,
         order.id,
         'order'
       );
     }
-    
+
+    const refreshedOrder = await loadOrderById(order.id);
+
     res.json({
-      message: 'Pickup confirmed successfully',
-      order
+      message: 'Pickup confirmed by lender successfully',
+      order: refreshedOrder
     });
   } catch (error) {
-    res.status(500).json({ message: 'Failed to confirm pickup', error: error.message });
+    res.status(500).json({ message: 'Failed to confirm pickup by lender', error: error.message });
   }
 });
 
-// 临期提醒确认（确认归还时间和地点）
-router.put('/:id/confirm-return', authenticateToken, async (req, res) => {
+// 卖方更新归还时间和地点
+router.put('/:id/update-return-info', authenticateToken, async (req, res) => {
   try {
     const { returnLocation, returnTime } = req.body;
-    const order = await Order.findByPk(req.params.id, {
-      include: [{ model: Item, as: 'item' }]
-    });
-    
+    const order = await loadOrderById(req.params.id);
+
     if (!order) {
       return res.status(404).json({ message: 'Order not found' });
     }
-    
-    if (order.borrowerId !== req.user.id) {
-      return res.status(403).json({ message: 'Only borrower can confirm return' });
+
+    if (order.lenderId !== req.user.id) {
+      return res.status(403).json({ message: 'Only lender can update return info' });
     }
-    
+
     if (order.status !== 'using') {
       return res.status(400).json({ message: 'Order is not in use' });
     }
-    
+
     const updates = {};
-    if (returnLocation) updates.returnLocation = returnLocation;
-    if (returnTime) updates.endDate = new Date(returnTime);
-    
+    if (returnLocation !== undefined) updates.returnLocation = returnLocation;
+
+    let returnTimeMessage = '';
+    if (returnTime !== undefined) {
+      const parsedReturnTime = parseDate(returnTime);
+      if (!parsedReturnTime) {
+        return res.status(400).json({ message: 'Invalid return time' });
+      }
+      updates.endDate = parsedReturnTime;
+      returnTimeMessage = `，计划交还时间：${parsedReturnTime.toLocaleString('zh-CN')}`;
+    }
+
     await order.update(updates);
-    
-    // 发送系统消息通知卖方
+
     await sendSystemMessage(
-      order.lenderId,
-      `买方确认归还信息，请注意接收：${order.item.title}`,
+      order.borrowerId,
+      `卖方已更新归还信息：${order.item.title}${returnTimeMessage}，请按新的约定完成交还。`,
       order.id,
       'order'
     );
-    
+
+    const refreshedOrder = await loadOrderById(order.id);
+
     res.json({
-      message: 'Return confirmed successfully',
-      order
+      message: 'Return info updated successfully',
+      order: refreshedOrder
     });
   } catch (error) {
-    res.status(500).json({ message: 'Failed to confirm return', error: error.message });
+    res.status(500).json({ message: 'Failed to update return info', error: error.message });
   }
 });
 
-// 确认归还完成
+// 买方提交归还码
 router.put('/:id/return', authenticateToken, async (req, res) => {
   try {
-    const order = await Order.findByPk(req.params.id, {
-      include: [{ model: Item, as: 'item' }]
-    });
-    
+    const inputReturnCode = normalizePickupCode(req.body.returnCode);
+    const order = await loadOrderById(req.params.id);
+
     if (!order) {
       return res.status(404).json({ message: 'Order not found' });
     }
-    
-    // 卖方或买方都可以确认归还
-    if (order.borrowerId !== req.user.id && order.lenderId !== req.user.id) {
-      return res.status(403).json({ message: 'Not authorized to confirm return' });
+
+    if (order.borrowerId !== req.user.id) {
+      return res.status(403).json({ message: 'Only borrower can submit return code' });
     }
-    
+
+    if (!isRentOrder(order)) {
+      return res.status(400).json({ message: 'Only rent orders can be returned with code' });
+    }
+
     if (order.status !== 'using') {
       return res.status(400).json({ message: 'Order cannot be returned' });
     }
-    
-    await order.update({ status: 'returned' });
-    
-    // 发送系统消息
-    if (req.user.id === order.borrowerId) {
-      await sendSystemMessage(
-        order.lenderId,
-        `买方已归还物品，请确认：${order.item.title}`,
-        order.id,
-        'order'
-      );
-    } else {
-      await sendSystemMessage(
-        order.borrowerId,
-        `物品已归还，订单完成：${order.item.title}`,
-        order.id,
-        'order'
-      );
-      
-      // 卖方确认归还时，增加双方信誉分
-      await updateCreditScore(order.borrowerId, 5);
-      await updateCreditScore(order.lenderId, 2);
-      
-      const item = await Item.findByPk(order.itemId);
-      await item.update({ status: 'available' });
-      
-      await order.update({ status: 'completed' });
-    }
-    
-    res.json({
-      message: 'Return confirmed successfully',
-      order
-    });
-  } catch (error) {
-    res.status(500).json({ message: 'Failed to confirm return', error: error.message });
-  }
-});
 
-// 完成订单（买方确认）
-router.put('/:id/complete', authenticateToken, async (req, res) => {
-  try {
-    const order = await Order.findByPk(req.params.id, {
-      include: [{ model: Item, as: 'item' }]
+    if (!order.pickupConfirmedByLenderAt) {
+      return res.status(400).json({ message: 'Pickup has not been confirmed yet' });
+    }
+
+    if (order.returnCodeVerifiedAt) {
+      return res.status(400).json({ message: 'Return code already submitted' });
+    }
+
+    if (!inputReturnCode) {
+      return res.status(400).json({ message: 'Return code is required' });
+    }
+
+    if (!isValidPickupCode(inputReturnCode)) {
+      return res.status(400).json({ message: 'Return code format is invalid' });
+    }
+
+    const expectedReturnCode = normalizePickupCode(order.returnCode);
+    if (!expectedReturnCode || expectedReturnCode !== inputReturnCode) {
+      return res.status(400).json({ message: 'Invalid return code' });
+    }
+
+    await order.update({
+      returnCodeVerifiedAt: new Date()
     });
-    
-    if (!order) {
-      return res.status(404).json({ message: 'Order not found' });
-    }
-    
-    if (order.borrowerId !== req.user.id) {
-      return res.status(403).json({ message: 'Only borrower can complete order' });
-    }
-    
-    if (order.status !== 'using' && order.status !== 'returned') {
-      return res.status(400).json({ message: 'Order cannot be completed' });
-    }
-    
-    await order.update({ status: 'completed' });
-    
-    const item = await Item.findByPk(order.itemId);
-    await item.update({ status: 'available' });
-    
-    // 增加双方信誉分
-    await updateCreditScore(order.borrowerId, 5);
-    await updateCreditScore(order.lenderId, 2);
-    
-    // 发送系统消息
+
     await sendSystemMessage(
       order.lenderId,
-      `订单已完成：${order.item.title}`,
+      `买方已提交归还码：${order.item.title}。请确认已收回物品。`,
       order.id,
       'order'
     );
-    
+    await sendSystemMessage(
+      order.borrowerId,
+      `您已提交归还码：${order.item.title}。等待卖方确认收回。`,
+      order.id,
+      'order'
+    );
+
+    const refreshedOrder = await loadOrderById(order.id);
+
+    res.json({
+      message: 'Return code submitted successfully',
+      order: refreshedOrder
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to submit return code', error: error.message });
+  }
+});
+
+// 卖方确认已收回
+router.put('/:id/confirm-return-receipt', authenticateToken, async (req, res) => {
+  try {
+    const order = await loadOrderById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: 'Order not found' });
+    }
+
+    if (order.lenderId !== req.user.id) {
+      return res.status(403).json({ message: 'Only lender can confirm return receipt' });
+    }
+
+    if (!isRentOrder(order)) {
+      return res.status(400).json({ message: 'Only rent orders require return confirmation' });
+    }
+
+    if (order.status !== 'using') {
+      return res.status(400).json({ message: 'Order cannot confirm return receipt' });
+    }
+
+    if (!order.returnCodeVerifiedAt) {
+      return res.status(400).json({ message: 'Return code has not been submitted yet' });
+    }
+
+    if (order.returnConfirmedByLenderAt) {
+      return res.status(400).json({ message: 'Return already confirmed by lender' });
+    }
+
+    const confirmedAt = new Date();
+    const isEarlyReturn = confirmedAt.getTime() < new Date(order.endDate).getTime();
+
+    await order.update({
+      status: 'returned',
+      returnConfirmedByLenderAt: confirmedAt,
+      actualReturnTime: confirmedAt,
+      isEarlyReturn
+    });
+
+    await sendSystemMessage(
+      order.lenderId,
+      `您已确认收回物品：${order.item.title}。订单待最终完成${isEarlyReturn ? '，本次为提前归还' : ''}。`,
+      order.id,
+      'order'
+    );
+    await sendSystemMessage(
+      order.borrowerId,
+      `卖方已确认收回：${order.item.title}。订单待最终完成${isEarlyReturn ? '，本次为提前归还' : ''}。`,
+      order.id,
+      'order'
+    );
+
+    const refreshedOrder = await loadOrderById(order.id);
+
+    res.json({
+      message: 'Return receipt confirmed successfully',
+      order: refreshedOrder
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to confirm return receipt', error: error.message });
+  }
+});
+
+// 卖方确认完成
+router.put('/:id/complete', authenticateToken, async (req, res) => {
+  try {
+    const order = await loadOrderById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: 'Order not found' });
+    }
+
+    if (order.lenderId !== req.user.id) {
+      return res.status(403).json({ message: 'Only lender can complete order' });
+    }
+
+    if (order.status !== 'returned') {
+      return res.status(400).json({ message: 'Order cannot be completed' });
+    }
+
+    await completeOrderAndSyncItem(order);
+
+    await updateCreditScore(order.borrowerId, 5);
+    await updateCreditScore(order.lenderId, 2);
+
+    await sendSystemMessage(
+      order.borrowerId,
+      `订单已完成：${order.item.title}。卖方已完成确认，双方现在可以互相评价了。`,
+      order.id,
+      'order'
+    );
+    await sendSystemMessage(
+      order.lenderId,
+      `您已完成订单：${order.item.title}。${shouldRestoreItemAvailability(order) ? '物品状态已恢复为可借。' : '物品状态已更新为下架。'}`,
+      order.id,
+      'order'
+    );
+
+    const refreshedOrder = await loadOrderById(order.id);
+
     res.json({
       message: 'Order completed successfully',
-      order
+      order: refreshedOrder
     });
   } catch (error) {
     res.status(500).json({ message: 'Failed to complete order', error: error.message });
@@ -621,49 +950,36 @@ router.put('/:id/complete', authenticateToken, async (req, res) => {
 router.put('/:id/cancel', authenticateToken, async (req, res) => {
   try {
     const { reason } = req.body;
-    const order = await Order.findByPk(req.params.id, {
-      include: [{ model: Item, as: 'item' }]
-    });
-    
+    const order = await loadOrderById(req.params.id);
+
     if (!order) {
       return res.status(404).json({ message: 'Order not found' });
     }
-    
+
     if (order.borrowerId !== req.user.id && order.lenderId !== req.user.id) {
       return res.status(403).json({ message: 'Not authorized to cancel order' });
     }
-    
-    if (order.status === 'completed') {
-      return res.status(400).json({ message: 'Completed order cannot be cancelled' });
+
+    if (!['pending', 'confirmed'].includes(order.status)) {
+      return res.status(400).json({ message: 'Order cannot be cancelled' });
     }
-    
-    // 如果订单已经在使用中，取消会影响信誉分
-    if (order.status === 'using') {
-      // 扣除取消方信誉分
-      if (req.user.id === order.borrowerId) {
-        await updateCreditScore(order.borrowerId, -10);
-      } else {
-        await updateCreditScore(order.lenderId, -10);
-      }
-    }
-    
-    await order.update({ status: 'cancelled', cancelReason: reason });
-    
-    const item = await Item.findByPk(order.itemId);
-    await item.update({ status: 'available' });
-    
-    // 发送系统消息
+
+    await order.update({ status: 'cancelled', cancelReason: reason || null });
+    await restoreItemAvailability(order.itemId);
+
     const otherUserId = req.user.id === order.borrowerId ? order.lenderId : order.borrowerId;
     await sendSystemMessage(
       otherUserId,
-      `订单已被取消：${order.item.title}，原因：${reason}`,
+      `订单已被取消：${order.item.title}${reason ? `，原因：${reason}` : ''}`,
       order.id,
       'order'
     );
-    
+
+    const refreshedOrder = await loadOrderById(order.id);
+
     res.json({
       message: 'Order cancelled successfully',
-      order
+      order: refreshedOrder
     });
   } catch (error) {
     res.status(500).json({ message: 'Failed to cancel order', error: error.message });
@@ -674,49 +990,51 @@ router.put('/:id/cancel', authenticateToken, async (req, res) => {
 router.put('/:id/extend', authenticateToken, async (req, res) => {
   try {
     const { endDate } = req.body;
-    const order = await Order.findByPk(req.params.id, {
-      include: [{ model: Item, as: 'item' }]
-    });
-    
+    const order = await loadOrderById(req.params.id);
+
     if (!order) {
       return res.status(404).json({ message: 'Order not found' });
     }
-    
+
     if (order.borrowerId !== req.user.id) {
       return res.status(403).json({ message: 'Only borrower can request extension' });
     }
-    
+
     if (order.status !== 'using') {
       return res.status(400).json({ message: 'Only in-use orders can be extended' });
     }
-    
-    const newEndDate = new Date(endDate);
+
+    const newEndDate = parseDate(endDate);
+    if (!newEndDate) {
+      return res.status(400).json({ message: 'Invalid end date' });
+    }
+
     const originalEndDate = new Date(order.endDate);
-    
+
     if (newEndDate <= originalEndDate) {
       return res.status(400).json({ message: 'New end date must be later than current' });
     }
-    
-    await order.update({ 
+
+    await order.update({
       endDate: newEndDate,
-      pendingExtension: true 
+      pendingExtension: true
     });
-    
-    // 计算延期费用
+
     const daysExtended = Math.ceil((newEndDate - originalEndDate) / (1000 * 60 * 60 * 24));
-    const extensionCost = order.item.price * daysExtended;
-    
-    // 发送系统消息
+    const extensionCost = Number(order.item.price) * daysExtended;
+
     await sendSystemMessage(
       order.lenderId,
       `买方申请延期：${order.item.title}，延期${daysExtended}天，费用¥${extensionCost}`,
       order.id,
       'order'
     );
-    
+
+    const refreshedOrder = await loadOrderById(order.id);
+
     res.json({
       message: 'Extension request sent',
-      order
+      order: refreshedOrder
     });
   } catch (error) {
     res.status(500).json({ message: 'Failed to request extension', error: error.message });
@@ -726,44 +1044,41 @@ router.put('/:id/extend', authenticateToken, async (req, res) => {
 // 确认延期
 router.put('/:id/confirm-extension', authenticateToken, async (req, res) => {
   try {
-    const order = await Order.findByPk(req.params.id, {
-      include: [{ model: Item, as: 'item' }]
-    });
-    
+    const order = await loadOrderById(req.params.id);
+
     if (!order) {
       return res.status(404).json({ message: 'Order not found' });
     }
-    
+
     if (order.lenderId !== req.user.id) {
       return res.status(403).json({ message: 'Only lender can confirm extension' });
     }
-    
+
     if (!order.pendingExtension) {
       return res.status(400).json({ message: 'No pending extension request' });
     }
-    
-    // 更新订单
-    await order.update({ pendingExtension: false });
-    
-    // 计算并更新费用
-    const originalEndDate = new Date(order.createdAt);
-    const newEndDate = new Date(order.endDate);
-    const totalDays = Math.ceil((newEndDate - originalEndDate) / (1000 * 60 * 60 * 24));
-    const totalPrice = order.item.price * totalDays;
-    
-    await order.update({ totalDays, totalPrice });
-    
-    // 发送系统消息
+
+    const totalDays = Math.max(1, Math.ceil((new Date(order.endDate) - new Date(order.startDate)) / (1000 * 60 * 60 * 24)));
+    const totalPrice = Number(order.item.price) * totalDays;
+
+    await order.update({
+      pendingExtension: false,
+      totalDays,
+      totalPrice
+    });
+
     await sendSystemMessage(
       order.borrowerId,
       `延期申请已通过：${order.item.title}`,
       order.id,
       'order'
     );
-    
+
+    const refreshedOrder = await loadOrderById(order.id);
+
     res.json({
       message: 'Extension confirmed successfully',
-      order
+      order: refreshedOrder
     });
   } catch (error) {
     res.status(500).json({ message: 'Failed to confirm extension', error: error.message });
@@ -773,36 +1088,34 @@ router.put('/:id/confirm-extension', authenticateToken, async (req, res) => {
 // 拒绝延期
 router.put('/:id/reject-extension', authenticateToken, async (req, res) => {
   try {
-    const order = await Order.findByPk(req.params.id, {
-      include: [{ model: Item, as: 'item' }]
-    });
-    
+    const order = await loadOrderById(req.params.id);
+
     if (!order) {
       return res.status(404).json({ message: 'Order not found' });
     }
-    
+
     if (order.lenderId !== req.user.id) {
       return res.status(403).json({ message: 'Only lender can reject extension' });
     }
-    
+
     if (!order.pendingExtension) {
       return res.status(400).json({ message: 'No pending extension request' });
     }
-    
-    // 恢复原时间
+
     await order.update({ pendingExtension: false });
-    
-    // 发送系统消息
+
     await sendSystemMessage(
       order.borrowerId,
       `延期申请已被拒绝：${order.item.title}`,
       order.id,
       'order'
     );
-    
+
+    const refreshedOrder = await loadOrderById(order.id);
+
     res.json({
       message: 'Extension rejected successfully',
-      order
+      order: refreshedOrder
     });
   } catch (error) {
     res.status(500).json({ message: 'Failed to reject extension', error: error.message });

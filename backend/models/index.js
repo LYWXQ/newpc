@@ -4,6 +4,7 @@ const Order = require('./Order');
 const Review = require('./Review');
 const Message = require('./Message');
 const Favorite = require('./Favorite');
+const OrderReminderLog = require('./OrderReminderLog');
 
 // 定义模型关联关系
 User.hasMany(Item, { foreignKey: 'userId', as: 'items' });
@@ -17,7 +18,7 @@ Order.belongsTo(User, { foreignKey: 'borrowerId', as: 'borrower' });
 Item.hasMany(Order, { foreignKey: 'itemId', as: 'orders' });
 Order.belongsTo(Item, { foreignKey: 'itemId', as: 'item' });
 
-Order.hasOne(Review, { foreignKey: 'orderId', as: 'review' });
+Order.hasMany(Review, { foreignKey: 'orderId', as: 'reviews' });
 Review.belongsTo(Order, { foreignKey: 'orderId', as: 'order' });
 
 User.hasMany(Review, { foreignKey: 'reviewerId', as: 'givenReviews' });
@@ -42,11 +43,17 @@ Favorite.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 Item.hasMany(Favorite, { foreignKey: 'itemId', as: 'favorites' });
 Favorite.belongsTo(Item, { foreignKey: 'itemId', as: 'item' });
 
+Order.hasMany(OrderReminderLog, { foreignKey: 'orderId', as: 'reminderLogs' });
+OrderReminderLog.belongsTo(Order, { foreignKey: 'orderId', as: 'order' });
+User.hasMany(OrderReminderLog, { foreignKey: 'receiverId', as: 'orderReminderLogs' });
+OrderReminderLog.belongsTo(User, { foreignKey: 'receiverId', as: 'receiver' });
+
 module.exports = {
   User,
   Item,
   Order,
   Review,
   Message,
-  Favorite
+  Favorite,
+  OrderReminderLog
 };

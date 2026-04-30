@@ -1,0 +1,18 @@
+- generic [ref=e3]:
+  - generic [ref=e255]: 个人中心
+  - generic [ref=e223]:
+    - generic [ref=e226] [cursor=pointer]:
+      - img [ref=e228]
+      - generic [ref=e229]: 首页
+    - generic [ref=e231] [cursor=pointer]:
+      - img [ref=e233]
+      - generic [ref=e234]: 订单
+    - generic [ref=e236] [cursor=pointer]:
+      - img [ref=e238]
+      - generic [ref=e239]: 发布
+    - generic [ref=e241] [cursor=pointer]:
+      - img [ref=e243]
+      - generic [ref=e244]: 消息
+    - generic [ref=e246] [cursor=pointer]:
+      - img [ref=e248]
+      - generic [ref=e249]: 我的

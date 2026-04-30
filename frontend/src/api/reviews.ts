@@ -38,6 +38,12 @@ interface OrderInfo {
   }
 }
 
+export interface OrderReviewResponse {
+  reviews: Review[]
+  myReview: Review | null
+  canReview: boolean
+}
+
 // 创建评价参数
 export interface CreateReviewParams {
   orderId: number
@@ -49,7 +55,7 @@ export interface CreateReviewParams {
 /**
  * 获取评价列表
  */
-export const getReviewList = (params?: { page?: number; limit?: number; userId?: number; itemId?: number }): Promise<PaginationData<Review>> => {
+export const getReviewList = (params?: { page?: number; limit?: number; userId?: number; itemId?: number; type?: 'given' | 'received' }): Promise<PaginationData<Review>> => {
   return get<PaginationData<Review>>('/reviews', params)
 }
 
@@ -84,6 +90,6 @@ export const getUserReviews = (userId: number, params?: { page?: number; limit?:
 /**
  * 获取订单的评价
  */
-export const getOrderReview = (orderId: number): Promise<{ review: Review | null }> => {
-  return get<{ review: Review | null }>(`/reviews/order/${orderId}`)
+export const getOrderReview = (orderId: number): Promise<OrderReviewResponse> => {
+  return get<OrderReviewResponse>(`/reviews/order/${orderId}`)
 }

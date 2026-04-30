@@ -1,0 +1,39 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e3]:
+    - generic [ref=e151]:
+      - generic [ref=e155]: 消息中心
+      - generic [ref=e188]:
+        - generic [ref=e189]:
+          - generic [ref=e190]: 系统通知
+          - generic [ref=e192]: 全部已读
+        - generic [ref=e196]:
+          - generic [ref=e197]:
+            - generic [ref=e199]: 📢
+            - generic [ref=e200]:
+              - generic [ref=e201]: 系统通知
+              - generic [ref=e202]: ������֤��Ϣ��������Ϣ�б����Ѷ���ɾ�����̡�
+              - generic [ref=e203]: 06:27
+            - generic [ref=e206]: 🗑️
+          - generic [ref=e208]: 没有更多了
+    - generic [ref=e159]:
+      - generic [ref=e162] [cursor=pointer]:
+        - img [ref=e164]
+        - generic [ref=e165]: 首页
+      - generic [ref=e167] [cursor=pointer]:
+        - img [ref=e169]
+        - generic [ref=e170]: 订单
+      - generic [ref=e172] [cursor=pointer]:
+        - img [ref=e174]
+        - generic [ref=e175]: 发布
+      - generic [ref=e177] [cursor=pointer]:
+        - img [ref=e179]
+        - generic [ref=e180]: 消息
+      - generic [ref=e182] [cursor=pointer]:
+        - img [ref=e184]
+        - generic [ref=e185]: 我的
+  - generic [ref=e211]:
+    - strong [ref=e213]: 提示
+    - generic [ref=e214]: 确定删除这条消息吗？
+    - generic [ref=e215]:
+      - generic [ref=e216] [cursor=pointer]: 取消
+      - generic [ref=e217] [cursor=pointer]: 确定

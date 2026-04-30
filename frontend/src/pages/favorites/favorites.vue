@@ -89,6 +89,7 @@
   import { ref, computed, onMounted } from 'vue'
   import { onShow } from '@dcloudio/uni-app'
   import { getFavorites, removeFavorite, batchRemoveFavorites, type Favorite } from '@/api/favorites'
+  import { getImageUrl } from '@/utils/image'
 
   // 收藏列表
   const favorites = ref<Favorite[]>([])
@@ -106,13 +107,6 @@
     if (favorites.value.length === 0) return false
     return favorites.value.every(fav => selectedItems.value.includes(fav.item.id))
   })
-
-  // 获取图片URL
-  const getImageUrl = (url: string | undefined): string => {
-    if (!url) return '/static/logo.png'
-    if (url.startsWith('http')) return url
-    return `http://localhost:3000${url}`
-  }
 
   // 加载收藏列表
   const loadFavorites = async (isRefresh = false) => {

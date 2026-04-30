@@ -28,15 +28,39 @@ const Order = sequelize.define('Order', {
     allowNull: false,
     comment: '借用者ID'
   },
-  startTime: {
+  startDate: {
     type: DataTypes.DATE,
     allowNull: false,
-    comment: '借用开始时间'
+    comment: '借用开始时间',
+    get() {
+      return this.getDataValue('startDate') || this.getDataValue('legacyStartDate');
+    },
+    set(value) {
+      this.setDataValue('startDate', value);
+      this.setDataValue('legacyStartDate', value);
+    }
   },
-  endTime: {
+  legacyStartDate: {
     type: DataTypes.DATE,
     allowNull: false,
-    comment: '借用结束时间'
+    field: 'startTime'
+  },
+  endDate: {
+    type: DataTypes.DATE,
+    allowNull: false,
+    comment: '借用结束时间',
+    get() {
+      return this.getDataValue('endDate') || this.getDataValue('legacyEndDate');
+    },
+    set(value) {
+      this.setDataValue('endDate', value);
+      this.setDataValue('legacyEndDate', value);
+    }
+  },
+  legacyEndDate: {
+    type: DataTypes.DATE,
+    allowNull: false,
+    field: 'endTime'
   },
   totalDays: {
     type: DataTypes.INTEGER,
@@ -53,10 +77,28 @@ const Order = sequelize.define('Order', {
     allowNull: false,
     comment: '押金金额'
   },
-  remark: {
+  note: {
     type: DataTypes.TEXT,
     allowNull: true,
-    comment: '备注'
+    comment: '备注',
+    get() {
+      const note = this.getDataValue('note');
+      return note !== null && note !== undefined ? note : this.getDataValue('legacyNote');
+    },
+    set(value) {
+      this.setDataValue('note', value);
+      this.setDataValue('legacyNote', value);
+    }
+  },
+  legacyNote: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+    field: 'remark'
+  },
+  cancelReason: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+    comment: '取消原因'
   },
   pickupLocation: {
     type: DataTypes.TEXT,
@@ -77,6 +119,64 @@ const Order = sequelize.define('Order', {
     type: DataTypes.STRING(20),
     allowNull: true,
     comment: '取件码'
+  },
+  returnCode: {
+    type: DataTypes.STRING(20),
+    allowNull: true,
+    comment: '归还码'
+  },
+  pickupCodeVerifiedAt: {
+    type: DataTypes.DATE,
+    allowNull: true,
+    comment: '买方已验证取件码时间'
+  },
+  pickupConfirmedByLenderAt: {
+    type: DataTypes.DATE,
+    allowNull: true,
+    comment: '卖方确认已交付时间'
+  },
+  actualPickupTime: {
+    type: DataTypes.DATE,
+    allowNull: true,
+    comment: '实际取货时间'
+  },
+  returnCodeVerifiedAt: {
+    type: DataTypes.DATE,
+    allowNull: true,
+    comment: '买方已验证归还码时间'
+  },
+  returnConfirmedByLenderAt: {
+    type: DataTypes.DATE,
+    allowNull: true,
+    comment: '卖方确认已收回时间'
+  },
+  actualReturnTime: {
+    type: DataTypes.DATE,
+    allowNull: true,
+    comment: '实际归还时间'
+  },
+  returnConfirmedTime: {
+    type: DataTypes.DATE,
+    allowNull: true,
+    comment: '订单最终完成时间'
+  },
+  isEarlyReturn: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+    defaultValue: false,
+    comment: '是否提前归还'
+  },
+  pendingConfirmation: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+    defaultValue: false,
+    comment: '是否待借方确认变更'
+  },
+  pendingExtension: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+    defaultValue: false,
+    comment: '是否待卖方确认延期'
   }
 }, {
   tableName: 'orders',

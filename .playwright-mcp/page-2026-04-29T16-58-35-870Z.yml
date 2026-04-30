@@ -1,0 +1,8 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e6]:
+    - img [ref=e9] [cursor=pointer]
+    - generic [ref=e12]: 物品详情
+  - generic:
+    - generic:
+      - generic:
+        - paragraph: 加载中...

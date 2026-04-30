@@ -2,7 +2,7 @@
   <view class="edit-profile-container">
     <view class="avatar-section">
       <image class="avatar"
-             :src="form.avatar || '/static/logo.png'"
+             :src="getImageUrl(form.avatar)"
              mode="aspectFill"
              @click="chooseAvatar" />
       <view class="avatar-tip">点击更换头像</view>
@@ -34,6 +34,14 @@
       </view>
 
       <view class="form-item">
+        <text class="label">QQ</text>
+        <input class="input"
+               v-model="form.qq"
+               placeholder="请输入QQ号"
+               type="number" >
+      </view>
+
+      <view class="form-item">
         <text class="label">邮箱</text>
         <input class="input" v-model="form.email" placeholder="请输入邮箱" >
       </view>
@@ -59,6 +67,7 @@
   import { ref, onMounted } from 'vue'
   import { updateUserInfo, uploadAvatar, type UserInfo } from '@/api/auth'
   import { useAuthStore } from '@/stores/auth'
+  import { getImageUrl } from '@/utils/image'
 
   const authStore = useAuthStore()
   const loading = ref(false)
@@ -67,6 +76,7 @@
     username: '',
     studentId: '',
     phone: '',
+    qq: '',
     email: '',
     avatar: '',
     school: '',
@@ -105,6 +115,16 @@
   }
 
   const handleSave = async () => {
+    if (form.value.phone && !/^1[3-9]\d{9}$/.test(form.value.phone)) {
+      uni.showToast({ title: '请输入正确的手机号', icon: 'none' })
+      return
+    }
+
+    if (form.value.qq && !/^[1-9][0-9]{4,14}$/.test(form.value.qq)) {
+      uni.showToast({ title: '请输入正确的QQ号', icon: 'none' })
+      return
+    }
+
     try {
       loading.value = true
       const user = await updateUserInfo(form.value)

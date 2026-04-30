@@ -1,9 +1,8 @@
 <template>
   <view class="profile-container">
-    <!-- 用户信息卡片 -->
     <view class="user-card">
       <view class="user-info">
-        <image class="avatar" :src="authStore.userInfo.avatar || '/static/logo.png'" mode="aspectFill" />
+        <image class="avatar" :src="getImageUrl(authStore.userInfo.avatar)" mode="aspectFill" />
         <view class="user-detail">
           <text class="nickname">{{ authStore.userInfo.username || '未登录' }}</text>
           <text class="student-id">学号: {{ authStore.userInfo.studentId || '--' }}</text>
@@ -12,8 +11,8 @@
               <text class="credit-label">信用分</text>
               <text class="credit-score">{{ authStore.userInfo.creditScore || 100 }}</text>
             </view>
-            <view 
-              class="verify-tag" 
+            <view
+              class="verify-tag"
               :class="authStore.userInfo.isVerified ? 'verified' : 'unverified'"
               @click="handleVerifyClick"
             >
@@ -21,52 +20,46 @@
             </view>
           </view>
           <view class="school-info" v-if="authStore.userInfo.school || authStore.userInfo.major">
-            <text class="school-text" v-if="authStore.userInfo.school">
-              🏫 {{ authStore.userInfo.school }}
-            </text>
-            <text class="major-text" v-if="authStore.userInfo.major">
-              📚 {{ authStore.userInfo.major }}
-            </text>
+            <text class="school-text" v-if="authStore.userInfo.school">🏫 {{ authStore.userInfo.school }}</text>
+            <text class="major-text" v-if="authStore.userInfo.major">📚 {{ authStore.userInfo.major }}</text>
           </view>
         </view>
       </view>
-      <view class="edit-btn" @click="editProfile">
-        <text class="edit-text">编辑资料</text>
-      </view>
     </view>
 
-    <!-- 数据统计 -->
-    <view class="stats-grid">
+    <view class="stats-grid" v-if="authStore.isLoggedIn">
       <view class="stat-item" @click="goToOrders('lender')">
-        <text class="stat-num">{{ stats.items }}</text>
+        <text class="stat-num">{{ dashboard.totalAsLender }}</text>
         <text class="stat-label">我借出的</text>
       </view>
       <view class="stat-item" @click="goToOrders('borrower')">
-        <text class="stat-num">{{ stats.orders }}</text>
+        <text class="stat-num">{{ dashboard.totalAsBorrower }}</text>
         <text class="stat-label">我借入的</text>
       </view>
       <view class="stat-item" @click="goToOrders('borrower')">
-        <text class="stat-num">{{ stats.pending }}</text>
+        <text class="stat-num">{{ dashboard.pendingCount }}</text>
         <text class="stat-label">待处理</text>
       </view>
-      <view class="stat-item" @click="goToMessages">
-        <text class="stat-num">{{ stats.messages }}</text>
-        <text class="stat-label">未读消息</text>
+      <view class="stat-item" @click="goToOrders('borrower')">
+        <text class="stat-num">{{ dashboard.completedCount }}</text>
+        <text class="stat-label">已完成</text>
       </view>
-      <view class="stat-item" @click="goToMyItems">
-        <text class="stat-num">{{ stats.published }}</text>
-        <text class="stat-label">我发布的</text>
+      <view class="stat-item" @click="goToMessages">
+        <text class="stat-num">{{ dashboard.unreadCount }}</text>
+        <text class="stat-label">未读消息</text>
       </view>
     </view>
 
-    <!-- 功能菜单 -->
-    <view class="menu-list">
+    <view class="menu-list" v-if="authStore.isLoggedIn">
       <view class="menu-item" @click="goToMyItems">
         <text class="menu-icon">📦</text>
         <text class="menu-text">我的发布</text>
-        <text class="menu-arrow">></text>
+        <view class="menu-meta">
+          <text class="menu-count" v-if="dashboard.publishedCount > 0">{{ dashboard.publishedCount }}</text>
+          <text class="menu-arrow">></text>
+        </view>
       </view>
-      <view class="menu-item" @click="goToOrders">
+      <view class="menu-item" @click="goToOrders()">
         <text class="menu-icon">📋</text>
         <text class="menu-text">我的订单</text>
         <text class="menu-arrow">></text>
@@ -74,8 +67,10 @@
       <view class="menu-item" @click="goToMessages">
         <text class="menu-icon">💬</text>
         <text class="menu-text">我的消息</text>
-        <view class="badge" v-if="stats.messages > 0">{{ stats.messages }}</view>
-        <text class="menu-arrow" v-else>></text>
+        <view class="menu-meta">
+          <view class="badge" v-if="dashboard.unreadCount > 0">{{ dashboard.unreadCount }}</view>
+          <text class="menu-arrow">></text>
+        </view>
       </view>
       <view class="menu-item" @click="goToReviews">
         <text class="menu-icon">⭐</text>
@@ -85,8 +80,10 @@
       <view class="menu-item" @click="goToFavorites">
         <text class="menu-icon">❤️</text>
         <text class="menu-text">我的收藏</text>
-        <view class="badge" v-if="stats.favorites > 0">{{ stats.favorites }}</view>
-        <text class="menu-arrow" v-else>></text>
+        <view class="menu-meta">
+          <text class="menu-count" v-if="dashboard.favoriteCount > 0">{{ dashboard.favoriteCount }}</text>
+          <text class="menu-arrow">></text>
+        </view>
       </view>
       <view class="menu-item" @click="goToSettings">
         <text class="menu-icon">⚙️</text>
@@ -95,10 +92,6 @@
       </view>
     </view>
 
-    <!-- 退出登录 -->
-    <button class="logout-btn" @click="handleLogout" v-if="authStore.isLoggedIn">
-      退出登录
-    </button>
     <button class="login-btn" @click="goToLogin" v-else>
       立即登录
     </button>
@@ -106,26 +99,30 @@
 </template>
 
 <script setup lang="ts">
-  import { ref, onMounted } from 'vue'
+  import { onMounted, ref } from 'vue'
   import { onShow } from '@dcloudio/uni-app'
-  import { getCurrentUser, type UserInfo } from '@/api/auth'
-  import { getOrderStats } from '@/api/orders'
-  import { getUnreadCount } from '@/api/messages'
+  import { getCurrentUser } from '@/api/auth'
   import { getMyItemsCount } from '@/api/items'
+  import { getUnreadCount } from '@/api/messages'
+  import { getOrderStats } from '@/api/orders'
   import { getFavoriteCount } from '@/api/favorites'
   import { useAuthStore } from '@/stores/auth'
   import { checkLogin } from '@/utils/auth'
+  import { getImageUrl } from '@/utils/image'
 
   const authStore = useAuthStore()
 
-  const stats = ref({
-    items: 0,
-    orders: 0,
-    pending: 0,
-    messages: 0,
-    published: 0,
-    favorites: 0
+  const createDashboard = () => ({
+    totalAsLender: 0,
+    totalAsBorrower: 0,
+    pendingCount: 0,
+    completedCount: 0,
+    unreadCount: 0,
+    publishedCount: 0,
+    favoriteCount: 0
   })
+
+  const dashboard = ref(createDashboard())
 
   onMounted(() => {
     checkLoginStatus()
@@ -135,27 +132,20 @@
     checkLoginStatus()
   })
 
-  const checkLoginStatus = () => {
-    if (authStore.isLoggedIn) {
-      // 从服务器加载最新信息
-      loadUserInfo()
-      loadStats()
-      loadUnreadCount()
-      loadPublishedCount()
-      loadFavoriteCount()
-    } else {
-      stats.value = {
-        items: 0,
-        orders: 0,
-        pending: 0,
-        messages: 0,
-        published: 0,
-        favorites: 0
-      }
-    }
+  const resetDashboard = () => {
+    dashboard.value = createDashboard()
   }
 
-  // 加载用户信息
+  const checkLoginStatus = () => {
+    if (!authStore.isLoggedIn) {
+      resetDashboard()
+      return
+    }
+
+    loadUserInfo()
+    loadDashboardData()
+  }
+
   const loadUserInfo = async () => {
     try {
       const user = await getCurrentUser(undefined, { showLoading: false })
@@ -165,51 +155,32 @@
     }
   }
 
-  // 加载订单统计
-  const loadStats = async () => {
-    try {
-      const orderStats = await getOrderStats({ showLoading: false })
-      stats.value.items = orderStats.totalAsLender
-      stats.value.orders = orderStats.totalAsBorrower
-      stats.value.pending = orderStats.pendingCount
-    } catch (error) {
-      console.error('获取订单统计失败:', error)
-    }
-  }
+  const loadDashboardData = async () => {
+    const [orderStats, unreadInfo, publishedInfo, favoriteInfo] = await Promise.all([
+      getOrderStats({ showLoading: false }).catch(() => null),
+      getUnreadCount({ showLoading: false }).catch(() => null),
+      getMyItemsCount().catch(() => null),
+      getFavoriteCount().catch(() => null)
+    ])
 
-  // 加载未读消息数
-  const loadUnreadCount = async () => {
-    try {
-      const { count } = await getUnreadCount({ showLoading: false })
-      stats.value.messages = count
-    } catch (error) {
-      console.error('获取未读消息数失败:', error)
+    if (orderStats) {
+      dashboard.value.totalAsLender = orderStats.totalAsLender || 0
+      dashboard.value.totalAsBorrower = orderStats.totalAsBorrower || 0
+      dashboard.value.pendingCount = orderStats.pendingCount || 0
+      dashboard.value.completedCount = orderStats.completedCount || 0
     }
-  }
 
-  // 加载用户发布物品数量
-  const loadPublishedCount = async () => {
-    try {
-      const { total } = await getMyItemsCount()
-      stats.value.published = total
-    } catch (error) {
-      console.error('获取发布物品数失败:', error)
+    if (unreadInfo) {
+      dashboard.value.unreadCount = unreadInfo.count || 0
     }
-  }
 
-  // 加载收藏数量
-  const loadFavoriteCount = async () => {
-    try {
-      const { count } = await getFavoriteCount()
-      stats.value.favorites = count
-    } catch (error) {
-      console.error('获取收藏数量失败:', error)
+    if (publishedInfo) {
+      dashboard.value.publishedCount = publishedInfo.total || 0
     }
-  }
 
-  const editProfile = () => {
-    if (!checkLogin()) return
-    uni.navigateTo({ url: '/pages/edit-profile/edit-profile' })
+    if (favoriteInfo) {
+      dashboard.value.favoriteCount = favoriteInfo.count || 0
+    }
   }
 
   const goToMyItems = () => {
@@ -248,42 +219,12 @@
   }
 
   const handleVerifyClick = () => {
-    if (!checkLogin()) return
     if (authStore.userInfo.isVerified) {
       uni.showToast({ title: '您已通过认证', icon: 'success' })
       return
     }
-    uni.showToast({ title: '认证功能即将上线，敬请期待', icon: 'none' })
-  }
 
-  const handleLogout = () => {
-    uni.showModal({
-      title: '提示',
-      content: '确定要退出登录吗？',
-      success: (res) => {
-        if (res.confirm) {
-          authStore.logout()
-          stats.value = {
-            items: 0,
-            orders: 0,
-            pending: 0,
-            messages: 0,
-            published: 0,
-            favorites: 0
-          }
-          uni.showToast({ 
-            title: '已退出登录', 
-            icon: 'success',
-            duration: 1500 
-          })
-          setTimeout(() => {
-            uni.reLaunch({ 
-              url: '/pages/login/login' 
-            })
-          }, 1000)
-        }
-      }
-    })
+    uni.showToast({ title: '认证功能即将上线，敬请期待', icon: 'none' })
   }
 </script>
 
@@ -399,29 +340,29 @@
   color: rgba(255,255,255,0.9);
 }
 
-.edit-btn {
-  position: absolute;
-  top: 40rpx;
-  right: 40rpx;
-  background-color: rgba(255,255,255,0.2);
-  padding: 12rpx 24rpx;
-  border-radius: 28rpx;
+.profile-tip-card {
+  margin: -20rpx 40rpx 24rpx;
+  background: rgba(255,255,255,0.95);
+  border-radius: 16rpx;
+  padding: 20rpx 24rpx;
+  box-shadow: 0 4rpx 20rpx rgba(0,0,0,0.08);
+  position: relative;
+  z-index: 1;
 }
 
-.edit-text {
+.profile-tip {
   font-size: 24rpx;
-  color: #fff;
+  color: #666;
+  line-height: 1.6;
 }
 
 .stats-grid {
   display: flex;
   background-color: #fff;
-  margin: -30rpx 40rpx 30rpx;
+  margin: 0 40rpx 24rpx;
   border-radius: 16rpx;
-  padding: 30rpx 0;
-  box-shadow: 0 4rpx 20rpx rgba(0,0,0,0.1);
-  position: relative;
-  z-index: 1;
+  padding: 24rpx 0;
+  box-shadow: 0 4rpx 20rpx rgba(0,0,0,0.08);
 }
 
 .stat-item {
@@ -438,7 +379,7 @@
 }
 
 .stat-num {
-  font-size: 36rpx;
+  font-size: 34rpx;
   font-weight: bold;
   color: #333;
   margin-bottom: 8rpx;
@@ -478,6 +419,17 @@
   color: #333;
 }
 
+.menu-meta {
+  display: flex;
+  align-items: center;
+}
+
+.menu-count {
+  font-size: 24rpx;
+  color: #999;
+  margin-right: 12rpx;
+}
+
 .menu-arrow {
   font-size: 28rpx;
   color: #999;
@@ -489,30 +441,21 @@
   font-size: 22rpx;
   padding: 4rpx 12rpx;
   border-radius: 20rpx;
-  margin-right: 16rpx;
+  margin-right: 12rpx;
+  min-width: 36rpx;
+  text-align: center;
 }
 
-.logout-btn,
 .login-btn {
   margin: 60rpx 40rpx 0;
   height: 90rpx;
   line-height: 90rpx;
   border-radius: 12rpx;
   font-size: 32rpx;
-}
-
-.logout-btn {
-  background-color: #fff;
-  color: #ff4d4f;
-  border: 1rpx solid #ff4d4f;
-}
-
-.login-btn {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: #fff;
 }
 
-.logout-btn::after,
 .login-btn::after {
   border: none;
 }

@@ -103,77 +103,70 @@ export const request = <T = any>(options: RequestOptions): Promise<T> => {
           // 处理业务逻辑错误（如果后端返回了 code 字段）
           if (result.code && result.code !== 200 && result.code !== 201) {
             showError(result.message || '请求失败')
-            if (showLoadingFlag) {
-              hideLoading()
-            }
             reject(result)
             return
           }
-          
+
           // 如果后端返回了 data 字段，使用 data；否则直接使用返回的数据
-          if (showLoadingFlag) {
-            hideLoading()
-          }
           resolve((result.data !== undefined ? result.data : result) as T)
+        } else if (statusCode === 400 || statusCode === 409) {
+          const result = (responseData || {}) as any
+          const error = new Error(result.message || '请求参数无效') as Error & { code?: number; response?: any }
+          error.code = statusCode
+          error.response = result
+
+          showError(error.message)
+          reject(error)
         } else if (statusCode === 401) {
-          // Token 过期或无效
-          if (!url.includes('/auth/login')) {
+          const result = (responseData || {}) as any
+          const error = new Error(result.message || (url.includes('/auth/login') ? '账号或密码错误' : '未授权访问')) as Error & { code?: number; response?: any }
+          error.code = statusCode
+          error.response = result
+
+          if (!url.includes('/auth/login') && !url.includes('/auth/login/resolve-deletion')) {
             uni.removeStorageSync('token')
             uni.removeStorageSync('userInfo')
             showError('登录已过期，请重新登录')
-            
-            // 跳转到登录页
+
             setTimeout(() => {
               uni.navigateTo({
                 url: '/pages/login/login'
               })
             }, 1500)
           } else {
-            showError('账号或密码错误')
+            showError(error.message)
           }
-          
-          if (showLoadingFlag) {
-            hideLoading()
-          }
-          reject(new Error('Unauthorized'))
+
+          reject(error)
         } else if (statusCode === 403) {
-          // Token 无效或过期
-          if (!url.includes('/auth/login')) {
+          const result = (responseData || {}) as any
+          const error = new Error(result.message || '请求被拒绝') as Error & { code?: number; response?: any }
+          error.code = statusCode
+          error.response = result
+
+          if (!url.includes('/auth/login') && !url.includes('/auth/login/resolve-deletion')) {
             uni.removeStorageSync('token')
             uni.removeStorageSync('userInfo')
             showError('登录已过期，请重新登录')
-            
-            // 跳转到登录页
+
             setTimeout(() => {
               uni.navigateTo({
                 url: '/pages/login/login'
               })
             }, 1500)
           } else {
-            showError('账号已被禁用')
+            showError(error.message)
           }
-          
-          if (showLoadingFlag) {
-            hideLoading()
-          }
-          reject(new Error('Forbidden'))
+
+          reject(error)
         } else if (statusCode === 404) {
           showError('请求的资源不存在')
-          if (showLoadingFlag) {
-            hideLoading()
-          }
           reject(new Error('Not Found'))
         } else if (statusCode >= 500) {
           showError('服务器错误，请稍后重试')
-          if (showLoadingFlag) {
-            hideLoading()
-          }
           reject(new Error('Server Error'))
         } else {
           showError('网络请求失败')
-          if (showLoadingFlag) {
-            hideLoading()
-          }
           reject(new Error('Request Failed'))
         }
       },
@@ -242,14 +235,14 @@ export const del = <T = any>(url: string, data?: any, options: Partial<RequestOp
 /**
  * 上传文件
  */
-export const upload = <T = any>(url: string, filePath: string, formData?: any): Promise<T> => {
+export const upload = <T = any>(url: string, filePath: string, formData?: any, name: string = 'file'): Promise<T> => {
   const token = getToken()
   
   return new Promise((resolve, reject) => {
     uni.uploadFile({
       url: `${BASE_URL}${url}`,
       filePath,
-      name: 'file',
+      name,
       formData,
       header: {
         'Authorization': token ? `Bearer ${token}` : ''

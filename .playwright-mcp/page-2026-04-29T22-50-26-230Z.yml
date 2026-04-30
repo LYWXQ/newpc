@@ -1,0 +1,80 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e3]:
+    - generic [ref=e4]:
+      - generic [ref=e8]: 个人中心
+      - generic [ref=e12]:
+        - generic [ref=e14]:
+          - img [ref=e17]
+          - generic [ref=e18]:
+            - generic [ref=e19]: liyiwen
+            - generic [ref=e20]: "学号: 202214060422"
+            - generic [ref=e21]:
+              - generic [ref=e22]:
+                - generic [ref=e23]: 信用分
+                - generic [ref=e24]: "100"
+              - generic [ref=e26]: 未认证
+        - generic [ref=e27]:
+          - generic [ref=e28]:
+            - generic [ref=e29]: "1"
+            - generic [ref=e30]: 我借出的
+          - generic [ref=e31]:
+            - generic [ref=e32]: "2"
+            - generic [ref=e33]: 我借入的
+          - generic [ref=e34]:
+            - generic [ref=e35]: "0"
+            - generic [ref=e36]: 待处理
+          - generic [ref=e37]:
+            - generic [ref=e38]: "0"
+            - generic [ref=e39]: 已完成
+          - generic [ref=e40]:
+            - generic [ref=e41]: "0"
+            - generic [ref=e42]: 未读消息
+        - generic [ref=e43]:
+          - generic [ref=e44]:
+            - generic [ref=e45]: 📦
+            - generic [ref=e46]: 我的发布
+            - generic [ref=e47]:
+              - generic [ref=e48]: "2"
+              - generic [ref=e49]: ">"
+          - generic [ref=e50]:
+            - generic [ref=e51]: 📋
+            - generic [ref=e52]: 我的订单
+            - generic [ref=e53]: ">"
+          - generic [ref=e54]:
+            - generic [ref=e55]: 💬
+            - generic [ref=e56]: 我的消息
+            - generic [ref=e58]: ">"
+          - generic [ref=e59]:
+            - generic [ref=e60]: ⭐
+            - generic [ref=e61]: 我的评价
+            - generic [ref=e62]: ">"
+          - generic [ref=e63]:
+            - generic [ref=e64]: ❤️
+            - generic [ref=e65]: 我的收藏
+            - generic [ref=e66]:
+              - generic [ref=e67]: "1"
+              - generic [ref=e68]: ">"
+          - generic [ref=e69]:
+            - generic [ref=e70]: ⚙️
+            - generic [ref=e71]: 设置
+            - generic [ref=e72]: ">"
+    - generic [ref=e74]:
+      - generic [ref=e77] [cursor=pointer]:
+        - img [ref=e79]
+        - generic [ref=e80]: 首页
+      - generic [ref=e82] [cursor=pointer]:
+        - img [ref=e84]
+        - generic [ref=e85]: 订单
+      - generic [ref=e87] [cursor=pointer]:
+        - img [ref=e89]
+        - generic [ref=e90]: 发布
+      - generic [ref=e92] [cursor=pointer]:
+        - img [ref=e94]
+        - generic [ref=e95]: 消息
+      - generic [ref=e97] [cursor=pointer]:
+        - img [ref=e99]
+        - generic [ref=e100]: 我的
+  - generic:
+    - generic:
+      - generic:
+        - paragraph: 加载中...

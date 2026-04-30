@@ -46,23 +46,23 @@
       </view>
 
       <!-- 发布者信息 -->
-      <view v-if="item.user" class="owner-section">
+      <view class="owner-section">
         <view class="owner-header">
           <text class="section-title">发布者</text>
           <view v-if="isOwnItem" class="self-badge">
             <text class="self-text">本人发布</text>
           </view>
-          <view v-else-if="item.user.isVerified" class="verified-badge">
+          <view v-else-if="item.user?.isVerified" class="verified-badge">
             <text class="verified-text">已认证</text>
           </view>
         </view>
         <view class="owner-info">
-          <image class="owner-avatar" :src="item.user.avatar || '/static/logo.png'" mode="aspectFill" />
+          <image class="owner-avatar" :src="getImageUrl(item.user?.avatar)" mode="aspectFill" />
           <view class="owner-detail">
-            <text class="owner-name">{{ item.user.username }}</text>
+            <text class="owner-name">{{ getItemOwnerDisplayName() }}</text>
             <view class="owner-credit">
               <text class="credit-label">信用分</text>
-              <text class="credit-score">{{ item.user.creditScore }}</text>
+              <text class="credit-score">{{ item.user?.creditScore ?? 0 }}</text>
             </view>
           </view>
         </view>
@@ -73,19 +73,19 @@
             <text class="contact-tip">点击可复制</text>
           </view>
           <view class="contact-list">
-            <view v-if="item.user.phone" class="contact-item" @click="copyContact(item.user.phone)">
+            <view v-if="item.user?.phone" class="contact-item" @click="copyContact(item.user.phone)">
               <text class="contact-icon">📞</text>
               <text class="contact-label">手机号</text>
               <text class="contact-value">{{ item.user.phone }}</text>
               <text class="copy-icon">📋</text>
             </view>
-            <view v-if="item.user.qq" class="contact-item" @click="copyContact(item.user.qq)">
+            <view v-if="item.user?.qq" class="contact-item" @click="copyContact(item.user.qq)">
               <text class="contact-icon">💬</text>
               <text class="contact-label">QQ号</text>
               <text class="contact-value">{{ item.user.qq }}</text>
               <text class="copy-icon">📋</text>
             </view>
-            <view v-if="!item.user.phone && !item.user.qq" class="contact-empty">
+            <view v-if="!item.user?.phone && !item.user?.qq" class="contact-empty">
               <text class="empty-text">暂无联系方式</text>
             </view>
           </view>
@@ -137,9 +137,9 @@
         <view v-else class="reviews-list">
           <view class="review-card" v-for="review in reviews" :key="review.id">
             <view class="review-header">
-              <image class="reviewer-avatar" :src="review.reviewer?.avatar || '/static/logo.png'" mode="aspectFill" />
+              <image class="reviewer-avatar" :src="getImageUrl(review.reviewer?.avatar)" mode="aspectFill" />
               <view class="reviewer-info">
-                <text class="reviewer-name">{{ review.reviewer?.username }}</text>
+                <text class="reviewer-name">{{ getReviewerDisplayName(review) }}</text>
                 <view class="review-rating">
                   <text 
                     class="star" 
@@ -157,7 +157,7 @@
                 class="review-image" 
                 v-for="(img, index) in review.images" 
                 :key="index"
-                :src="img" 
+                :src="getImageUrl(img)"
                 mode="aspectFill"
                 @click="previewReviewImage(img)"
               />
@@ -193,7 +193,7 @@
     <view class="borrow-dialog-mask" v-if="showBorrowDialog" @click="closeBorrowDialog">
       <view class="borrow-dialog" @click.stop>
         <view class="dialog-header">
-          <text class="dialog-title">借用信息</text>
+          <text class="dialog-title">交易信息</text>
           <text class="dialog-close" @click="closeBorrowDialog">×</text>
         </view>
         <view class="dialog-content">
@@ -206,42 +206,42 @@
             <text class="form-value price">¥{{ item?.price }}/天</text>
           </view>
           <view class="form-item">
-            <text class="form-label">开始时间</text>
+            <text class="form-label">交易时间</text>
             <view class="datetime-picker" @click="openDateTimePicker('start')">
               <text class="picker-value" :class="{ 'placeholder': !orderForm.startDate }">
-                {{ orderForm.startDate ? formatDateTime(orderForm.startDate) : '请选择开始时间' }}
+                {{ orderForm.startDate ? formatDateTime(orderForm.startDate) : '请选择交易时间' }}
               </text>
               <text class="picker-arrow">></text>
             </view>
           </view>
           <view class="form-item">
-            <text class="form-label">结束时间</text>
+            <text class="form-label">交还时间</text>
             <view class="datetime-picker" @click="openDateTimePicker('end')">
               <text class="picker-value" :class="{ 'placeholder': !orderForm.endDate }">
-                {{ orderForm.endDate ? formatDateTime(orderForm.endDate) : '请选择结束时间' }}
+                {{ orderForm.endDate ? formatDateTime(orderForm.endDate) : '请选择交还时间' }}
               </text>
               <text class="picker-arrow">></text>
             </view>
           </view>
           <view class="form-item" v-if="orderForm.startDate && orderForm.endDate">
-            <text class="form-label">借用时长</text>
+            <text class="form-label">预计交易时长</text>
             <text class="form-value duration">{{ calculateDuration }}</text>
           </view>
           <view class="form-item">
             <text class="form-label">取货地点</text>
-            <input 
-              class="form-input" 
-              v-model="orderForm.pickupLocation" 
+            <input
+              class="form-input"
+              v-model="orderForm.pickupLocation"
               placeholder="请输入取货地点"
-            />
+            >
           </view>
           <view class="form-item">
             <text class="form-label">还货地点</text>
-            <input 
-              class="form-input" 
-              v-model="orderForm.returnLocation" 
+            <input
+              class="form-input"
+              v-model="orderForm.returnLocation"
               placeholder="请输入还货地点"
-            />
+            >
           </view>
           <view class="form-item">
             <text class="form-label">备注信息</text>
@@ -255,7 +255,7 @@
         </view>
         <view class="dialog-footer">
           <button class="btn-cancel" @click="closeBorrowDialog">取消</button>
-          <button class="btn-confirm" @click="submitOrder" :disabled="!canSubmit">确认借用</button>
+          <button class="btn-confirm" @click="submitOrder" :disabled="!canSubmit">确认交易</button>
         </view>
       </view>
     </view>
@@ -265,7 +265,7 @@
       <view class="datetime-picker-container" @click.stop>
         <view class="picker-header">
           <text class="picker-cancel" @click="closeDateTimePicker">取消</text>
-          <text class="picker-title">选择{{ pickerType === 'start' ? '开始' : '结束' }}时间</text>
+          <text class="picker-title">选择{{ pickerType === 'start' ? '交易' : '交还' }}时间</text>
           <text class="picker-confirm" @click="confirmDateTime">确定</text>
         </view>
         <view class="picker-view-container">
@@ -300,8 +300,9 @@
   import { getItemReviews, type Review } from '@/api/reviews'
   import { addFavorite, removeFavorite, checkFavoriteStatus } from '@/api/favorites'
   import { useAuthStore } from '@/stores/auth'
-  import { formatItemStatus, getBorrowButtonText, canBorrow as canBorrowItem } from '@/utils/constants'
+  import { formatItemStatus, canBorrow as canBorrowItem } from '@/utils/constants'
   import { checkLogin } from '@/utils/auth'
+  import { getImageUrl } from '@/utils/image'
 
   const authStore = useAuthStore()
 
@@ -365,11 +366,6 @@
     return itemUserId === currentUserId
   })
 
-  // 计算属性：借用按钮文字
-  const borrowButtonText = computed(() => {
-    return item.value ? getBorrowButtonText(item.value.status) : '立即借用'
-  })
-
   // 计算属性：计算借用时长
   const calculateDuration = computed(() => {
     if (!orderForm.value.startDate || !orderForm.value.endDate) return ''
@@ -398,23 +394,14 @@
 
   // 更新日期列表
   const updateDays = () => {
-    const year = parseInt(years.value[pickerValue.value[0]] || new Date().getFullYear())
-    const month = parseInt(months.value[pickerValue.value[1]] || 1)
+    const year = parseInt(String(years.value[pickerValue.value[0]] || new Date().getFullYear()))
+    const month = parseInt(String(months.value[pickerValue.value[1]] || 1))
     const daysInMonth = new Date(year, month, 0).getDate()
     days.value = Array.from({ length: daysInMonth }, (_, i) => String(i + 1).padStart(2, '0'))
   }
 
-  // 获取图片 URL
-  const getImageUrl = (url: string): string => {
-    if (!url) return '/static/logo.png'
-    if (url.startsWith('http')) return url
-    return `http://localhost:3000${url}`
-  }
-
   // 图片加载失败处理
-  const onImageError = () => {
-    console.log('图片加载失败')
-  }
+  const onImageError = () => {}
 
   // 格式化状态
   const formatStatus = (status: string): string => {
@@ -458,7 +445,7 @@
     const date = new Date(time)
     const now = new Date()
     const diff = now.getTime() - date.getTime()
-  
+
     if (diff < 60000) {
       return '刚刚'
     } else if (diff < 3600000) {
@@ -472,11 +459,20 @@
     }
   }
 
+  const getItemOwnerDisplayName = () => {
+    return item.value?.user?.username || '已注销用户'
+  }
+
+  const getReviewerDisplayName = (review: Review) => {
+    return review.reviewer?.username || '已注销用户'
+  }
+
   // 预览评价图片
   const previewReviewImage = (url: string) => {
+    const normalizedUrl = getImageUrl(url)
     uni.previewImage({
-      urls: [url],
-      current: url
+      urls: [normalizedUrl],
+      current: normalizedUrl
     })
   }
 
@@ -488,7 +484,7 @@
   
     try {
       const res = await getItemReviews(itemId.value, { page: 1, limit: 5 })
-      reviews.value = res.data || []
+      reviews.value = res.reviews || []
     } catch (error) {
       console.error('获取物品评价失败:', error)
     } finally {
@@ -575,13 +571,16 @@
   }
 
   // 联系发布者（跳转到交易流程）
-  const contactOwner = () => {
+  const contactOwner = async () => {
+    if (!checkLogin()) return
+
+    await loadItemDetail()
+
     if (!canBorrow.value) {
       uni.showToast({ title: '该物品当前不可借用', icon: 'none' })
       return
     }
-    if (!checkLogin()) return
-    // 打开借用弹窗，进入交易流程
+
     openBorrowDialog()
   }
 
@@ -602,8 +601,10 @@
   
     orderForm.value.startDate = startDate.toISOString()
     orderForm.value.endDate = endDate.toISOString()
+    orderForm.value.pickupLocation = item.value.location || ''
+    orderForm.value.returnLocation = item.value.location || ''
     orderForm.value.note = ''
-  
+
     showBorrowDialog.value = true
   }
 
@@ -670,14 +671,14 @@
     // 验证时间
     const now = new Date()
     if (pickerType.value === 'start' && selectedDate < now) {
-      uni.showToast({ title: '开始时间不能早于当前时间', icon: 'none' })
+      uni.showToast({ title: '交易时间不能早于当前时间', icon: 'none' })
       return
     }
-  
+
     if (pickerType.value === 'end' && orderForm.value.startDate) {
       const startDate = new Date(orderForm.value.startDate)
       if (selectedDate <= startDate) {
-        uni.showToast({ title: '结束时间必须晚于开始时间', icon: 'none' })
+        uni.showToast({ title: '交还时间必须晚于交易时间', icon: 'none' })
         return
       }
     }
@@ -703,20 +704,19 @@
   // 提交订单
   const submitOrder = async () => {
     if (!orderForm.value.startDate || !orderForm.value.endDate) {
-      uni.showToast({ title: '请选择借用时间', icon: 'none' })
+      uni.showToast({ title: '请选择交易时间和交还时间', icon: 'none' })
       return
     }
-  
+
     const startDate = new Date(orderForm.value.startDate)
     const endDate = new Date(orderForm.value.endDate)
-  
+
     if (endDate <= startDate) {
-      uni.showToast({ title: '结束时间必须晚于开始时间', icon: 'none' })
+      uni.showToast({ title: '交还时间必须晚于交易时间', icon: 'none' })
       return
     }
   
     try {
-      uni.showLoading({ title: '提交中...' })
       const params: CreateOrderParams = {
         itemId: itemId.value,
         startDate: orderForm.value.startDate,
@@ -726,15 +726,20 @@
         note: orderForm.value.note || undefined
       }
       await createOrder(params)
-      uni.hideLoading()
       uni.showToast({ title: '交易请求已提交', icon: 'success' })
       closeBorrowDialog()
       setTimeout(() => {
         uni.switchTab({ url: '/pages/orders/orders' })
       }, 1500)
-    } catch (error) {
-      uni.hideLoading()
-      uni.showToast({ title: '提交失败，请重试', icon: 'none' })
+    } catch (error: any) {
+      if (error?.message === 'Item is not available') {
+        closeBorrowDialog()
+        await loadItemDetail()
+        uni.showToast({ title: '物品状态已变化，请重新确认', icon: 'none' })
+        return
+      }
+
+      uni.showToast({ title: error?.message || '提交失败，请重试', icon: 'none' })
     }
   }
 

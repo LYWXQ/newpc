@@ -26,7 +26,7 @@ export interface UserInfo {
 // 消息信息接口
 export interface Message {
   id: number
-  senderId: number
+  senderId: number | null
   receiverId: number
   itemId?: number
   type: MessageType
@@ -111,7 +111,7 @@ export const getUnreadCount = (options?: any): Promise<{ count: number }> => {
  * 删除消息
  */
 export const deleteMessage = (messageId: number): Promise<{ message: string }> => {
-  return put(`/messages/${messageId}/delete`)
+  return del(`/messages/${messageId}`)
 }
 
 /**

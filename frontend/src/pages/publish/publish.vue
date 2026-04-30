@@ -286,8 +286,8 @@
       return
     }
     const pages = getCurrentPages()
-    const currentPage = pages[pages.length - 1]
-    const options = currentPage.options as any
+    const currentPage = pages[pages.length - 1] as any
+    const options = currentPage?.options || {}
     if (options.id) {
       itemId.value = parseInt(options.id)
       isEditMode.value = true

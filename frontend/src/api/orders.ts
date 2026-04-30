@@ -4,10 +4,37 @@
 import { get, post, put } from '@/utils/request'
 import type { PaginationData } from './types'
 
-// 订单状态（与后端保持一致）
-type OrderStatus = 'pending' | 'confirmed' | 'using' | 'returned' | 'completed' | 'cancelled'
+export type OrderStatus = 'pending' | 'confirmed' | 'using' | 'returned' | 'completed' | 'cancelled'
 
-// 订单信息接口
+interface UserInfo {
+  id: number
+  username: string
+  avatar?: string
+  creditScore?: number
+  phone?: string
+  qq?: string
+}
+
+interface ItemOwnerInfo {
+  id: number
+  username: string
+  avatar?: string
+  creditScore?: number
+  isVerified?: boolean
+  phone?: string
+  qq?: string
+}
+
+interface ItemInfo {
+  id: number
+  title: string
+  images: string[]
+  price: number
+  deposit: number
+  transactionType?: 'free' | 'rent' | 'sell'
+  user?: ItemOwnerInfo
+}
+
 export interface Order {
   id: number
   itemId: number
@@ -16,14 +43,25 @@ export interface Order {
   status: OrderStatus
   startDate: string
   endDate: string
+  totalDays: number
   totalPrice: number
   deposit: number
   note?: string
   cancelReason?: string
   pickupLocation?: string
   returnLocation?: string
-  pickupCode?: string
+  pickupCode?: string | null
+  returnCode?: string | null
+  pickupCodeVerifiedAt?: string | null
+  pickupConfirmedByLenderAt?: string | null
+  actualPickupTime?: string | null
+  returnCodeVerifiedAt?: string | null
+  returnConfirmedByLenderAt?: string | null
+  actualReturnTime?: string | null
+  returnConfirmedTime?: string | null
+  isEarlyReturn?: boolean
   pendingConfirmation?: boolean
+  pendingExtension?: boolean
   createdAt: string
   updatedAt: string
   item?: ItemInfo
@@ -31,24 +69,6 @@ export interface Order {
   borrower?: UserInfo
 }
 
-// 物品信息（简版）
-interface ItemInfo {
-  id: number
-  title: string
-  images: string[]
-  price: number
-  deposit: number
-}
-
-// 用户信息（简版）
-interface UserInfo {
-  id: number
-  username: string
-  avatar?: string
-  phone?: string
-}
-
-// 创建订单参数
 export interface CreateOrderParams {
   itemId: number
   startDate: string
@@ -58,10 +78,11 @@ export interface CreateOrderParams {
   note?: string
 }
 
-// 更新订单参数
-export interface UpdateOrderParams {
-  status?: OrderStatus
-  cancelReason?: string
+export interface ConfirmOrderParams {
+  startDate?: string
+  endDate?: string
+  pickupLocation?: string
+  returnLocation?: string
 }
 
 /**
@@ -86,17 +107,10 @@ export const createOrder = (data: CreateOrderParams): Promise<{ message: string;
 }
 
 /**
- * 更新订单状态
+ * 卖方确认订单
  */
-export const updateOrder = (id: number, data: UpdateOrderParams): Promise<{ message: string; order: Order }> => {
-  return put(`/orders/${id}`, data)
-}
-
-/**
- * 同意订单
- */
-export const approveOrder = (id: number): Promise<{ message: string; order: Order }> => {
-  return put(`/orders/${id}/approve`)
+export const confirmOrder = (id: number, data?: ConfirmOrderParams): Promise<{ message: string; order: Order }> => {
+  return put(`/orders/${id}/confirm`, data || {})
 }
 
 /**
@@ -121,10 +135,24 @@ export const confirmChanges = (id: number): Promise<{ message: string; order: Or
 }
 
 /**
- * 确认归还
+ * 卖方确认已交付
  */
-export const returnOrder = (id: number): Promise<{ message: string; order: Order }> => {
-  return put(`/orders/${id}/return`)
+export const confirmPickupByLender = (id: number): Promise<{ message: string; order: Order }> => {
+  return put(`/orders/${id}/confirm-pickup`)
+}
+
+/**
+ * 提交归还码
+ */
+export const returnOrder = (id: number, returnCode: string): Promise<{ message: string; order: Order }> => {
+  return put(`/orders/${id}/return`, { returnCode })
+}
+
+/**
+ * 卖方确认已收回
+ */
+export const confirmReturnByLender = (id: number): Promise<{ message: string; order: Order }> => {
+  return put(`/orders/${id}/confirm-return-receipt`)
 }
 
 /**
@@ -148,7 +176,9 @@ export const getOrderStats = (options?: any): Promise<{
   totalAsLender: number
   totalAsBorrower: number
   pendingCount: number
-  inProgressCount: number
+  confirmedCount: number
+  usingCount: number
+  returnedCount: number
   completedCount: number
 }> => {
   return get('/orders/stats', undefined, options)

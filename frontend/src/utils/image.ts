@@ -28,29 +28,35 @@ export const getImageUrl = (imagePath?: string | null): string => {
   if (!imagePath || typeof imagePath !== 'string') {
     return '/static/logo.png'
   }
-  
+
+  const normalizedImagePath = imagePath.replace(/\\/g, '/')
+
   // 如果是完整的URL，直接返回
-  if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
-    return imagePath
+  if (normalizedImagePath.startsWith('http://') || normalizedImagePath.startsWith('https://')) {
+    return normalizedImagePath
   }
-  
+
   // 如果是本地路径（以/static开头），直接返回
-  if (imagePath.startsWith('/static/')) {
-    return imagePath
+  if (normalizedImagePath.startsWith('/static/')) {
+    return normalizedImagePath
   }
-  
+
   // 如果是/uploads路径，添加服务器地址前缀
-  if (imagePath.startsWith('/uploads/') || imagePath.startsWith('uploads/')) {
+  if (normalizedImagePath.startsWith('/uploads/') || normalizedImagePath.startsWith('uploads/')) {
     // 标准化路径，确保以/uploads/开头
-    let normalizedPath = imagePath.startsWith('/') ? imagePath : `/${imagePath}`
-    
+    const normalizedPath = normalizedImagePath.startsWith('/') ? normalizedImagePath : `/${normalizedImagePath}`
+
+    if (normalizedPath === '/uploads/test.png') {
+      return '/static/logo.png'
+    }
+
     // 解码可能的URL编码问题
     let decodedPath = decodeURIComponent(normalizedPath)
     
     // 检查解码后是否包含乱码
     if (hasInvalidChars(decodedPath)) {
       // 如果有乱码，尝试从原始路径中提取看起来有效的部分
-      const match = imagePath.match(/uploads\/\d{6}\/\d+-\d+\.png/i)
+      const match = normalizedImagePath.match(/uploads\/\d{6}\/\d+-\d+\.png/i)
       if (match) {
         decodedPath = '/' + match[0]
       } else {
@@ -66,6 +72,6 @@ export const getImageUrl = (imagePath?: string | null): string => {
   }
   
   // 其他相对路径，添加服务器地址前缀（确保只有一个斜杠）
-  const cleanPath = imagePath.startsWith('/') ? imagePath.substring(1) : imagePath
+  const cleanPath = normalizedImagePath.startsWith('/') ? normalizedImagePath.substring(1) : normalizedImagePath
   return `${BASE_URL}/${cleanPath}`
 }

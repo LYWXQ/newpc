@@ -11,6 +11,11 @@ if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
 }
 
+const getFileUrl = (filePath) => {
+  const relativePath = path.relative(uploadDir, filePath).replace(/\\/g, '/');
+  return `/uploads/${relativePath}`;
+};
+
 // 配置存储
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
@@ -61,9 +66,7 @@ router.post('/', authenticateToken, upload.single('file'), (req, res) => {
       return res.status(400).json({ message: '没有上传文件' });
     }
 
-    // 构建文件访问 URL
-    const relativePath = req.file.path.replace(uploadDir, '');
-    const fileUrl = `/uploads${relativePath}`;
+    const fileUrl = getFileUrl(req.file.path);
 
     res.json({
       message: '上传成功',
@@ -87,10 +90,7 @@ router.post('/multiple', authenticateToken, upload.array('files', 6), (req, res)
       return res.status(400).json({ message: '没有上传文件' });
     }
 
-    const urls = req.files.map(file => {
-      const relativePath = file.path.replace(uploadDir, '');
-      return `/uploads${relativePath}`;
-    });
+    const urls = req.files.map(file => getFileUrl(file.path));
 
     res.json({
       message: '上传成功',
@@ -113,8 +113,7 @@ router.post('/avatar', authenticateToken, upload.single('avatar'), (req, res) =>
       return res.status(400).json({ message: '没有上传文件' });
     }
 
-    const relativePath = req.file.path.replace(uploadDir, '');
-    const fileUrl = `/uploads${relativePath}`;
+    const fileUrl = getFileUrl(req.file.path);
 
     res.json({
       message: '头像上传成功',

@@ -1,0 +1,29 @@
+- generic [ref=e3]:
+  - generic [ref=e202]:
+    - generic [ref=e206]: 我的订单
+    - generic [ref=e210]:
+      - generic [ref=e211]:
+        - generic [ref=e212]: 我借入的
+        - generic [ref=e213]: 我借出的
+      - generic [ref=e214]:
+        - generic [ref=e215]: 全部
+        - generic [ref=e216]: 待处理
+        - generic [ref=e217]: 进行中
+        - generic [ref=e218]: 已完成
+      - generic [ref=e225]: 加载中...
+  - generic [ref=e174]:
+    - generic [ref=e177] [cursor=pointer]:
+      - img [ref=e179]
+      - generic [ref=e180]: 首页
+    - generic [ref=e182] [cursor=pointer]:
+      - img [ref=e184]
+      - generic [ref=e185]: 订单
+    - generic [ref=e187] [cursor=pointer]:
+      - img [ref=e189]
+      - generic [ref=e190]: 发布
+    - generic [ref=e192] [cursor=pointer]:
+      - img [ref=e194]
+      - generic [ref=e195]: 消息
+    - generic [ref=e197] [cursor=pointer]:
+      - img [ref=e199]
+      - generic [ref=e200]: 我的

@@ -66,9 +66,35 @@ const User = sequelize.define('User', {
     comment: '是否认证'
   },
   status: {
-    type: DataTypes.ENUM('active', 'inactive', 'banned'),
+    type: DataTypes.ENUM('active', 'inactive', 'banned', 'deleted'),
     defaultValue: 'active',
     comment: '账号状态'
+  },
+  deletionStatus: {
+    type: DataTypes.ENUM('none', 'pending', 'deleted'),
+    allowNull: false,
+    defaultValue: 'none',
+    comment: '注销状态'
+  },
+  deletionRequestedAt: {
+    type: DataTypes.DATE,
+    allowNull: true,
+    comment: '发起注销时间'
+  },
+  deletionDeadlineAt: {
+    type: DataTypes.DATE,
+    allowNull: true,
+    comment: '注销生效截止时间'
+  },
+  deletionCancelledAt: {
+    type: DataTypes.DATE,
+    allowNull: true,
+    comment: '取消注销时间'
+  },
+  anonymizedAt: {
+    type: DataTypes.DATE,
+    allowNull: true,
+    comment: '匿名化时间'
   },
   role: {
     type: DataTypes.STRING(20),

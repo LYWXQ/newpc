@@ -82,8 +82,8 @@ router.post('/system', async (req, res) => {
       return res.status(404).json({ message: 'Receiver not found' });
     }
     
-    // 系统消息的发送者设为0（表示系统）
-    const senderId = 0;
+    // 系统消息不关联具体发送用户
+    const senderId = null;
     
     const message = await Message.create({
       senderId,

@@ -12,9 +12,10 @@
             <text class="required">*</text>
             学号
           </text>
-          <input 
-            type="text" 
-            v-model="studentId" 
+          <input
+            type="text"
+            v-model="studentId"
+            name="studentId"
             placeholder="请输入学号"
             maxlength="20"
           >
@@ -25,9 +26,10 @@
             <text class="required">*</text>
             用户名
           </text>
-          <input 
-            type="text" 
-            v-model="username" 
+          <input
+            type="text"
+            v-model="username"
+            name="username"
             placeholder="请输入用户名"
             maxlength="50"
           >
@@ -35,9 +37,10 @@
 
         <view class="form-item school-selector">
           <text class="label">学校</text>
-          <input 
-            type="text" 
-            v-model="schoolInput" 
+          <input
+            type="text"
+            v-model="schoolInput"
+            name="school"
             placeholder="请搜索并选择学校"
             maxlength="100"
             @input="handleSchoolInput"
@@ -57,9 +60,10 @@
 
         <view class="form-item">
           <text class="label">专业</text>
-          <input 
-            type="text" 
-            v-model="major" 
+          <input
+            type="text"
+            v-model="major"
+            name="major"
             placeholder="请输入专业"
             maxlength="100"
           >
@@ -70,9 +74,10 @@
             <text class="required">*</text>
             手机号
           </text>
-          <input 
-            type="number" 
-            v-model="phone" 
+          <input
+            type="number"
+            v-model="phone"
+            name="phone"
             placeholder="请输入手机号"
             maxlength="11"
           >
@@ -81,11 +86,26 @@
         <view class="form-item">
           <text class="label">
             <text class="required">*</text>
+            QQ
+          </text>
+          <input
+            type="number"
+            v-model="qq"
+            name="qq"
+            placeholder="请输入QQ号"
+            maxlength="15"
+          >
+        </view>
+
+        <view class="form-item">
+          <text class="label">
+            <text class="required">*</text>
             密码
           </text>
-          <input 
-            type="password" 
-            v-model="password" 
+          <input
+            type="password"
+            v-model="password"
+            name="password"
             placeholder="请输入密码（6-20位）"
             maxlength="20"
           >
@@ -96,9 +116,10 @@
             <text class="required">*</text>
             确认密码
           </text>
-          <input 
-            type="password" 
-            v-model="confirmPassword" 
+          <input
+            type="password"
+            v-model="confirmPassword"
+            name="confirmPassword"
             placeholder="请再次输入密码"
             maxlength="20"
           >
@@ -150,6 +171,7 @@
   const selectedSchool = ref('')
   const major = ref('')
   const phone = ref('')
+  const qq = ref('')
   const filteredUniversities = ref<string[]>([])
   const showDropdown = ref(false)
   let debounceTimer: number | null = null
@@ -200,6 +222,14 @@
       uni.showToast({ title: '请输入正确的手机号', icon: 'none' })
       return
     }
+    if (!qq.value.trim()) {
+      uni.showToast({ title: '请输入QQ号', icon: 'none' })
+      return
+    }
+    if (!/^[1-9][0-9]{4,14}$/.test(qq.value)) {
+      uni.showToast({ title: '请输入正确的QQ号', icon: 'none' })
+      return
+    }
     if (!password.value.trim()) {
       uni.showToast({ title: '请输入密码', icon: 'none' })
       return
@@ -220,15 +250,16 @@
     loading.value = true
   
     try {
-      const res = await register({
+      await register({
         studentId: studentId.value,
         username: username.value,
         password: password.value,
         school: selectedSchool.value || schoolInput.value,
         major: major.value,
-        phone: phone.value
+        phone: phone.value,
+        qq: qq.value
       })
-    
+
       uni.showToast({ title: '注册成功', icon: 'success' })
     
       setTimeout(() => {

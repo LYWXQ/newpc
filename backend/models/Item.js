@@ -63,7 +63,7 @@ const Item = sequelize.define('Item', {
     comment: '物品位置'
   },
   status: {
-    type: DataTypes.ENUM('available', 'rented', 'offline', 'reviewing'),
+    type: DataTypes.ENUM('available', 'reserved', 'rented', 'offline', 'reviewing'),
     defaultValue: 'reviewing',
     comment: '物品状态'
   },

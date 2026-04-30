@@ -1,0 +1,45 @@
+- generic [ref=e3]:
+  - generic [ref=e202]:
+    - generic [ref=e206]: 我的订单
+    - generic [ref=e210]:
+      - generic [ref=e211]:
+        - generic [ref=e212]: 我借入的
+        - generic [ref=e213]: 我借出的
+      - generic [ref=e214]:
+        - generic [ref=e215]: 全部
+        - generic [ref=e216]: 待处理
+        - generic [ref=e217]: 进行中
+        - generic [ref=e218]: 已完成
+      - generic [ref=e223]:
+        - generic [ref=e233]:
+          - generic [ref=e234]:
+            - generic [ref=e235]: "订单号: 3"
+            - generic [ref=e236]: 待处理
+          - generic [ref=e240]:
+            - generic [ref=e241]: 前端交易流验证物品 481901
+            - generic [ref=e242]: 4月30日 - 5月7日
+            - generic [ref=e243]:
+              - generic [ref=e244]: "租金: ¥84.00"
+              - generic [ref=e245]: "押金: ¥36.00"
+          - generic [ref=e246]:
+            - generic [ref=e247]:
+              - img [ref=e250]
+              - generic [ref=e251]: ui_seller_481901
+            - generic [ref=e253] [cursor=pointer]: 取消
+        - generic [ref=e255]: 没有更多了
+  - generic [ref=e174]:
+    - generic [ref=e177] [cursor=pointer]:
+      - img [ref=e179]
+      - generic [ref=e180]: 首页
+    - generic [ref=e182] [cursor=pointer]:
+      - img [ref=e184]
+      - generic [ref=e185]: 订单
+    - generic [ref=e187] [cursor=pointer]:
+      - img [ref=e189]
+      - generic [ref=e190]: 发布
+    - generic [ref=e192] [cursor=pointer]:
+      - img [ref=e194]
+      - generic [ref=e195]: 消息
+    - generic [ref=e197] [cursor=pointer]:
+      - img [ref=e199]
+      - generic [ref=e200]: 我的

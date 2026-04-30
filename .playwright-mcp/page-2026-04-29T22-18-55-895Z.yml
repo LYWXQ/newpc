@@ -1,0 +1,48 @@
+- generic [ref=e3]:
+  - generic [ref=e7]:
+    - generic [ref=e10]: 校园闲置共享
+    - generic [ref=e12]:
+      - generic [ref=e13]: 🔍
+      - generic [ref=e15]:
+        - generic: 搜索闲置物品
+        - textbox [ref=e16]
+    - generic [ref=e17]:
+      - generic [ref=e21]:
+        - generic [ref=e22]: 全部
+        - generic [ref=e23]: 图书
+        - generic [ref=e24]: 电子产品
+        - generic [ref=e25]: 运动器材
+        - generic [ref=e26]: 生活用品
+        - generic [ref=e27]: 服装
+        - generic [ref=e28]: 其他
+      - generic [ref=e29]:
+        - generic [ref=e30]: 全部
+        - generic [ref=e31]: 免费
+        - generic [ref=e32]: 可租
+        - generic [ref=e33]: 购买
+      - generic [ref=e51]:
+        - generic [ref=e52]:
+          - generic [ref=e53]: 热门推荐
+          - generic [ref=e54]: 查看更多 >
+        - generic [ref=e56]: 暂无推荐物品
+      - generic [ref=e57]:
+        - generic [ref=e58]:
+          - generic [ref=e59]: 最新发布
+          - generic [ref=e60]: 查看更多 >
+        - generic [ref=e62]: 暂无最新物品
+  - generic [ref=e64]:
+    - generic [ref=e67] [cursor=pointer]:
+      - img [ref=e69]
+      - generic [ref=e70]: 首页
+    - generic [ref=e72] [cursor=pointer]:
+      - img [ref=e74]
+      - generic [ref=e75]: 订单
+    - generic [ref=e77] [cursor=pointer]:
+      - img [ref=e79]
+      - generic [ref=e80]: 发布
+    - generic [ref=e82] [cursor=pointer]:
+      - img [ref=e84]
+      - generic [ref=e85]: 消息
+    - generic [ref=e87] [cursor=pointer]:
+      - img [ref=e89]
+      - generic [ref=e90]: 我的

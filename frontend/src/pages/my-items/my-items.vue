@@ -165,6 +165,7 @@
   import { ref, onMounted, computed } from 'vue'
   import { getMyItems, deleteItem, updateItem, type Item } from '@/api/items'
   import { formatItemStatus } from '@/utils/constants'
+  import { getImageUrl } from '@/utils/image'
 
   const currentStatus = ref('')
   const items = ref<Item[]>([])
@@ -194,12 +195,6 @@
     const selected = items.value.filter(item => selectedItems.value.includes(item.id))
     return selected.length > 0 && selected.every(item => item.status === 'available')
   })
-
-  const getImageUrl = (url?: string) => {
-    if (!url) return '/static/logo.png'
-    if (url.startsWith('http')) return url
-    return `http://localhost:3000${url}`
-  }
 
   // 获取状态文本，已下架物品显示更详细的状态
   const getStatusText = (item: Item) => {

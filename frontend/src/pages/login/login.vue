@@ -29,6 +29,7 @@
         <input
           type="text"
           v-model="account"
+          name="account"
           :placeholder="loginTab === 'user' ? '请输入学号或手机号' : '请输入用户名'"
           maxlength="50"
         >
@@ -36,9 +37,10 @@
 
       <view class="form-item">
         <text class="label">密码</text>
-        <input 
-          type="password" 
-          v-model="password" 
+        <input
+          type="password"
+          v-model="password"
+          name="password"
           placeholder="请输入密码"
           maxlength="20"
         >
@@ -68,7 +70,7 @@
 
 <script setup lang="ts">
   import { ref } from 'vue'
-  import { login, type UserInfo } from '@/api/auth'
+  import { login, resolveDeletionLogin, type LoginResponse, type LoginSuccessResponse, type PendingDeletionLoginResponse, type UserInfo } from '@/api/auth'
   import { useAuthStore } from '@/stores/auth'
 
   const authStore = useAuthStore()
@@ -76,6 +78,93 @@
   const account = ref('')
   const password = ref('')
   const loading = ref(false)
+
+  const isPendingDeletionResponse = (response: LoginResponse): response is PendingDeletionLoginResponse => {
+    return 'actionRequired' in response && response.actionRequired === 'confirmDeletionLogin'
+  }
+
+  const isLoginSuccessResponse = (response: LoginResponse): response is LoginSuccessResponse => {
+    return 'token' in response && 'user' in response
+  }
+
+  const completeLogin = (token: string, user: UserInfo) => {
+    authStore.login(token, user)
+
+    uni.showToast({ title: '登录成功', icon: 'success' })
+
+    setTimeout(() => {
+      if (user.role === 'admin' || user.role === 'root' || user.role === 'superadmin') {
+        uni.navigateTo({ url: '/pages/admin/admin' })
+      } else {
+        uni.switchTab({ url: '/pages/index/index' })
+      }
+    }, 1500)
+  }
+
+  const validateRole = (user: UserInfo) => {
+    if (loginTab.value === 'user') {
+      if (user.role !== 'user') {
+        uni.showToast({
+          title: '该账号不是普通用户，请在管理员tab登录',
+          icon: 'none',
+          duration: 2000
+        })
+        return false
+      }
+      return true
+    }
+
+    if (user.role !== 'admin' && user.role !== 'root' && user.role !== 'superadmin') {
+      uni.showToast({
+        title: '该账号不是管理员，请在普通用户tab登录',
+        icon: 'none',
+        duration: 2000
+      })
+      return false
+    }
+
+    return true
+  }
+
+  const handlePendingDeletionLogin = async (response: PendingDeletionLoginResponse) => {
+    return new Promise<void>((resolve, reject) => {
+      uni.showModal({
+        title: '账号注销确认',
+        content: '该账号仍在7天注销冷静期内。继续登录将取消注销申请；中断登录则账号继续按原计划注销。',
+        confirmText: '继续登录',
+        cancelText: '中断登录',
+        success: async (modalRes) => {
+          try {
+            const result = await resolveDeletionLogin({
+              pendingLoginToken: response.pendingLoginToken,
+              action: modalRes.confirm ? 'continue' : 'abort'
+            })
+
+            if ('aborted' in result && result.aborted) {
+              uni.showToast({ title: result.message, icon: 'none', duration: 2000 })
+              resolve()
+              return
+            }
+
+            if (!('token' in result) || !('user' in result)) {
+              throw new Error('登录响应异常')
+            }
+
+            if (!validateRole(result.user)) {
+              resolve()
+              return
+            }
+
+            completeLogin(result.token, result.user)
+            resolve()
+          } catch (error) {
+            reject(error)
+          }
+        },
+        fail: reject
+      })
+    })
+  }
 
   const handleLogin = async () => {
     if (!account.value.trim()) {
@@ -93,52 +182,27 @@
     loading.value = true
   
     try {
-      console.log('登录请求参数:', { account: account.value, password: password.value })
-    
       const res = await login({
         account: account.value,
         password: password.value,
         loginType: loginTab.value
       })
-    
-      console.log('登录响应:', res)
-    
-      const user = res.user as UserInfo
-    
-      // 根据选择的tab验证用户角色
-      if (loginTab.value === 'user') {
-        // 普通用户tab：只能登录普通用户
-        if (user.role !== 'user') {
-          uni.showToast({ 
-            title: '该账号不是普通用户，请在管理员tab登录', 
-            icon: 'none',
-            duration: 2000
-          })
-          return
-        }
-      } else {
-        // 管理员tab：只能登录管理员或超级用户
-        if (user.role !== 'admin' && user.role !== 'root' && user.role !== 'superadmin') {
-          uni.showToast({
-            title: '该账号不是管理员，请在普通用户tab登录',
-            icon: 'none',
-            duration: 2000
-          })
-          return
-        }
+
+      if (isPendingDeletionResponse(res)) {
+        await handlePendingDeletionLogin(res)
+        return
       }
-    
-      authStore.login(res.token, res.user)
-    
-      uni.showToast({ title: '登录成功', icon: 'success' })
-    
-      setTimeout(() => {
-        if (user.role === 'admin' || user.role === 'root' || user.role === 'superadmin') {
-          uni.navigateTo({ url: '/pages/admin/admin' })
-        } else {
-          uni.switchTab({ url: '/pages/index/index' })
-        }
-      }, 1500)
+
+      if (!isLoginSuccessResponse(res)) {
+        throw new Error('登录响应异常')
+      }
+
+      const user = res.user as UserInfo
+      if (!validateRole(user)) {
+        return
+      }
+
+      completeLogin(res.token, res.user)
     } catch (error: any) {
       console.error('登录失败:', error)
       uni.showToast({ 

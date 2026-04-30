@@ -1,16 +1,15 @@
 <template>
   <view class="orders-container">
-    <!-- 角色切换标签 -->
     <view class="role-tabs">
-      <view 
-        class="role-tab" 
+      <view
+        class="role-tab"
         :class="{ active: currentRole === 'borrower' }"
         @click="selectRole('borrower')"
       >
         我借入的
       </view>
-      <view 
-        class="role-tab" 
+      <view
+        class="role-tab"
         :class="{ active: currentRole === 'lender' }"
         @click="selectRole('lender')"
       >
@@ -18,11 +17,10 @@
       </view>
     </view>
 
-    <!-- 订单类型标签 -->
     <view class="order-tabs">
-      <view 
-        class="tab-item" 
-        v-for="tab in tabs" 
+      <view
+        class="tab-item"
+        v-for="tab in tabs"
         :key="tab.value"
         :class="{ active: currentTab === tab.value }"
         @click="selectTab(tab.value)"
@@ -32,34 +30,31 @@
       </view>
     </view>
 
-    <!-- 订单列表 -->
-    <scroll-view 
-      class="orders-scroll" 
-      scroll-y 
+    <scroll-view
+      class="orders-scroll"
+      scroll-y
       @scrolltolower="loadMore"
       refresher-enabled
       :refresher-triggered="refreshing"
       @refresherrefresh="onRefresh"
     >
       <view class="order-list">
-        <view 
-          class="order-card" 
-          v-for="order in orders" 
+        <view
+          class="order-card"
+          v-for="order in orders"
           :key="order.id"
           @click="goToDetail(order.id)"
         >
-          <!-- 订单头部 -->
           <view class="order-header">
             <text class="order-no">订单号: {{ order.id }}</text>
-            <text class="order-status" :class="order.status">{{ getStatusText(order.status) }}</text>
+            <text class="order-status" :class="order.status">{{ getStatusText(order) }}</text>
           </view>
 
-          <!-- 订单内容 -->
           <view class="order-content">
-            <image class="item-image" :src="order.item?.images?.[0] || '/static/logo.png'" mode="aspectFill" />
+            <image class="item-image" :src="getImageUrl(order.item?.images?.[0])" mode="aspectFill" />
             <view class="item-info">
               <text class="item-title">{{ order.item?.title || '未知物品' }}</text>
-              <text class="item-time">{{ formatTime(order.startDate) }} - {{ formatTime(order.endDate) }}</text>
+              <text class="item-time">交易 {{ formatTime(order.startDate) }} · 交还 {{ formatTime(order.endDate) }}</text>
               <view class="item-price">
                 <text class="rent-price">租金: ¥{{ order.totalPrice }}</text>
                 <text class="deposit-price">押金: ¥{{ order.deposit }}</text>
@@ -67,22 +62,21 @@
             </view>
           </view>
 
-          <!-- 订单底部 -->
           <view class="order-footer">
             <view class="user-info">
-              <image class="user-avatar" :src="getOtherUser(order)?.avatar || '/static/logo.png'" />
-              <text class="user-name">{{ getOtherUser(order)?.username || '未知用户' }}</text>
+              <image class="user-avatar" :src="getImageUrl(getOtherUser(order)?.avatar)" />
+              <text class="user-name">{{ getUserDisplayName(getOtherUser(order)) }}</text>
             </view>
             <view class="order-actions">
-              <button 
-                class="action-btn primary" 
+              <button
+                class="action-btn primary"
                 v-if="showPrimaryAction(order)"
                 @click.stop="handlePrimaryAction(order)"
               >
                 {{ getPrimaryActionText(order) }}
               </button>
-              <button 
-                class="action-btn" 
+              <button
+                class="action-btn"
                 v-if="showSecondaryAction(order)"
                 @click.stop="handleSecondaryAction(order)"
               >
@@ -93,7 +87,6 @@
         </view>
       </view>
 
-      <!-- 加载状态 -->
       <view class="load-more" v-if="loading">
         <text>加载中...</text>
       </view>
@@ -110,28 +103,27 @@
 </template>
 
 <script setup lang="ts">
-  import { ref, onMounted, computed } from 'vue'
+  import { ref, onMounted, computed, reactive } from 'vue'
   import { onShow } from '@dcloudio/uni-app'
-  import { getOrderList, getOrderStats, type Order, approveOrder, rejectOrder, confirmPickup, completeOrder, cancelOrder } from '@/api/orders'
+  import { getOrderList, getOrderStats, type Order, confirmOrder, rejectOrder, cancelOrder } from '@/api/orders'
   import { useAuthStore } from '@/stores/auth'
   import { isLoggedIn } from '@/utils/auth'
+  import { getImageUrl } from '@/utils/image'
 
   const authStore = useAuthStore()
 
-  // 从authStore获取当前用户ID
   const currentUserId = computed(() => {
     return authStore.userInfo?.id || 0
   })
 
-  // 角色切换：borrower = 我借入的, lender = 我借出的
   const currentRole = ref<'borrower' | 'lender'>('borrower')
 
-  const tabs = [
+  const tabs = reactive([
     { label: '全部', value: 'all', count: 0 },
     { label: '待处理', value: 'pending', count: 0 },
-    { label: '进行中', value: 'in_progress', count: 0 },
+    { label: '进行中', value: 'active', count: 0 },
     { label: '已完成', value: 'completed', count: 0 }
-  ]
+  ])
   const currentTab = ref('all')
 
   const orders = ref<Order[]>([])
@@ -163,62 +155,67 @@
     if (savedRole && (savedRole === 'lender' || savedRole === 'borrower')) {
       if (currentRole.value !== savedRole) {
         currentRole.value = savedRole
-        page.value = 1
-        orders.value = []
-        hasMore.value = true
-        loadOrders()
       }
       uni.removeStorageSync('orderRole')
     }
+    onRefresh()
   })
 
-  // 加载订单统计
   const loadOrderStats = async () => {
     try {
       const stats = await getOrderStats()
       tabs[0].count = 0
       tabs[1].count = stats.pendingCount || 0
-      tabs[2].count = stats.inProgressCount || 0
+      tabs[2].count = (stats.confirmedCount || 0) + (stats.usingCount || 0) + (stats.returnedCount || 0)
       tabs[3].count = stats.completedCount || 0
     } catch (error) {
       console.error('获取订单统计失败:', error)
     }
   }
 
-  // 加载订单列表
+  const getStatusFilter = () => {
+    if (currentTab.value === 'pending') {
+      return 'pending'
+    }
+
+    if (currentTab.value === 'active') {
+      return 'confirmed,using,returned'
+    }
+
+    if (currentTab.value === 'completed') {
+      return 'completed'
+    }
+
+    return undefined
+  }
+
   const loadOrders = async () => {
     if (loading.value) return
-  
+
     loading.value = true
-  
+
     try {
       const params: { page: number; limit: number; status?: string; role?: 'lender' | 'borrower' } = {
         page: page.value,
-        limit: limit,
+        limit,
         role: currentRole.value
       }
-    
-      // 根据当前标签添加状态筛选
-      if (currentTab.value !== 'all') {
-        if (currentTab.value === 'pending') {
-          params.status = 'pending'
-        } else if (currentTab.value === 'in_progress') {
-          params.status = 'in_progress'
-        } else if (currentTab.value === 'completed') {
-          params.status = 'completed'
-        }
+
+      const statusFilter = getStatusFilter()
+      if (statusFilter) {
+        params.status = statusFilter
       }
-    
+
       const res = await getOrderList(params)
-    
+      const nextOrders = res.orders || []
+
       if (page.value === 1) {
-        orders.value = res.orders || []
+        orders.value = nextOrders
       } else {
-        orders.value = [...orders.value, ...(res.orders || [])]
+        orders.value = [...orders.value, ...nextOrders]
       }
-    
-      // 判断是否还有更多数据
-      hasMore.value = res.orders?.length === limit && page.value < (res.pagination?.totalPages || 1)
+
+      hasMore.value = nextOrders.length === limit && page.value < (res.pagination?.totalPages || 1)
     } catch (error) {
       console.error('获取订单列表失败:', error)
       uni.showToast({ title: '获取订单失败', icon: 'none' })
@@ -227,7 +224,6 @@
     }
   }
 
-  // 切换角色
   const selectRole = (role: 'borrower' | 'lender') => {
     currentRole.value = role
     page.value = 1
@@ -236,7 +232,6 @@
     loadOrders()
   }
 
-  // 切换标签
   const selectTab = (tab: string) => {
     currentTab.value = tab
     page.value = 1
@@ -245,149 +240,142 @@
     loadOrders()
   }
 
-  // 获取状态文本
-  const getStatusText = (status: string) => {
+  const getStatusText = (order: Order) => {
+    if (order.status === 'confirmed') {
+      return order.pickupCodeVerifiedAt && !order.pickupConfirmedByLenderAt ? '待卖方确认交付' : '待取货'
+    }
+
+    if (order.status === 'using') {
+      return order.returnCodeVerifiedAt && !order.returnConfirmedByLenderAt ? '待卖方确认收回' : '使用中'
+    }
+
+    if (order.status === 'returned') {
+      return '待完成'
+    }
+
     const statusMap: Record<string, string> = {
       pending: '待处理',
-      approved: '已同意',
-      rejected: '已拒绝',
-      in_progress: '进行中',
       completed: '已完成',
       cancelled: '已取消'
     }
-    return statusMap[status] || status
+    return statusMap[order.status] || order.status
   }
 
-  // 格式化时间
   const formatTime = (time: string) => {
     if (!time) return ''
     const date = new Date(time)
     return `${date.getMonth() + 1}月${date.getDate()}日`
   }
 
-  // 获取对方用户信息
   const getOtherUser = (order: Order) => {
     if (!currentUserId.value) return order.lender
     return order.lenderId === currentUserId.value ? order.borrower : order.lender
   }
 
-  // 是否显示主要操作按钮
-  const showPrimaryAction = (order: Order) => {
-    const actions = ['pending', 'approved', 'in_progress']
-    return actions.includes(order.status)
+  const getUserDisplayName = (user?: Order['lender'] | Order['borrower']) => {
+    return user?.username || '已注销用户'
   }
 
-  // 获取主要操作按钮文本
+  const showPrimaryAction = (order: Order) => {
+    const isLender = order.lenderId === currentUserId.value
+
+    if (order.status === 'pending') return true
+    if (['confirmed', 'using', 'returned'].includes(order.status)) return true
+    if (order.status === 'completed' && isLender) return true
+
+    return false
+  }
+
   const getPrimaryActionText = (order: Order) => {
     const isLender = order.lenderId === currentUserId.value
-    const actionMap: Record<string, string> = {
-      pending: isLender ? '同意' : '取消',
-      approved: isLender ? '等待取货' : '确认取货',
-      in_progress: isLender ? '等待归还' : '确认归还'
+
+    if (order.status === 'pending') {
+      return isLender ? '同意' : '取消'
     }
-    return actionMap[order.status] || '处理'
+
+    if (['confirmed', 'using', 'returned'].includes(order.status)) {
+      return '去处理'
+    }
+
+    if (order.status === 'completed' && isLender) {
+      return '查看详情'
+    }
+
+    return '查看详情'
   }
 
-  // 处理主要操作
   const handlePrimaryAction = async (order: Order) => {
     const isLender = order.lenderId === currentUserId.value
-  
+
     try {
       if (order.status === 'pending') {
         if (isLender) {
-          // 同意订单
-          await approveOrder(order.id)
+          await confirmOrder(order.id)
           uni.showToast({ title: '已同意订单', icon: 'success' })
         } else {
-          // 取消订单
           await cancelOrder(order.id)
           uni.showToast({ title: '已取消订单', icon: 'success' })
         }
-      } else if (order.status === 'approved') {
-        if (!isLender) {
-          // 确认取货
-          await confirmPickup(order.id)
-          uni.showToast({ title: '已确认取货', icon: 'success' })
-        }
-      } else if (order.status === 'in_progress') {
-        if (isLender) {
-          // 出借方等待归还
-          uni.showToast({ title: '等待借入方归还', icon: 'none' })
-          return
-        } else {
-          // 确认归还
-          await completeOrder(order.id)
-          uni.showToast({ title: '已确认归还', icon: 'success' })
-        }
+
+        await onRefresh()
+        return
       }
-      // 刷新订单列表
-      onRefresh()
+
+      uni.navigateTo({
+        url: `/pages/order-detail/order-detail?id=${order.id}`
+      })
     } catch (error: any) {
       uni.showToast({ title: error?.message || '操作失败', icon: 'none' })
     }
   }
 
-  // 是否显示次要操作按钮
   const showSecondaryAction = (order: Order) => {
-    return order.status === 'pending' || order.status === 'approved' || order.status === 'in_progress'
-  }
-
-  // 获取次要操作按钮文本
-  const getSecondaryActionText = (order: Order) => {
     const isLender = order.lenderId === currentUserId.value
-    if (order.status === 'pending' && isLender) {
-      return '拒绝'
-    }
-    return '联系对方'
+    return order.status === 'pending' && isLender
   }
 
-  // 处理次要操作
+  const getSecondaryActionText = (_order: Order) => {
+    return '拒绝'
+  }
+
   const handleSecondaryAction = async (order: Order) => {
-    const isLender = order.lenderId === currentUserId.value
-  
-    if (order.status === 'pending' && isLender) {
-      // 拒绝订单
-      try {
-        await rejectOrder(order.id)
-        uni.showToast({ title: '已拒绝订单', icon: 'success' })
-        onRefresh()
-      } catch (error: any) {
-        uni.showToast({ title: error?.message || '操作失败', icon: 'none' })
+    uni.showModal({
+      title: '拒绝订单',
+      content: '确定要拒绝这个订单吗？',
+      editable: true,
+      placeholderText: '请输入拒绝原因（可选）',
+      success: async (res) => {
+        if (!res.confirm) return
+
+        try {
+          await rejectOrder(order.id, res.content || undefined)
+          uni.showToast({ title: '已拒绝订单', icon: 'success' })
+          await onRefresh()
+        } catch (error: any) {
+          uni.showToast({ title: error?.message || '操作失败', icon: 'none' })
+        }
       }
-    } else {
-      // 联系对方
-      const otherUser = getOtherUser(order)
-      if (otherUser?.id) {
-        uni.navigateTo({
-          url: `/pages/chat/chat?userId=${otherUser.id}`
-        })
-      } else {
-        uni.showToast({ title: '无法联系对方', icon: 'none' })
-      }
-    }
+    })
   }
 
-  // 加载更多
   const loadMore = () => {
     if (!hasMore.value || loading.value) return
-  
+
     page.value++
     loadOrders()
   }
 
-  // 下拉刷新
   const onRefresh = async () => {
     refreshing.value = true
     page.value = 1
     hasMore.value = true
-  
+
     await loadOrderStats()
     await loadOrders()
-  
+
     refreshing.value = false
   }
 
-  // 跳转到订单详情
   const goToDetail = (id: number) => {
     uni.navigateTo({
       url: `/pages/order-detail/order-detail?id=${id}`
@@ -520,16 +508,16 @@
   color: #faad14;
 }
 
-.order-status.approved {
+.order-status.confirmed {
   color: #1890ff;
 }
 
-.order-status.rejected {
-  color: #ff4d4f;
+.order-status.using {
+  color: #722ed1;
 }
 
-.order-status.in_progress {
-  color: #722ed1;
+.order-status.returned {
+  color: #13c2c2;
 }
 
 .order-status.completed {

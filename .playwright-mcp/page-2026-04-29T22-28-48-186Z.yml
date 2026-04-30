@@ -1,0 +1,18 @@
+- generic [ref=e3]:
+  - generic [ref=e155]: 消息中心
+  - generic [ref=e159]:
+    - generic [ref=e162] [cursor=pointer]:
+      - img [ref=e164]
+      - generic [ref=e165]: 首页
+    - generic [ref=e167] [cursor=pointer]:
+      - img [ref=e169]
+      - generic [ref=e170]: 订单
+    - generic [ref=e172] [cursor=pointer]:
+      - img [ref=e174]
+      - generic [ref=e175]: 发布
+    - generic [ref=e177] [cursor=pointer]:
+      - img [ref=e179]
+      - generic [ref=e180]: 消息
+    - generic [ref=e182] [cursor=pointer]:
+      - img [ref=e184]
+      - generic [ref=e185]: 我的

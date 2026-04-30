@@ -1,5 +1,6 @@
 export const ITEM_STATUS = {
   AVAILABLE: 'available',
+  RESERVED: 'reserved',
   RENTED: 'rented',
   REVIEWING: 'reviewing',
   OFFLINE: 'offline'
@@ -7,6 +8,7 @@ export const ITEM_STATUS = {
 
 export const ITEM_STATUS_TEXT: Record<string, string> = {
   [ITEM_STATUS.AVAILABLE]: '可借用',
+  [ITEM_STATUS.RESERVED]: '已预订',
   [ITEM_STATUS.RENTED]: '已借出',
   [ITEM_STATUS.REVIEWING]: '审核中',
   [ITEM_STATUS.OFFLINE]: '已下架'
@@ -14,6 +16,7 @@ export const ITEM_STATUS_TEXT: Record<string, string> = {
 
 export const BORROW_BUTTON_TEXT: Record<string, string> = {
   [ITEM_STATUS.AVAILABLE]: '立即借用',
+  [ITEM_STATUS.RESERVED]: '交易进行中',
   [ITEM_STATUS.RENTED]: '已被借用',
   [ITEM_STATUS.REVIEWING]: '审核中',
   [ITEM_STATUS.OFFLINE]: '已下架'

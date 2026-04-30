@@ -48,7 +48,7 @@
       <text class="section-title">添加图片（可选）</text>
       <view class="images-grid">
         <view class="image-item" v-for="(img, index) in images" :key="index">
-          <image :src="img" mode="aspectFill" />
+          <image :src="getImageUrl(img)" mode="aspectFill" />
           <view class="delete-btn" @click="removeImage(index)">×</view>
         </view>
         <view class="upload-btn" @click="chooseImage" v-if="images.length < 6">
@@ -71,6 +71,7 @@
   import { createReview } from '@/api/reviews'
   import { getOrderDetail, type Order } from '@/api/orders'
   import { upload } from '@/utils/request'
+  import { getImageUrl } from '@/utils/image'
 
   const orderId = ref<number>(0)
   const order = ref<Order | null>(null)
@@ -83,13 +84,6 @@
     const texts = ['', '非常差', '差', '一般', '好', '非常好']
     return texts[rating.value] || ''
   })
-
-  // 获取图片完整 URL
-  const getImageUrl = (url?: string) => {
-    if (!url) return '/static/logo.png'
-    if (url.startsWith('http')) return url
-    return `http://localhost:3000${url}`
-  }
 
   onLoad((options) => {
     if (options?.orderId) {

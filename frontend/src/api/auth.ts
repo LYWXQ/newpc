@@ -3,6 +3,8 @@
  */
 import { get, post, upload } from '@/utils/request'
 
+export type DeletionStatus = 'none' | 'pending' | 'deleted'
+
 // 用户信息接口
 export interface UserInfo {
   id: number
@@ -12,11 +14,17 @@ export interface UserInfo {
   creditScore: number
   isVerified: boolean
   status: string
-  role: 'user' | 'admin' | 'root'
-  phone?: string
-  email?: string
-  school?: string
-  major?: string
+  role: 'user' | 'admin' | 'root' | 'superadmin'
+  phone?: string | null
+  qq?: string | null
+  email?: string | null
+  school?: string | null
+  major?: string | null
+  deletionStatus?: DeletionStatus
+  deletionRequestedAt?: string | null
+  deletionDeadlineAt?: string | null
+  deletionCancelledAt?: string | null
+  anonymizedAt?: string | null
   createdAt: string
   updatedAt: string
 }
@@ -34,15 +42,41 @@ export interface RegisterParams {
   username: string
   password: string
   phone: string
+  qq: string
   email?: string
   school?: string
   major?: string
 }
 
-// 登录响应
-export interface LoginResponse {
+export interface LoginSuccessResponse {
   token: string
   user: UserInfo
+  message: string
+}
+
+export interface PendingDeletionLoginResponse {
+  message: string
+  actionRequired: 'confirmDeletionLogin'
+  pendingLoginToken: string
+  deletionStatus: 'pending'
+  deletionRequestedAt: string
+  deletionDeadlineAt: string
+  userPreview: Pick<UserInfo, 'id' | 'studentId' | 'username' | 'avatar' | 'role'>
+}
+
+export type LoginResponse = LoginSuccessResponse | PendingDeletionLoginResponse
+
+export interface ResolveDeletionLoginParams {
+  pendingLoginToken: string
+  action: 'continue' | 'abort'
+}
+
+export interface AbortDeletionLoginResponse {
+  message: string
+  aborted: true
+  deletionStatus: 'pending'
+  deletionRequestedAt: string
+  deletionDeadlineAt: string
 }
 
 /**
@@ -50,6 +84,10 @@ export interface LoginResponse {
  */
 export const login = (data: LoginParams): Promise<LoginResponse> => {
   return post<LoginResponse>('/auth/login', data, { showLoading: true })
+}
+
+export const resolveDeletionLogin = (data: ResolveDeletionLoginParams): Promise<LoginSuccessResponse | AbortDeletionLoginResponse> => {
+  return post<LoginSuccessResponse | AbortDeletionLoginResponse>('/auth/login/resolve-deletion', data, { showLoading: true })
 }
 
 /**
@@ -71,6 +109,19 @@ export const getCurrentUser = (params?: any, options?: any): Promise<UserInfo> =
  */
 export const updateUserInfo = (data: Partial<UserInfo>): Promise<UserInfo> => {
   return post<UserInfo>('/users/profile', data)
+}
+
+export const requestAccountDeletion = (): Promise<{
+  message: string
+  deletionStatus: 'pending'
+  deletionRequestedAt: string
+  deletionDeadlineAt: string
+}> => {
+  return post('/users/deletion-request')
+}
+
+export const cancelAccountDeletion = (): Promise<{ message: string; user: UserInfo }> => {
+  return post('/users/deletion-request/cancel')
 }
 
 /**

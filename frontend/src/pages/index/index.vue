@@ -99,8 +99,16 @@
               indicator-dots
               autoplay
               circular>
-        <swiper-item v-for="(banner, index) in banners" :key="index">
-          <image :src="banner" mode="aspectFill" />
+        <swiper-item
+          v-for="banner in bannerItems"
+          :key="banner.id"
+          @click="banner.itemId && goToDetail(banner.itemId)"
+        >
+          <image :src="banner.image" mode="aspectFill" />
+          <view v-if="banner.itemId" class="banner-overlay">
+            <text class="banner-title">{{ banner.title }}</text>
+            <text class="banner-views">{{ banner.viewCount }}次浏览</text>
+          </view>
         </swiper-item>
       </swiper>
 
@@ -134,7 +142,7 @@
               <view class="item-user">
                 <image
                   class="user-avatar"
-                  :src="item.user?.avatar || '/static/logo.png'"
+                  :src="getImageUrl(item.user?.avatar)"
                 />
                 <text class="user-name">{{
                   item.user?.username || "未知用户"
@@ -188,11 +196,13 @@
 </template>
 
 <script setup lang="ts">
-  import { ref, computed } from 'vue'
+  import { ref } from 'vue'
   import { onLoad, onShow, onPullDownRefresh } from '@dcloudio/uni-app'
   import { getItemList, getCategories, type Item } from '@/api/items'
+  import { getHotRecommendations } from '@/api/recommendations'
   import { isLoggedIn } from '@/utils/auth'
   import { useDeviceInfo } from '@/utils/device'
+  import { getImageUrl } from '@/utils/image'
 
   const { statusBarHeight } = useDeviceInfo()
 
@@ -221,17 +231,43 @@
     '其他',
   ])
 
-  const banners = ['/static/logo.png', '/static/logo.png', '/static/logo.png']
+  interface BannerItem {
+    id: string
+    image: string
+    title: string
+    viewCount: number
+    itemId?: number
+  }
 
+  const fallbackBannerItems: BannerItem[] = [
+    { id: 'fallback-1', image: '/static/logo.png', title: '', viewCount: 0 },
+    { id: 'fallback-2', image: '/static/logo.png', title: '', viewCount: 0 },
+    { id: 'fallback-3', image: '/static/logo.png', title: '', viewCount: 0 },
+  ]
+
+  const bannerItems = ref<BannerItem[]>(fallbackBannerItems)
   const recommendedItems = ref<Item[]>([])
   const latestItems = ref<Item[]>([])
   const loading = ref(false)
 
-  // 获取图片完整 URL
-  const getImageUrl = (url?: string) => {
-    if (!url) return '/static/logo.png'
-    if (url.startsWith('http')) return url
-    return `http://localhost:3000${url}`
+  const loadHotBannerItems = async () => {
+    try {
+      const res = await getHotRecommendations({ limit: 3 })
+      const items = res.items || []
+
+      bannerItems.value = items.length > 0
+        ? items.map((item: Item) => ({
+            id: `hot-${item.id}`,
+            image: getImageUrl(item.images?.[0]),
+            title: item.title,
+            viewCount: item.viewCount || 0,
+            itemId: item.id,
+          }))
+        : fallbackBannerItems
+    } catch (error) {
+      console.error('加载热门轮播失败:', error)
+      bannerItems.value = fallbackBannerItems
+    }
   }
 
   // 加载推荐物品（按浏览量排序）
@@ -292,6 +328,7 @@
   const loadData = async () => {
     loading.value = true
     await Promise.all([
+      loadHotBannerItems(),
       loadRecommendedItems(currentCategory.value, currentTransactionType.value || undefined),
       loadLatestItems(currentCategory.value, currentTransactionType.value || undefined),
       loadCategories(),
@@ -553,9 +590,40 @@
   overflow: hidden;
 }
 
+.banner swiper-item {
+  position: relative;
+}
+
 .banner image {
   width: 100%;
   height: 100%;
+}
+
+.banner-overlay {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+  padding: 20rpx 24rpx;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.65), transparent);
+}
+
+.banner-title {
+  font-size: $font-lg;
+  font-weight: bold;
+  color: #fff;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.banner-views {
+  font-size: $font-sm;
+  color: rgba(255, 255, 255, 0.9);
 }
 
 .section {

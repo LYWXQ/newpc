@@ -2,7 +2,9 @@ const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const sequelize = require('./config/database');
-const { User, Item, Order, Review, Message, Favorite } = require('./models');
+const { User, Item, Order, Review, Message, Favorite, OrderReminderLog } = require('./models');
+const { sweepExpiredDeletionUsers } = require('./accountLifecycle');
+const { startOrderReminderScheduler } = require('./services/orderReminderScheduler');
 
 dotenv.config();
 
@@ -40,6 +42,37 @@ app.use((err, req, res, next) => {
   res.status(500).json({ message: 'Something went wrong!' });
 });
 
+const ensureSchemaCompatibility = async () => {
+  await sequelize.query(`
+    ALTER TABLE items
+    MODIFY COLUMN status ENUM('available','reserved','rented','offline','reviewing') DEFAULT 'reviewing'
+  `);
+
+  await sequelize.query(`
+    ALTER TABLE messages
+    MODIFY COLUMN senderId INT NULL COMMENT '发送者ID'
+  `);
+};
+
+const syncApplicationModels = async () => {
+  const modelsWithAlter = [User, Item, Order, Review, Message, Favorite]
+
+  for (const model of modelsWithAlter) {
+    await model.sync({ alter: { drop: false } })
+  }
+
+  await OrderReminderLog.sync()
+
+  await sequelize.query(`
+    ALTER TABLE order_reminder_logs
+    ADD UNIQUE INDEX uniq_order_daily_reminder (orderId, receiverId, reminderType, reminderDate)
+  `).catch((error) => {
+    if (!['ER_DUP_KEYNAME', 'ER_DUP_ENTRY'].includes(error?.original?.code)) {
+      throw error
+    }
+  })
+};
+
 // 数据库连接和服务器启动
 const startServer = async () => {
   try {
@@ -54,11 +87,18 @@ const startServer = async () => {
       console.log('No disputes table found, continuing...');
     }
     
-    // 同步数据库模型（使用 alter: true 来更新表结构，保持现有数据）
-    // 使用 alter: { drop: false } 避免删除字段导致问题
-    await sequelize.sync({ alter: { drop: false } });
-    console.log('Database models synchronized with alter: { drop: false }.');
-    
+    // 按模型同步，避免 OrderReminderLog 在 alter 阶段生成超长索引名
+    await syncApplicationModels();
+    await ensureSchemaCompatibility();
+    console.log('Database models synchronized.');
+
+    const deletionSweepResults = await sweepExpiredDeletionUsers();
+    if (deletionSweepResults.length > 0) {
+      console.log('Expired deletion sweep results:', deletionSweepResults);
+    }
+
+    startOrderReminderScheduler();
+
     app.listen(PORT, () => {
       console.log(`Server is running on port ${PORT}`);
     });

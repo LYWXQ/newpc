@@ -14,7 +14,7 @@
       </view>
       <button class="cancel-button" @click="cancelSearch">取消</button>
     </view>
-    
+
     <!-- 分类标签筛选 -->
     <view class="category-filter">
       <scroll-view scroll-x class="category-scroll">
@@ -36,7 +36,7 @@
         </view>
       </scroll-view>
     </view>
-    
+
     <view class="search-content">
       <!-- 搜索历史 -->
       <view class="search-history" v-if="searchHistory.length > 0 && !showResults && !searchQuery">
@@ -145,8 +145,8 @@
     loadCategories()
     // 检查是否有分类参数
     const pages = getCurrentPages()
-    const currentPage = pages[pages.length - 1]
-    const category = currentPage.$page?.options?.category
+    const currentPage = pages[pages.length - 1] as any
+    const category = currentPage?.options?.category
     if (category && category !== '全部') {
       currentCategory.value = category
       showResults.value = true
@@ -167,7 +167,6 @@
   // 选择分类
   const selectCategory = (category: string) => {
     currentCategory.value = category
-    // 重置分页并搜索
     currentPage.value = 1
     hasMore.value = true
     searchResults.value = []
@@ -191,9 +190,7 @@
   const saveSearchHistory = (keyword: string) => {
     if (!keyword.trim()) return
 
-    // 去重并移到最前面
     const newHistory = [keyword, ...searchHistory.value.filter(item => item !== keyword)]
-    // 最多保存 10 条
     searchHistory.value = newHistory.slice(0, 10)
 
     try {
@@ -252,10 +249,8 @@
       return
     }
 
-    // 保存搜索历史
     saveSearchHistory(keyword)
 
-    // 重置分页
     currentPage.value = 1
     hasMore.value = true
     searchResults.value = []
@@ -274,19 +269,17 @@
         page: currentPage.value,
         limit: pageSize.value
       }
-    
-      // 添加关键词搜索
+
       if (searchQuery.value.trim()) {
         params.keyword = searchQuery.value.trim()
       }
-    
-      // 添加分类筛选
+
       if (currentCategory.value) {
         params.category = currentCategory.value
       }
-    
+
       const res = await getItemList(params)
-    
+
       const resItems = res.items || []
 
       if (currentPage.value === 1) {
@@ -295,7 +288,6 @@
         searchResults.value = [...searchResults.value, ...resItems]
       }
 
-      // 判断是否还有更多
       hasMore.value = resItems.length === pageSize.value
     } catch (error) {
       console.error('搜索失败', error)
@@ -339,208 +331,208 @@
   // 跳转到物品详情页
   const goToDetail = (id: number) => {
     uni.navigateTo({
-      url: `/pages/item/detail?id=${id}`
+      url: `/pages/item-detail/item-detail?id=${id}`
     })
   }
 </script>
 
 <style scoped>
-.container {
-  background-color: #f5f5f5;
-  min-height: 100vh;
-}
+	.container {
+		background-color: #f5f5f5;
+		min-height: 100vh;
+	}
 
-.search-header {
-  display: flex;
-  align-items: center;
-  padding: 16rpx;
-  background-color: #ffffff;
-  border-bottom: 2rpx solid #f0f0f0;
-}
+	.search-header {
+		display: flex;
+		align-items: center;
+		padding: 16rpx;
+		background-color: #ffffff;
+		border-bottom: 2rpx solid #f0f0f0;
+	}
 
-.search-bar {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  background-color: #f5f5f5;
-  border-radius: 24rpx;
-  padding: 0 16rpx;
-  margin-right: 16rpx;
-}
+	.search-bar {
+		flex: 1;
+		display: flex;
+		align-items: center;
+		background-color: #f5f5f5;
+		border-radius: 24rpx;
+		padding: 0 16rpx;
+		margin-right: 16rpx;
+	}
 
-.search-icon {
-  font-size: 24rpx;
-  margin-right: 8rpx;
-  color: #999999;
-}
+	.search-icon {
+		font-size: 24rpx;
+		margin-right: 8rpx;
+		color: #999999;
+	}
 
-.search-input {
-  flex: 1;
-  font-size: 24rpx;
-  padding: 12rpx 0;
-}
+	.search-input {
+		flex: 1;
+		font-size: 24rpx;
+		padding: 12rpx 0;
+	}
 
-.clear-button {
-  font-size: 24rpx;
-  color: #999999;
-  padding: 0 8rpx;
-}
+	.clear-button {
+		font-size: 24rpx;
+		color: #999999;
+		padding: 0 8rpx;
+	}
 
-.cancel-button {
-  font-size: 24rpx;
-  color: #007aff;
-  padding: 0 8rpx;
-  background: none;
-  border: none;
-}
+	.cancel-button {
+		font-size: 24rpx;
+		color: #007aff;
+		padding: 0 8rpx;
+		background: none;
+		border: none;
+	}
 
-.search-content {
-  padding: 16rpx;
-}
+	.search-content {
+		padding: 16rpx;
+	}
 
-/* 分类筛选 */
-.category-filter {
-  background-color: #ffffff;
-  padding: 16rpx 0;
-  border-bottom: 2rpx solid #f0f0f0;
-}
+	/* 分类筛选 */
+	.category-filter {
+		background-color: #ffffff;
+		padding: 16rpx 0;
+		border-bottom: 2rpx solid #f0f0f0;
+	}
 
-.category-scroll {
-  white-space: nowrap;
-  padding: 0 16rpx;
-}
+	.category-scroll {
+		white-space: nowrap;
+		padding: 0 16rpx;
+	}
 
-.category-tag {
-  display: inline-block;
-  padding: 12rpx 24rpx;
-  margin-right: 16rpx;
-  background-color: #f5f5f5;
-  border-radius: 28rpx;
-  font-size: 26rpx;
-  color: #666666;
-  border: 2rpx solid transparent;
-}
+	.category-tag {
+		display: inline-block;
+		padding: 12rpx 24rpx;
+		margin-right: 16rpx;
+		background-color: #f5f5f5;
+		border-radius: 28rpx;
+		font-size: 26rpx;
+		color: #666666;
+		border: 2rpx solid transparent;
+	}
 
-.category-tag.active {
-  background-color: #667eea;
-  color: #ffffff;
-  border-color: #667eea;
-}
+	.category-tag.active {
+		background-color: #667eea;
+		color: #ffffff;
+		border-color: #667eea;
+	}
 
-/* 搜索历史 */
-.search-history {
-  margin-bottom: 32rpx;
-}
+	/* 搜索历史 */
+	.search-history {
+		margin-bottom: 32rpx;
+	}
 
-.history-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16rpx;
-}
+	.history-header {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		margin-bottom: 16rpx;
+	}
 
-.history-title {
-  font-size: 28rpx;
-  font-weight: bold;
-  color: #333333;
-}
+	.history-title {
+		font-size: 28rpx;
+		font-weight: bold;
+		color: #333333;
+	}
 
-.clear-history {
-  font-size: 24rpx;
-  color: #999999;
-}
+	.clear-history {
+		font-size: 24rpx;
+		color: #999999;
+	}
 
-.history-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12rpx;
-}
+	.history-tags {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 12rpx;
+	}
 
-/* 热门搜索 */
-.hot-search {
-  margin-bottom: 32rpx;
-}
+	/* 热门搜索 */
+	.hot-search {
+		margin-bottom: 32rpx;
+	}
 
-.hot-title {
-  font-size: 28rpx;
-  font-weight: bold;
-  margin-bottom: 16rpx;
-  display: block;
-  color: #333333;
-}
+	.hot-title {
+		font-size: 28rpx;
+		font-weight: bold;
+		margin-bottom: 16rpx;
+		display: block;
+		color: #333333;
+	}
 
-.hot-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12rpx;
-}
+	.hot-tags {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 12rpx;
+	}
 
-.tag {
-  background-color: #ffffff;
-  padding: 12rpx 24rpx;
-  border-radius: 20rpx;
-  font-size: 24rpx;
-  color: #666666;
-  border: 2rpx solid #e5e5e5;
-}
+	.tag {
+		background-color: #ffffff;
+		padding: 12rpx 24rpx;
+		border-radius: 20rpx;
+		font-size: 24rpx;
+		color: #666666;
+		border: 2rpx solid #e5e5e5;
+	}
 
-/* 搜索结果 */
-.search-results {
-  margin-top: 16rpx;
-  height: calc(100vh - 120rpx);
-}
+	/* 搜索结果 */
+	.search-results {
+		margin-top: 16rpx;
+		height: calc(100vh - 120rpx);
+	}
 
-.result-scroll {
-  height: 100%;
-}
+	.result-scroll {
+		height: 100%;
+	}
 
-.result-item {
-  display: flex;
-  background-color: #ffffff;
-  border-radius: 12rpx;
-  padding: 16rpx;
-  margin-bottom: 16rpx;
-}
+	.result-item {
+		display: flex;
+		background-color: #ffffff;
+		border-radius: 12rpx;
+		padding: 16rpx;
+		margin-bottom: 16rpx;
+	}
 
-.result-image {
-  width: 120rpx;
-  height: 120rpx;
-  border-radius: 8rpx;
-  margin-right: 16rpx;
-}
+	.result-image {
+		width: 120rpx;
+		height: 120rpx;
+		border-radius: 8rpx;
+		margin-right: 16rpx;
+	}
 
-.result-info {
-  flex: 1;
-}
+	.result-info {
+		flex: 1;
+	}
 
-.result-title {
-  font-size: 24rpx;
-  font-weight: bold;
-  margin-bottom: 8rpx;
-  display: block;
-  color: #333333;
-}
+	.result-title {
+		font-size: 24rpx;
+		font-weight: bold;
+		margin-bottom: 8rpx;
+		display: block;
+		color: #333333;
+	}
 
-.result-price {
-  font-size: 24rpx;
-  color: #ff4d4f;
-  margin-bottom: 8rpx;
-  display: block;
-}
+	.result-price {
+		font-size: 24rpx;
+		color: #ff4d4f;
+		margin-bottom: 8rpx;
+		display: block;
+	}
 
-.result-owner {
-  font-size: 20rpx;
-  color: #999999;
-  display: block;
-}
+	.result-owner {
+		font-size: 20rpx;
+		color: #999999;
+		display: block;
+	}
 
-/* 加载状态 */
-.load-more,
-.no-more,
-.empty-result {
-  text-align: center;
-  padding: 32rpx;
-  color: #999999;
-  font-size: 24rpx;
-}
+	/* 加载状态 */
+	.load-more,
+	.no-more,
+	.empty-result {
+		text-align: center;
+		padding: 32rpx;
+		color: #999999;
+		font-size: 24rpx;
+	}
 </style>

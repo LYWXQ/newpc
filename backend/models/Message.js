@@ -9,7 +9,7 @@ const Message = sequelize.define('Message', {
   },
   senderId: {
     type: DataTypes.INTEGER,
-    allowNull: false,
+    allowNull: true,
     comment: '发送者ID'
   },
   receiverId: {

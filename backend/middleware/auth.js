@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken');
 const { User } = require('../models');
+const { isDeletedUser } = require('../accountLifecycle');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 
@@ -18,6 +19,10 @@ const authenticateToken = async (req, res, next) => {
     
     if (!user) {
       return res.status(401).json({ message: 'User not found' });
+    }
+
+    if (isDeletedUser(user)) {
+      return res.status(403).json({ message: '账号已注销' });
     }
 
     req.user = user;

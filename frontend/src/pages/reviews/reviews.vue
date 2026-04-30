@@ -1,15 +1,15 @@
 <template>
   <view class="reviews-container">
     <view class="role-tabs">
-      <view 
-        class="role-tab" 
+      <view
+        class="role-tab"
         :class="{ active: currentType === 'received' }"
         @click="selectType('received')"
       >
         收到的评价
       </view>
-      <view 
-        class="role-tab" 
+      <view
+        class="role-tab"
         :class="{ active: currentType === 'given' }"
         @click="selectType('given')"
       >
@@ -17,9 +17,9 @@
       </view>
     </view>
 
-    <scroll-view 
-      class="reviews-scroll" 
-      scroll-y 
+    <scroll-view
+      class="reviews-scroll"
+      scroll-y
       @scrolltolower="loadMore"
       refresher-enabled
       :refresher-triggered="refreshing"
@@ -32,9 +32,9 @@
             <view class="user-info">
               <text class="username">{{ getUsername(review) }}</text>
               <view class="rating">
-                <text 
-                  class="star" 
-                  v-for="index in 5" 
+                <text
+                  class="star"
+                  v-for="index in 5"
                   :key="index"
                   :class="{ active: index <= review.rating }"
                 >★</text>
@@ -42,20 +42,20 @@
             </view>
             <text class="review-time">{{ formatTime(review.createdAt) }}</text>
           </view>
-          
+
           <view class="item-info" v-if="review.order?.item">
-            <image class="item-image" :src="review.order.item.images?.[0] || '/static/logo.png'" mode="aspectFill" />
+            <image class="item-image" :src="getImageUrl(review.order.item.images?.[0])" mode="aspectFill" />
             <text class="item-title">{{ review.order.item.title }}</text>
           </view>
-          
+
           <text class="review-content">{{ review.content }}</text>
-          
+
           <view class="review-images" v-if="review.images && review.images.length > 0">
-            <image 
-              class="review-image" 
-              v-for="(img, index) in review.images" 
+            <image
+              class="review-image"
+              v-for="(img, index) in review.images"
               :key="index"
-              :src="img" 
+              :src="getImageUrl(img)"
               mode="aspectFill"
               @click="previewImage(img)"
             />
@@ -81,6 +81,7 @@
   import { ref, computed, onMounted } from 'vue'
   import { getUserReviews, type Review } from '@/api/reviews'
   import { useAuthStore } from '@/stores/auth'
+  import { getImageUrl } from '@/utils/image'
 
   const authStore = useAuthStore()
   const currentUserId = computed(() => authStore.userInfo?.id || 0)
@@ -99,23 +100,25 @@
 
   const loadReviews = async () => {
     if (loading.value) return
-  
+
     loading.value = true
-  
+
     try {
       const res = await getUserReviews(currentUserId.value, {
         page: page.value,
-        limit: limit,
+        limit,
         type: currentType.value
       })
-    
+
+      const nextReviews = res.reviews || []
+
       if (page.value === 1) {
-        reviews.value = res.data || []
+        reviews.value = nextReviews
       } else {
-        reviews.value = [...reviews.value, ...(res.data || [])]
+        reviews.value = [...reviews.value, ...nextReviews]
       }
-    
-      hasMore.value = (res.data?.length || 0) === limit && page.value < (res.totalPages || 1)
+
+      hasMore.value = nextReviews.length === limit && page.value < (res.pagination?.totalPages || 1)
     } catch (error) {
       console.error('获取评价列表失败:', error)
       uni.showToast({ title: '获取评价失败', icon: 'none' })
@@ -134,7 +137,7 @@
 
   const getUserAvatar = (review: Review) => {
     const user = currentType.value === 'received' ? review.reviewer : review.reviewee
-    return user?.avatar || '/static/logo.png'
+    return getImageUrl(user?.avatar)
   }
 
   const getUsername = (review: Review) => {
@@ -147,7 +150,7 @@
     const date = new Date(time)
     const now = new Date()
     const diff = now.getTime() - date.getTime()
-  
+
     if (diff < 60000) {
       return '刚刚'
     } else if (diff < 3600000) {
@@ -170,7 +173,7 @@
 
   const loadMore = () => {
     if (!hasMore.value || loading.value) return
-  
+
     page.value++
     loadReviews()
   }
@@ -179,9 +182,9 @@
     refreshing.value = true
     page.value = 1
     hasMore.value = true
-  
+
     await loadReviews()
-  
+
     refreshing.value = false
   }
 </script>

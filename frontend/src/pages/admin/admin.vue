@@ -2,7 +2,7 @@
   <view class="admin-container">
     <view class="admin-header" :style="{ paddingTop: statusBarHeight + 'px' }">
       <view class="user-info">
-        <image class="avatar" :src="userInfo?.avatar || '/static/logo.png'" mode="aspectFill" />
+        <image class="avatar" :src="getImageUrl(userInfo?.avatar)" mode="aspectFill" />
         <view class="info">
           <text class="nickname">{{ userInfo?.username }}</text>
           <text class="role">{{ roleText }}</text>
@@ -68,7 +68,7 @@
         </view>
         <view class="user-list" v-if="users.length > 0">
           <view class="user-item" v-for="user in users" :key="user.id">
-            <image class="user-avatar" :src="user.avatar || '/static/logo.png'" mode="aspectFill" />
+            <image class="user-avatar" :src="getImageUrl(user.avatar)" mode="aspectFill" />
             <view class="user-detail">
               <text class="user-name">{{ user.username }}</text>
               <text class="user-account">
@@ -252,6 +252,7 @@
   import { onLoad } from '@dcloudio/uni-app'
   import { request, get, post, put } from '@/utils/request'
   import { useDeviceInfo } from '@/utils/device'
+  import { getImageUrl } from '@/utils/image'
 
   const currentTab = ref('dashboard')
   const showCreateModal = ref(false)
@@ -302,12 +303,6 @@
     if (!userInfo.value) return ''
     return userInfo.value.role === 'root' ? '超级用户' : userInfo.value.role === 'admin' ? '管理员' : '用户'
   })
-
-  const getImageUrl = (url?: string) => {
-    if (!url) return '/static/logo.png'
-    if (url.startsWith('http')) return url
-    return `http://localhost:3000${url}`
-  }
 
   const formatTime = (timeStr: string) => {
     if (!timeStr) return ''

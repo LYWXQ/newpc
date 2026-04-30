@@ -4,6 +4,17 @@
 import { get, post, put, del } from '@/utils/request'
 import type { PaginationData } from './types'
 
+// 用户信息（简版）
+interface UserInfo {
+  id: number
+  username: string
+  avatar?: string
+  creditScore: number
+  isVerified: boolean
+  phone?: string
+  qq?: string
+}
+
 // 物品信息接口
 export interface Item {
   id: number
@@ -21,21 +32,12 @@ export interface Item {
     end?: string
   }
   location?: string
-  status: 'available' | 'rented' | 'reviewing' | 'offline'
+  status: 'available' | 'reserved' | 'rented' | 'reviewing' | 'offline'
   viewCount: number
   userId: number
   user?: UserInfo
   createdAt: string
   updatedAt: string
-}
-
-// 用户信息（简版）
-interface UserInfo {
-  id: number
-  username: string
-  avatar?: string
-  creditScore: number
-  isVerified: boolean
 }
 
 // 物品列表参数
@@ -64,6 +66,7 @@ export interface CreateItemParams {
     end?: string
   }
   location?: string
+  status?: Item['status']
 }
 
 /**
@@ -90,8 +93,8 @@ export const createItem = (data: CreateItemParams, options?: any): Promise<{ mes
 /**
  * 更新物品
  */
-export const updateItem = (id: number, data: Partial<CreateItemParams>): Promise<{ message: string; item: Item }> => {
-  return put(`/items/${id}`, data)
+export const updateItem = (id: number, data: Partial<CreateItemParams>, options?: any): Promise<{ message: string; item: Item }> => {
+  return put(`/items/${id}`, data, options)
 }
 
 /**
