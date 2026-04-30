@@ -198,3 +198,4 @@ export interface OrderStats {
 export const getOrderStats = (options?: any): Promise<OrderStats> => {
   return get('/orders/stats', undefined, options)
 }
+

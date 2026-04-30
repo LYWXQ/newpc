@@ -116,7 +116,10 @@
       <view class="section">
         <view class="section-header">
           <text class="section-title">热门推荐</text>
-          <text class="section-more" @click="goToMore">查看更多 ></text>
+          <view class="section-more" @click="goToMore">
+            <text>查看更多</text>
+            <text class="section-more-arrow">＞</text>
+          </view>
         </view>
 
         <view class="item-grid" v-if="recommendedItems.length > 0">
@@ -161,7 +164,10 @@
       <view class="section">
         <view class="section-header">
           <text class="section-title">最新发布</text>
-          <text class="section-more" @click="goToMore">查看更多 ></text>
+          <view class="section-more" @click="goToMore">
+            <text>查看更多</text>
+            <text class="section-more-arrow">＞</text>
+          </view>
         </view>
 
         <view class="item-list" v-if="latestItems.length > 0">
@@ -647,7 +653,16 @@
 }
 
 .section-more {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
   font-size: $font-sm;
+  color: $text-hint;
+}
+
+.section-more-arrow {
+  font-size: $font-sm;
+  line-height: 1;
   color: $text-hint;
 }
 

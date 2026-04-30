@@ -9,7 +9,6 @@
         @click="selectRole(role.value)"
       >
         {{ role.label }}
-        <text class="badge" v-if="role.count > 0">{{ role.count }}</text>
       </view>
     </view>
 
@@ -22,7 +21,6 @@
         @click="selectTab(tab.value)"
       >
         {{ tab.label }}
-        <text class="badge" v-if="tab.count > 0">{{ tab.count }}</text>
       </view>
     </view>
 
@@ -101,7 +99,7 @@
 <script setup lang="ts">
   import { ref, onMounted, computed } from 'vue'
   import { onShow } from '@dcloudio/uni-app'
-  import { getOrderList, getOrderStats, type Order, type OrderStats, confirmOrder, rejectOrder, cancelOrder } from '@/api/orders'
+  import { getOrderList, type Order, confirmOrder, rejectOrder, cancelOrder } from '@/api/orders'
   import { useAuthStore } from '@/stores/auth'
   import { isLoggedIn } from '@/utils/auth'
   import { getImageUrl } from '@/utils/image'
@@ -111,31 +109,9 @@
 
   const authStore = useAuthStore()
 
-  const emptyRoleStats = () => ({
-    pending: 0,
-    confirmed: 0,
-    using: 0,
-    returned: 0,
-    completed: 0,
-    active: 0
-  })
-
   const currentUserId = computed(() => authStore.userInfo?.id || 0)
   const currentRole = ref<OrderRole>('borrower')
   const currentTab = ref<OrderTabValue>('all')
-  const orderStats = ref<OrderStats>({
-    totalAsLender: 0,
-    totalAsBorrower: 0,
-    pendingCount: 0,
-    confirmedCount: 0,
-    usingCount: 0,
-    returnedCount: 0,
-    completedCount: 0,
-    roleStats: {
-      lender: emptyRoleStats(),
-      borrower: emptyRoleStats()
-    }
-  })
 
   const tabDefinitions = [
     { label: '全部', value: 'all' as OrderTabValue },
@@ -144,31 +120,12 @@
     { label: '已完成', value: 'completed' as OrderTabValue }
   ]
 
-  const roleStats = computed(() => orderStats.value.roleStats[currentRole.value] || emptyRoleStats())
+  const roleTabs = computed(() => [
+    { label: '我借入的', value: 'borrower' as OrderRole },
+    { label: '我借出的', value: 'lender' as OrderRole }
+  ])
 
-  const roleTabs = computed(() => {
-    const lenderCount = orderStats.value.roleStats.lender.pending + orderStats.value.roleStats.lender.active + orderStats.value.roleStats.lender.completed
-    const borrowerCount = orderStats.value.roleStats.borrower.pending + orderStats.value.roleStats.borrower.active + orderStats.value.roleStats.borrower.completed
-
-    return [
-      { label: '我借入的', value: 'borrower' as OrderRole, count: borrowerCount },
-      { label: '我借出的', value: 'lender' as OrderRole, count: lenderCount }
-    ]
-  })
-
-  const displayTabs = computed(() => {
-    const counts: Record<OrderTabValue, number> = {
-      all: roleStats.value.pending + roleStats.value.active + roleStats.value.completed,
-      pending: roleStats.value.pending,
-      active: roleStats.value.active,
-      completed: roleStats.value.completed
-    }
-
-    return tabDefinitions.map(tab => ({
-      ...tab,
-      count: counts[tab.value]
-    }))
-  })
+  const displayTabs = computed(() => tabDefinitions)
 
   const orders = ref<Order[]>([])
   const loading = ref(false)
@@ -201,14 +158,6 @@
     }
     void onRefresh()
   })
-
-  const loadOrderStats = async () => {
-    try {
-      orderStats.value = await getOrderStats()
-    } catch (error) {
-      console.error('获取订单统计失败:', error)
-    }
-  }
 
   const getStatusFilter = () => {
     if (currentTab.value === 'pending') return 'pending'
@@ -397,7 +346,6 @@
   const onRefresh = async () => {
     refreshing.value = true
     resetOrderList()
-    await loadOrderStats()
     await loadOrders()
     refreshing.value = false
   }

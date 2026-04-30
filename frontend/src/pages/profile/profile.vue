@@ -55,40 +55,39 @@
         <text class="menu-icon">📦</text>
         <text class="menu-text">我的发布</text>
         <view class="menu-meta">
-          <text class="menu-count" v-if="dashboard.publishedCount > 0">{{ dashboard.publishedCount }}</text>
-          <text class="menu-arrow">></text>
+          <text class="menu-arrow">＞</text>
         </view>
       </view>
       <view class="menu-item" @click="goToOrders()">
         <text class="menu-icon">📋</text>
         <text class="menu-text">我的订单</text>
-        <text class="menu-arrow">></text>
+        <text class="menu-arrow">＞</text>
       </view>
       <view class="menu-item" @click="goToMessages">
         <text class="menu-icon">💬</text>
         <text class="menu-text">我的消息</text>
         <view class="menu-meta">
           <view class="badge" v-if="dashboard.unreadCount > 0">{{ dashboard.unreadCount }}</view>
-          <text class="menu-arrow">></text>
+          <text class="menu-arrow">＞</text>
         </view>
       </view>
       <view class="menu-item" @click="goToReviews">
         <text class="menu-icon">⭐</text>
         <text class="menu-text">我的评价</text>
-        <text class="menu-arrow">></text>
+        <text class="menu-arrow">＞</text>
       </view>
       <view class="menu-item" @click="goToFavorites">
         <text class="menu-icon">❤️</text>
         <text class="menu-text">我的收藏</text>
         <view class="menu-meta">
           <text class="menu-count" v-if="dashboard.favoriteCount > 0">{{ dashboard.favoriteCount }}</text>
-          <text class="menu-arrow">></text>
+          <text class="menu-arrow">＞</text>
         </view>
       </view>
       <view class="menu-item" @click="goToSettings">
         <text class="menu-icon">⚙️</text>
         <text class="menu-text">设置</text>
-        <text class="menu-arrow">></text>
+        <text class="menu-arrow">＞</text>
       </view>
     </view>
 
@@ -431,7 +430,8 @@
 }
 
 .menu-arrow {
-  font-size: 28rpx;
+  font-size: 30rpx;
+  line-height: 1;
   color: #999;
 }
 

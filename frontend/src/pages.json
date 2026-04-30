@@ -132,7 +132,7 @@
       "width": "80rpx",
       "height": "80rpx",
       "text": "发布",
-      "iconPath": "static/tabbar/publish.png",
+      "iconPath": "static/tabbar/iconfont-line/publish.png",
       "iconWidth": "50rpx",
       "backgroundImage": "linear-gradient(135deg, #007aff, #1E88E5)",
       "iconHeight": "50rpx"
@@ -141,32 +141,32 @@
       {
         "pagePath": "pages/index/index",
         "text": "首页",
-        "iconPath": "static/tabbar/home.png",
-        "selectedIconPath": "static/tabbar/home-active.png"
+        "iconPath": "static/tabbar/iconfont-line/home.png",
+        "selectedIconPath": "static/tabbar/iconfont-line/home-active.png"
       },
       {
         "pagePath": "pages/orders/orders",
         "text": "订单",
-        "iconPath": "static/tabbar/order.png",
-        "selectedIconPath": "static/tabbar/order-active.png"
+        "iconPath": "static/tabbar/iconfont-line/order.png",
+        "selectedIconPath": "static/tabbar/iconfont-line/order-active.png"
       },
       {
         "pagePath": "pages/publish/publish",
         "text": "发布",
-        "iconPath": "static/tabbar/publish.png",
-        "selectedIconPath": "static/tabbar/publish.png"
+        "iconPath": "static/tabbar/iconfont-line/publish.png",
+        "selectedIconPath": "static/tabbar/iconfont-line/publish.png"
       },
       {
         "pagePath": "pages/messages/messages",
         "text": "消息",
-        "iconPath": "static/tabbar/message.png",
-        "selectedIconPath": "static/tabbar/message-active.png"
+        "iconPath": "static/tabbar/iconfont-line/message.png",
+        "selectedIconPath": "static/tabbar/iconfont-line/message-active.png"
       },
       {
         "pagePath": "pages/profile/profile",
         "text": "我的",
-        "iconPath": "static/tabbar/profile.png",
-        "selectedIconPath": "static/tabbar/profile-active.png"
+        "iconPath": "static/tabbar/iconfont-line/profile.png",
+        "selectedIconPath": "static/tabbar/iconfont-line/profile-active.png"
       }
     ]
   }
