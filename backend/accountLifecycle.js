@@ -15,6 +15,8 @@ const DELETION_STATUS = {
   DELETED: 'deleted'
 };
 
+const normalizeUserRole = () => 'user';
+
 const serializeUser = (user) => ({
   id: user.id,
   studentId: user.studentId,
@@ -27,7 +29,7 @@ const serializeUser = (user) => ({
   major: user.major,
   creditScore: user.creditScore,
   isVerified: user.isVerified,
-  role: user.role,
+  role: normalizeUserRole(user.role),
   status: user.status,
   deletionStatus: user.deletionStatus,
   deletionRequestedAt: user.deletionRequestedAt,
@@ -181,6 +183,7 @@ const anonymizeUserAccount = async (userOrId) => {
     school: null,
     major: null,
     isVerified: false,
+    role: normalizeUserRole(),
     status: DELETION_STATUS.DELETED,
     deletionStatus: DELETION_STATUS.DELETED,
     anonymizedAt
@@ -237,5 +240,6 @@ module.exports = {
   scheduleUserDeletion,
   serializeUser,
   sweepExpiredDeletionUsers,
+  normalizeUserRole,
   verifyPendingLoginToken
 };

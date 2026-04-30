@@ -37,23 +37,7 @@ const generateToken = (userId, role) => {
   return jwt.sign({ userId, role }, JWT_SECRET, { expiresIn: '24h' });
 };
 
-// 检查用户角色
-const requireRole = (allowedRoles) => {
-  return (req, res, next) => {
-    if (!req.user) {
-      return res.status(401).json({ message: '未认证' });
-    }
-
-    if (!allowedRoles.includes(req.user.role)) {
-      return res.status(403).json({ message: '权限不足' });
-    }
-
-    next();
-  };
-};
-
 module.exports = {
   authenticateToken,
-  generateToken,
-  requireRole
+  generateToken
 };

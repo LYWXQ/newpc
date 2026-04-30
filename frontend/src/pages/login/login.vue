@@ -6,31 +6,14 @@
       <text class="subtitle">让闲置物品流动起来</text>
     </view>
 
-    <view class="login-tabs">
-      <view 
-        class="login-tab" 
-        :class="{ active: loginTab === 'user' }"
-        @click="loginTab = 'user'"
-      >
-        普通用户
-      </view>
-      <view 
-        class="login-tab" 
-        :class="{ active: loginTab === 'admin' }"
-        @click="loginTab = 'admin'"
-      >
-        管理员
-      </view>
-    </view>
-
     <view class="login-form">
       <view class="form-item">
-        <text class="label">{{ loginTab === 'user' ? '学号/手机号' : '用户名' }}</text>
+        <text class="label">学号/手机号/用户名</text>
         <input
           type="text"
           v-model="account"
           name="account"
-          :placeholder="loginTab === 'user' ? '请输入学号或手机号' : '请输入用户名'"
+          placeholder="请输入学号、手机号或用户名"
           maxlength="50"
         >
       </view>
@@ -53,7 +36,7 @@
         登录
       </button>
 
-      <view class="form-footer" v-if="loginTab === 'user'">
+      <view class="form-footer">
         <text class="link" @click="goToRegister">还没有账号？去注册</text>
         <text class="link" @click="goToForgot">忘记密码？</text>
       </view>
@@ -74,7 +57,6 @@
   import { useAuthStore } from '@/stores/auth'
 
   const authStore = useAuthStore()
-  const loginTab = ref<'user' | 'admin'>('user')
   const account = ref('')
   const password = ref('')
   const loading = ref(false)
@@ -93,37 +75,8 @@
     uni.showToast({ title: '登录成功', icon: 'success' })
 
     setTimeout(() => {
-      if (user.role === 'admin' || user.role === 'root' || user.role === 'superadmin') {
-        uni.navigateTo({ url: '/pages/admin/admin' })
-      } else {
-        uni.switchTab({ url: '/pages/index/index' })
-      }
+      uni.switchTab({ url: '/pages/index/index' })
     }, 1500)
-  }
-
-  const validateRole = (user: UserInfo) => {
-    if (loginTab.value === 'user') {
-      if (user.role !== 'user') {
-        uni.showToast({
-          title: '该账号不是普通用户，请在管理员tab登录',
-          icon: 'none',
-          duration: 2000
-        })
-        return false
-      }
-      return true
-    }
-
-    if (user.role !== 'admin' && user.role !== 'root' && user.role !== 'superadmin') {
-      uni.showToast({
-        title: '该账号不是管理员，请在普通用户tab登录',
-        icon: 'none',
-        duration: 2000
-      })
-      return false
-    }
-
-    return true
   }
 
   const handlePendingDeletionLogin = async (response: PendingDeletionLoginResponse) => {
@@ -150,11 +103,6 @@
               throw new Error('登录响应异常')
             }
 
-            if (!validateRole(result.user)) {
-              resolve()
-              return
-            }
-
             completeLogin(result.token, result.user)
             resolve()
           } catch (error) {
@@ -169,7 +117,7 @@
   const handleLogin = async () => {
     if (!account.value.trim()) {
       uni.showToast({
-        title: loginTab.value === 'user' ? '请输入学号或手机号' : '请输入用户名',
+        title: '请输入学号、手机号或用户名',
         icon: 'none'
       })
       return
@@ -180,12 +128,11 @@
     }
 
     loading.value = true
-  
+
     try {
       const res = await login({
         account: account.value,
-        password: password.value,
-        loginType: loginTab.value
+        password: password.value
       })
 
       if (isPendingDeletionResponse(res)) {
@@ -197,16 +144,11 @@
         throw new Error('登录响应异常')
       }
 
-      const user = res.user as UserInfo
-      if (!validateRole(user)) {
-        return
-      }
-
       completeLogin(res.token, res.user)
     } catch (error: any) {
       console.error('登录失败:', error)
-      uni.showToast({ 
-        title: error.message || '登录失败，请检查账号和密码', 
+      uni.showToast({
+        title: error.message || '登录失败，请检查账号和密码',
         icon: 'none',
         duration: 2000
       })
@@ -267,30 +209,6 @@
 .subtitle {
   font-size: 28rpx;
   color: rgba(255,255,255,0.8);
-}
-
-.login-tabs {
-  display: flex;
-  background-color: rgba(255,255,255,0.2);
-  border-radius: 12rpx;
-  padding: 8rpx;
-  margin-bottom: 40rpx;
-}
-
-.login-tab {
-  flex: 1;
-  text-align: center;
-  padding: 20rpx 0;
-  font-size: 28rpx;
-  color: rgba(255,255,255,0.8);
-  border-radius: 8rpx;
-  transition: all 0.3s;
-}
-
-.login-tab.active {
-  background-color: #fff;
-  color: #667eea;
-  font-weight: 500;
 }
 
 .login-form {

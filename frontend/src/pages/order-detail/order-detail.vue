@@ -615,14 +615,14 @@
   const handleCancel = () => {
     uni.showModal({
       title: '取消订单',
-      content: '确定要取消这个订单吗？',
+      content: '确定要取消这个订单吗？\n\n可在输入框中填写取消原因（选填）。',
       editable: true,
-      placeholderText: '请输入取消原因（可选）',
+      placeholderText: '请输入取消原因（选填）',
       success: async (res) => {
         if (res.confirm) {
           try {
             uni.showLoading({ title: '处理中...' })
-            await cancelOrder(orderId.value, res.content || undefined)
+            await cancelOrder(orderId.value, res.content?.trim() || undefined)
             uni.hideLoading()
             uni.showToast({ title: '订单已取消', icon: 'success' })
             await loadOrderDetail()

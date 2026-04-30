@@ -11,7 +11,7 @@ const User = sequelize.define('User', {
     type: DataTypes.STRING(20),
     allowNull: true,
     unique: true,
-    comment: '学号（普通用户必填，管理员和root可以为空）'
+    comment: '学号（普通用户可填写）'
   },
   username: {
     type: DataTypes.STRING(50),
@@ -99,7 +99,7 @@ const User = sequelize.define('User', {
   role: {
     type: DataTypes.STRING(20),
     defaultValue: 'user',
-    comment: '用户角色：user-普通用户，admin-管理员，root-超级用户'
+    comment: '用户角色：当前仅保留普通用户 user'
   }
 }, {
   tableName: 'users',

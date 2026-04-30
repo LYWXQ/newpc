@@ -1006,6 +1006,10 @@ router.put('/:id/cancel', authenticateToken, async (req, res) => {
       return res.status(400).json({ message: 'Order cannot be cancelled' });
     }
 
+    if (order.pickupConfirmedByLenderAt) {
+      return res.status(400).json({ message: 'Only orders with items still held by the lender can be cancelled' });
+    }
+
     await order.update({ status: 'cancelled', cancelReason: reason || null });
     await restoreItemAvailability(order.itemId);
 

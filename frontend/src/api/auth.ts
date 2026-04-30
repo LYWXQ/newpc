@@ -14,7 +14,7 @@ export interface UserInfo {
   creditScore: number
   isVerified: boolean
   status: string
-  role: 'user' | 'admin' | 'root' | 'superadmin'
+  role: 'user'
   phone?: string | null
   qq?: string | null
   email?: string | null
@@ -33,7 +33,6 @@ export interface UserInfo {
 export interface LoginParams {
   account: string
   password: string
-  loginType: 'user' | 'admin'
 }
 
 // 注册参数

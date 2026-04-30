@@ -9,6 +9,7 @@ const {
   isDeletionExpired,
   isPendingDeletion,
   isValidQQ,
+  normalizeUserRole,
   processExpiredDeletionForUser,
   serializeUser,
   verifyPendingLoginToken
@@ -17,7 +18,7 @@ const { Op } = require('sequelize');
 
 const buildLoginSuccessResponse = (user) => ({
   message: '登录成功',
-  token: generateToken(user.id, user.role),
+  token: generateToken(user.id, normalizeUserRole(user.role)),
   user: serializeUser(user)
 });
 
@@ -71,7 +72,7 @@ const register = async (req, res) => {
       deletionStatus: DELETION_STATUS.NONE
     });
 
-    const token = generateToken(user.id, user.role);
+    const token = generateToken(user.id, normalizeUserRole(user.role));
 
     res.status(201).json({
       message: '注册成功',
@@ -84,40 +85,25 @@ const register = async (req, res) => {
   }
 };
 
-// 用户登录（普通用户支持学号和手机号，管理员支持用户名登录）
+// 用户登录（统一支持学号、手机号或用户名登录）
 const login = async (req, res) => {
   try {
-    const { account, password, loginType = 'user' } = req.body;
-    console.log('登录请求 - account:', account, 'loginType:', loginType, 'account type:', typeof account);
+    const { account, password } = req.body;
+    const normalizedAccount = String(account || '').trim();
 
-    if (!account || !password) {
+    if (!normalizedAccount || !password) {
       return res.status(400).json({ message: '账号和密码不能为空' });
     }
 
-    let user = null;
-
-    if (loginType === 'admin') {
-      user = await User.findOne({
-        where: {
-          username: account,
-          role: {
-            [Op.in]: ['admin', 'root', 'superadmin']
-          }
-        }
-      });
-    } else {
-      user = await User.findOne({
-        where: {
-          role: 'user',
-          [Op.or]: [
-            { studentId: account },
-            { phone: account }
-          ]
-        }
-      });
-    }
-
-    console.log('查询结果:', user ? (user.username + ' / ' + user.studentId) : '未找到');
+    const user = await User.findOne({
+      where: {
+        [Op.or]: [
+          { studentId: normalizedAccount },
+          { phone: normalizedAccount },
+          { username: normalizedAccount }
+        ]
+      }
+    });
 
     if (!user) {
       return res.status(401).json({ message: '账号或密码错误' });
@@ -154,7 +140,7 @@ const login = async (req, res) => {
           studentId: user.studentId,
           username: user.username,
           avatar: user.avatar,
-          role: user.role
+          role: normalizeUserRole(user.role)
         }
       });
     }
@@ -233,7 +219,7 @@ const resolveDeletionLogin = async (req, res) => {
 
     res.json({
       message: '登录成功，已取消注销申请',
-      token: generateToken(user.id, user.role),
+      token: generateToken(user.id, normalizeUserRole(user.role)),
       user: serializeUser(user)
     });
   } catch (error) {

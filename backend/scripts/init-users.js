@@ -14,22 +14,6 @@ const initUsers = async () => {
 
     const users = [
       {
-        username: 'root',
-        password: hashedPassword,
-        role: 'root',
-        creditScore: 100,
-        isVerified: true,
-        status: 'active'
-      },
-      {
-        username: 'admin',
-        password: hashedPassword,
-        role: 'admin',
-        creditScore: 100,
-        isVerified: true,
-        status: 'active'
-      },
-      {
         username: 'user',
         studentId: '202214060422',
         password: hashedPassword,
@@ -56,8 +40,6 @@ const initUsers = async () => {
 
     console.log('✅ 用户初始化完成！');
     console.log('\n测试账号：');
-    console.log('  root (超级用户): root / 123456');
-    console.log('  admin (管理员): admin / 123456');
     console.log('  user (普通用户): user / 123456 (学号: 202214060422)');
 
     process.exit(0);

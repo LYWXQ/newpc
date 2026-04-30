@@ -11,7 +11,7 @@ const initMockData = async () => {
     await sequelize.authenticate();
     console.log('数据库连接成功');
 
-    // 清空现有数据（保留root、admin、user三个基础用户）
+    // 清空现有数据（保留 user 基础用户）
     await Review.destroy({ where: {} });
     await Message.destroy({ where: {} });
     await Order.destroy({ where: {} });
@@ -19,7 +19,7 @@ const initMockData = async () => {
     await User.destroy({ 
       where: { 
         role: 'user',
-        username: { [require('sequelize').Op.notIn]: ['user', 'root', 'admin'] }
+        username: { [require('sequelize').Op.notIn]: ['user'] }
       }
     });
     console.log('旧数据已清理');

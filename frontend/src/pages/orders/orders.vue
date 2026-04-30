@@ -162,7 +162,7 @@
   const getStatusFilter = () => {
     if (currentTab.value === 'pending') return 'pending'
     if (currentTab.value === 'active') return 'confirmed,using,returned'
-    if (currentTab.value === 'completed') return 'completed'
+    if (currentTab.value === 'completed') return 'completed,cancelled'
     return undefined
   }
 
