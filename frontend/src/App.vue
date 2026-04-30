@@ -3,11 +3,11 @@ import { onLaunch, onShow, onHide } from '@dcloudio/uni-app'
 import { useAuthStore } from '@/stores/auth'
 import { getCurrentUser } from '@/api/auth'
 import { initDeviceInfo } from '@/utils/device'
+import { syncMessageTabBadge } from '@/utils/messageBadge'
 
 onLaunch(async () => {
-  // 初始化设备信息
   await initDeviceInfo()
-  
+
   const authStore = useAuthStore()
   authStore.initAuth()
 
@@ -19,9 +19,13 @@ onLaunch(async () => {
       console.error('获取最新用户信息失败:', error)
     }
   }
+
+  await syncMessageTabBadge()
 })
 
-onShow(() => {})
+onShow(async () => {
+  await syncMessageTabBadge()
+})
 
 onHide(() => {})
 </script>
@@ -52,7 +56,7 @@ button {
   background: none;
   border: none;
   line-height: inherit;
-  
+
   &::after {
     border: none;
   }

@@ -22,12 +22,13 @@ const normalizePickupCode = (value) => String(value || '')
 const isValidPickupCode = (value) => /^[A-Z0-9]{6}$/.test(value);
 
 // 发送系统消息
-const sendSystemMessage = async (receiverId, content, relatedId, relatedType) => {
+const sendSystemMessage = async (receiverId, content, relatedId, relatedType, itemId = null) => {
   try {
     const Message = require('../models').Message;
     await Message.create({
       senderId: null,
       receiverId,
+      itemId,
       content,
       type: 'system',
       relatedId,
@@ -203,6 +204,30 @@ router.get('/stats', authenticateToken, async (req, res) => {
       }
     });
 
+    const buildRoleStats = async (roleField) => {
+      const [pending, confirmed, using, returned, completed] = await Promise.all([
+        Order.count({ where: { [roleField]: userId, status: 'pending' } }),
+        Order.count({ where: { [roleField]: userId, status: 'confirmed' } }),
+        Order.count({ where: { [roleField]: userId, status: 'using' } }),
+        Order.count({ where: { [roleField]: userId, status: 'returned' } }),
+        Order.count({ where: { [roleField]: userId, status: 'completed' } })
+      ]);
+
+      return {
+        pending,
+        confirmed,
+        using,
+        returned,
+        completed,
+        active: confirmed + using + returned
+      };
+    };
+
+    const [lenderRoleStats, borrowerRoleStats] = await Promise.all([
+      buildRoleStats('lenderId'),
+      buildRoleStats('borrowerId')
+    ]);
+
     res.json({
       totalAsLender,
       totalAsBorrower,
@@ -210,7 +235,11 @@ router.get('/stats', authenticateToken, async (req, res) => {
       confirmedCount,
       usingCount,
       returnedCount,
-      completedCount
+      completedCount,
+      roleStats: {
+        lender: lenderRoleStats,
+        borrower: borrowerRoleStats
+      }
     });
   } catch (error) {
     res.status(500).json({ message: 'Failed to get order stats', error: error.message });
@@ -363,7 +392,8 @@ router.post('/', authenticateToken, async (req, res) => {
       item.userId,
       `有新的交易请求：${item.title}，请确认交易时间、交还时间和交接地点。`,
       order.id,
-      'order'
+      'order',
+      item.id
     );
 
     const fullOrder = await loadOrderById(order.id);
@@ -514,7 +544,8 @@ router.put('/:id/confirm-changes', authenticateToken, async (req, res) => {
       order.lenderId,
       `买方已确认修改：${order.item.title}。请妥善保管并在交接时向买方出示${codeTip}。`,
       order.id,
-      'order'
+      'order',
+      order.itemId || order.item?.id || null
     );
     await sendSystemMessage(
       order.borrowerId,
@@ -522,7 +553,8 @@ router.put('/:id/confirm-changes', authenticateToken, async (req, res) => {
         ? `交易信息已确认：${order.item.title}。请先向卖方获取取件码完成取件，归还时再向卖方获取归还码。`
         : `交易信息已确认：${order.item.title}。请在交接时向卖方获取取件码并完成验码。`,
       order.id,
-      'order'
+      'order',
+      order.itemId || order.item?.id || null
     );
 
     const refreshedOrder = await loadOrderById(order.id);
@@ -561,7 +593,8 @@ router.put('/:id/reject', authenticateToken, async (req, res) => {
       order.borrowerId,
       `您的借用请求已被拒绝：${order.item.title}${reason ? `，原因：${reason}` : ''}`,
       order.id,
-      'order'
+      'order',
+      order.itemId || order.item?.id || null
     );
 
     const refreshedOrder = await loadOrderById(order.id);
@@ -618,13 +651,15 @@ router.put('/:id/pickup', authenticateToken, async (req, res) => {
       order.lenderId,
       `买方已提交取件码：${order.item.title}。请确认已完成交付。`,
       order.id,
-      'order'
+      'order',
+      order.itemId || order.item?.id || null
     );
     await sendSystemMessage(
       order.borrowerId,
       `您已提交取件码：${order.item.title}。等待卖方确认交付。`,
       order.id,
-      'order'
+      'order',
+      order.itemId || order.item?.id || null
     );
 
     const refreshedOrder = await loadOrderById(order.id);
@@ -752,7 +787,8 @@ router.put('/:id/update-return-info', authenticateToken, async (req, res) => {
       order.borrowerId,
       `卖方已更新归还信息：${order.item.title}${returnTimeMessage}，请按新的约定完成交还。`,
       order.id,
-      'order'
+      'order',
+      order.itemId || order.item?.id || null
     );
 
     const refreshedOrder = await loadOrderById(order.id);
@@ -817,13 +853,15 @@ router.put('/:id/return', authenticateToken, async (req, res) => {
       order.lenderId,
       `买方已提交归还码：${order.item.title}。请确认已收回物品。`,
       order.id,
-      'order'
+      'order',
+      order.itemId || order.item?.id || null
     );
     await sendSystemMessage(
       order.borrowerId,
       `您已提交归还码：${order.item.title}。等待卖方确认收回。`,
       order.id,
-      'order'
+      'order',
+      order.itemId || order.item?.id || null
     );
 
     const refreshedOrder = await loadOrderById(order.id);
@@ -880,13 +918,15 @@ router.put('/:id/confirm-return-receipt', authenticateToken, async (req, res) =>
       order.lenderId,
       `您已确认收回物品：${order.item.title}。订单待最终完成${isEarlyReturn ? '，本次为提前归还' : ''}。`,
       order.id,
-      'order'
+      'order',
+      order.itemId || order.item?.id || null
     );
     await sendSystemMessage(
       order.borrowerId,
       `卖方已确认收回：${order.item.title}。订单待最终完成${isEarlyReturn ? '，本次为提前归还' : ''}。`,
       order.id,
-      'order'
+      'order',
+      order.itemId || order.item?.id || null
     );
 
     const refreshedOrder = await loadOrderById(order.id);
@@ -926,13 +966,15 @@ router.put('/:id/complete', authenticateToken, async (req, res) => {
       order.borrowerId,
       `订单已完成：${order.item.title}。卖方已完成确认，双方现在可以互相评价了。`,
       order.id,
-      'order'
+      'order',
+      order.itemId || order.item?.id || null
     );
     await sendSystemMessage(
       order.lenderId,
       `您已完成订单：${order.item.title}。${shouldRestoreItemAvailability(order) ? '物品状态已恢复为可借。' : '物品状态已更新为下架。'}`,
       order.id,
-      'order'
+      'order',
+      order.itemId || order.item?.id || null
     );
 
     const refreshedOrder = await loadOrderById(order.id);
@@ -972,7 +1014,8 @@ router.put('/:id/cancel', authenticateToken, async (req, res) => {
       otherUserId,
       `订单已被取消：${order.item.title}${reason ? `，原因：${reason}` : ''}`,
       order.id,
-      'order'
+      'order',
+      order.itemId || order.item?.id || null
     );
 
     const refreshedOrder = await loadOrderById(order.id);
@@ -1027,7 +1070,8 @@ router.put('/:id/extend', authenticateToken, async (req, res) => {
       order.lenderId,
       `买方申请延期：${order.item.title}，延期${daysExtended}天，费用¥${extensionCost}`,
       order.id,
-      'order'
+      'order',
+      order.itemId || order.item?.id || null
     );
 
     const refreshedOrder = await loadOrderById(order.id);
@@ -1071,7 +1115,8 @@ router.put('/:id/confirm-extension', authenticateToken, async (req, res) => {
       order.borrowerId,
       `延期申请已通过：${order.item.title}`,
       order.id,
-      'order'
+      'order',
+      order.itemId || order.item?.id || null
     );
 
     const refreshedOrder = await loadOrderById(order.id);
@@ -1108,7 +1153,8 @@ router.put('/:id/reject-extension', authenticateToken, async (req, res) => {
       order.borrowerId,
       `延期申请已被拒绝：${order.item.title}`,
       order.id,
-      'order'
+      'order',
+      order.itemId || order.item?.id || null
     );
 
     const refreshedOrder = await loadOrderById(order.id);

@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import type { UserInfo } from '@/api/auth'
+import { syncMessageTabBadge } from '@/utils/messageBadge'
 
 export const useAuthStore = defineStore('auth', () => {
   const isLoggedIn = ref(false)
@@ -20,22 +21,24 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
-  const login = (newToken: string, newUserInfo: Partial<UserInfo>) => {
+  const login = async (newToken: string, newUserInfo: Partial<UserInfo>) => {
     token.value = newToken
     userInfo.value = newUserInfo
     isLoggedIn.value = true
 
     uni.setStorageSync('token', newToken)
     uni.setStorageSync('userInfo', newUserInfo)
+    await syncMessageTabBadge()
   }
 
-  const logout = () => {
+  const logout = async () => {
     token.value = ''
     userInfo.value = {}
     isLoggedIn.value = false
-    
+
     uni.removeStorageSync('token')
     uni.removeStorageSync('userInfo')
+    await syncMessageTabBadge()
   }
 
   const updateUserInfo = (newUserInfo: Partial<UserInfo>) => {

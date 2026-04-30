@@ -9,10 +9,11 @@ const buildReminderDate = (date = new Date()) => {
   return date.toISOString().slice(0, 10);
 };
 
-const sendReminderMessage = async ({ receiverId, content, orderId }) => {
+const sendReminderMessage = async ({ receiverId, content, orderId, itemId }) => {
   await Message.create({
     senderId: null,
     receiverId,
+    itemId: itemId || null,
     content,
     type: 'system',
     relatedId: orderId,
@@ -21,7 +22,7 @@ const sendReminderMessage = async ({ receiverId, content, orderId }) => {
   });
 };
 
-const createReminderIfNeeded = async ({ orderId, receiverId, reminderType, content, reminderDate }) => {
+const createReminderIfNeeded = async ({ orderId, receiverId, reminderType, content, reminderDate, itemId }) => {
   const [log, created] = await OrderReminderLog.findOrCreate({
     where: {
       orderId,
@@ -42,7 +43,7 @@ const createReminderIfNeeded = async ({ orderId, receiverId, reminderType, conte
   }
 
   try {
-    await sendReminderMessage({ receiverId, content, orderId });
+    await sendReminderMessage({ receiverId, content, orderId, itemId });
     return true;
   } catch (error) {
     await log.destroy();
@@ -84,7 +85,8 @@ const runOrderReminderScan = async () => {
         receiverId: order.borrowerId,
         reminderType: 'daily-rent-pay',
         reminderDate,
-        content: `今日租金提醒：${order.item.title} 仍在借用中，请按约及时付租金。`
+        content: `今日租金提醒：${order.item.title} 仍在借用中，请按约及时付租金。`,
+        itemId: order.itemId || order.item?.id || null
       })) ? 1 : 0;
 
       sentCount += (await createReminderIfNeeded({
@@ -92,7 +94,8 @@ const runOrderReminderScan = async () => {
         receiverId: order.lenderId,
         reminderType: 'daily-rent-receive',
         reminderDate,
-        content: `今日收租提醒：${order.item.title} 仍在借用中，请留意今日租金收取情况。`
+        content: `今日收租提醒：${order.item.title} 仍在借用中，请留意今日租金收取情况。`,
+        itemId: order.itemId || order.item?.id || null
       })) ? 1 : 0;
     }
 

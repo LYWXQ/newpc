@@ -1,52 +1,56 @@
 <template>
   <view class="container">
     <view class="message-header">
-      <text class="page-title">系统通知</text>
+      <text class="page-title">消息中心</text>
       <view class="mark-all-read" @click="handleMarkAllAsRead">
         <text class="mark-all-text">全部已读</text>
       </view>
     </view>
-    
-    <scroll-view 
-      class="message-list" 
-      scroll-y 
+
+    <scroll-view
+      class="message-list"
+      scroll-y
       :refresher-enabled="false"
       :refresher-triggered="isRefreshing"
       @refresherrefresh="onRefresh"
       @scrolltolower="onLoadMore"
     >
-      <view v-if="systemMessageList.length === 0 && !isLoading" class="empty-state">
-        <text class="empty-text">暂无系统通知</text>
+      <view v-if="messageGroups.length === 0 && !isLoading" class="empty-state">
+        <text class="empty-text">暂无消息</text>
       </view>
-      
-      <!-- 系统消息列表 -->
-      <view 
-        v-for="message in systemMessageList" 
-        :key="message.id"
+
+      <view
+        v-for="group in messageGroups"
+        :key="group.groupKey"
         class="message-item"
-        :class="{ unread: !message.isRead }"
-        @click="handleSystemMessageClick(message)"
-        @longpress="handleLongPress(message)"
+        :class="{ unread: group.unreadCount > 0 }"
+        @click="goToMessageDetail(group)"
+        @longpress="handleLongPress(group)"
       >
-        <view class="message-icon system">
-          <text class="icon">📢</text>
-        </view>
+        <image class="item-image" :src="getGroupImage(group)" mode="aspectFill" />
         <view class="message-content">
-          <text class="message-title">系统通知</text>
-          <text class="message-text">{{ message.content }}</text>
-          <text class="message-time">{{ formatTime(message.createdAt) }}</text>
+          <view class="message-top">
+            <text class="message-title">{{ group.title }}</text>
+            <text class="message-time">{{ formatTime(group.lastMessageTime) }}</text>
+          </view>
+          <text class="message-text">{{ group.lastMessage }}</text>
+          <view class="message-meta">
+            <text class="message-count">共 {{ group.totalCount }} 条消息</text>
+          </view>
         </view>
-        <view v-if="!message.isRead" class="message-badge"/>
-        <view class="delete-btn" @click.stop="handleDelete(message)">
-          <text class="delete-icon">🗑️</text>
+        <view class="message-right">
+          <view v-if="group.unreadCount > 0" class="message-badge">{{ group.unreadCount }}</view>
+          <view class="delete-btn" @click.stop="handleDeleteGroup(group)">
+            <text class="delete-icon">🗑️</text>
+          </view>
         </view>
       </view>
-      
-      <view v-if="isLoading && systemMessageList.length > 0" class="loading-more">
+
+      <view v-if="isLoading && messageGroups.length > 0" class="loading-more">
         <text>加载中...</text>
       </view>
-      
-      <view v-if="!hasMore && systemMessageList.length > 0" class="no-more">
+
+      <view v-if="!hasMore && messageGroups.length > 0" class="no-more">
         <text>没有更多了</text>
       </view>
     </scroll-view>
@@ -56,44 +60,48 @@
 <script setup lang="ts">
   import { ref, onMounted } from 'vue'
   import { onShow } from '@dcloudio/uni-app'
-  import { getMessageList, markAsRead, markAllAsRead, deleteMessage, type Message } from '@/api/messages'
+  import { getMessageGroups, markAllAsRead, markGroupAsRead, deleteMessageGroup, type MessageGroup } from '@/api/messages'
+  import { syncMessageTabBadge } from '@/utils/messageBadge'
+  import { getImageUrl } from '@/utils/image'
 
-  // 系统消息列表
-  const systemMessageList = ref<Message[]>([])
-
-  // 分页参数
+  const messageGroups = ref<MessageGroup[]>([])
   const page = ref(1)
   const limit = ref(10)
   const hasMore = ref(true)
   const isLoading = ref(false)
   const isRefreshing = ref(false)
 
-  // 获取消息列表
-  const fetchMessageList = async (isRefresh = false) => {
+  const checkLoginStatus = () => {
+    const token = uni.getStorageSync('token')
+    if (!token) {
+      uni.navigateTo({ url: '/pages/login/login' })
+      return false
+    }
+    return true
+  }
+
+  const fetchMessageGroups = async (isRefresh = false) => {
     if (isLoading.value) return
-  
+
     isLoading.value = true
-  
+
     try {
-      const params: { page: number; limit: number; type: 'system' } = {
+      const params = {
         page: isRefresh ? 1 : page.value,
-        limit: limit.value,
-        type: 'system'
+        limit: limit.value
       }
-    
-      const res = await getMessageList(params)
-      const resData = res.messages || []
-    
-      // 系统消息
+
+      const res = await getMessageGroups(params)
+      const groups = res.groups || []
+
       if (isRefresh) {
-        systemMessageList.value = resData as Message[]
+        messageGroups.value = groups
         page.value = 2
       } else {
-        systemMessageList.value = [...systemMessageList.value, ...(resData as Message[])]
+        messageGroups.value = [...messageGroups.value, ...groups]
         page.value++
       }
-    
-      // 判断是否还有更多数据
+
       hasMore.value = res.pagination.page < res.pagination.totalPages
     } catch (error) {
       uni.showToast({
@@ -106,150 +114,132 @@
     }
   }
 
-  // 下拉刷新
-  const onRefresh = () => {
+  const onRefresh = async () => {
     isRefreshing.value = true
     page.value = 1
     hasMore.value = true
-    fetchMessageList(true)
+    await fetchMessageGroups(true)
+    await syncMessageTabBadge()
   }
 
-  // 加载更多
   const onLoadMore = () => {
     if (!hasMore.value || isLoading.value) return
-    fetchMessageList()
+    void fetchMessageGroups()
   }
 
-  // 格式化时间
   const formatTime = (timeStr: string) => {
     const date = new Date(timeStr)
     const now = new Date()
     const diff = now.getTime() - date.getTime()
-  
-    // 今天
+
     if (date.toDateString() === now.toDateString()) {
       return date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
     }
-  
-    // 昨天
+
     const yesterday = new Date(now)
     yesterday.setDate(yesterday.getDate() - 1)
     if (date.toDateString() === yesterday.toDateString()) {
       return '昨天'
     }
-  
-    // 一周内
+
     if (diff < 7 * 24 * 60 * 60 * 1000) {
       const days = ['周日', '周一', '周二', '周三', '周四', '周五', '周六']
       return days[date.getDay()]
     }
-  
-    // 更早
+
     return date.toLocaleDateString('zh-CN', { month: '2-digit', day: '2-digit' })
   }
 
-  // 点击系统消息
-  const handleSystemMessageClick = async (message: Message) => {
-    // 标记为已读
-    if (!message.isRead) {
-      try {
-        await markAsRead(message.id)
-        message.isRead = true
-      } catch (error) {
-        console.error('标记已读失败', error)
-      }
+  const getGroupImage = (group: MessageGroup) => {
+    const images = group.item?.images
+    if (Array.isArray(images)) {
+      return getImageUrl(images[0])
     }
-  
-    // 系统通知，如果有相关订单则跳转到订单详情
-    if (message.relatedId && message.relatedType === 'order') {
-      uni.navigateTo({
-        url: `/pages/order-detail/order-detail?id=${message.relatedId}`
-      })
-    }
+    return getImageUrl(images || null)
   }
 
-  // 标记全部已读
+  const goToMessageDetail = async (group: MessageGroup) => {
+    if (group.unreadCount > 0) {
+      messageGroups.value = messageGroups.value.map(item => item.groupKey === group.groupKey ? {
+        ...item,
+        unreadCount: 0
+      } : item)
+
+      await syncMessageTabBadge()
+
+      try {
+        await markGroupAsRead({ itemId: group.itemId, groupKey: group.groupKey })
+        await syncMessageTabBadge()
+      } catch (error) {
+        console.error('按分组标记已读失败:', error)
+        await onRefresh()
+      }
+    }
+
+    const params = [`groupKey=${encodeURIComponent(group.groupKey)}`]
+
+    if (group.itemId) {
+      params.push(`itemId=${group.itemId}`)
+    }
+
+    uni.navigateTo({
+      url: `/pages/message-detail/message-detail?${params.join('&')}`
+    })
+  }
+
   const handleMarkAllAsRead = async () => {
     try {
       await markAllAsRead()
-      // 更新本地状态
-      systemMessageList.value.forEach(msg => {
-        msg.isRead = true
-      })
-      uni.showToast({
-        title: '已全部标记为已读',
-        icon: 'success'
-      })
+      messageGroups.value = messageGroups.value.map(group => ({
+        ...group,
+        unreadCount: 0
+      }))
+      await syncMessageTabBadge()
+      uni.showToast({ title: '已全部标记为已读', icon: 'success' })
     } catch (error) {
-      uni.showToast({
-        title: '操作失败',
-        icon: 'none'
-      })
+      uni.showToast({ title: '操作失败', icon: 'none' })
     }
   }
 
-  // 长按消息
-  const handleLongPress = (message: Message) => {
+  const handleLongPress = (group: MessageGroup) => {
     uni.showActionSheet({
-      itemList: ['删除消息'],
+      itemList: ['删除该分类消息'],
       success: (res) => {
         if (res.tapIndex === 0) {
-          handleDelete(message)
+          void handleDeleteGroup(group)
         }
       }
     })
   }
 
-  // 删除消息
-  const handleDelete = async (message: Message) => {
+  const handleDeleteGroup = async (group: MessageGroup) => {
     uni.showModal({
       title: '提示',
-      content: '确定删除这条消息吗？',
+      content: `确定删除“${group.title}”下的全部消息吗？`,
       success: async (res) => {
-        if (res.confirm) {
-          try {
-            await deleteMessage(message.id)
-            // 从列表中移除
-            const index = systemMessageList.value.findIndex(m => m.id === message.id)
-            if (index > -1) {
-              systemMessageList.value.splice(index, 1)
-            }
-            uni.showToast({
-              title: '删除成功',
-              icon: 'success'
-            })
-          } catch (error) {
-            uni.showToast({
-              title: '删除失败',
-              icon: 'none'
-            })
-          }
+        if (!res.confirm) return
+
+        try {
+          await deleteMessageGroup({ itemId: group.itemId, groupKey: group.groupKey })
+          messageGroups.value = messageGroups.value.filter(item => item.groupKey !== group.groupKey)
+          await syncMessageTabBadge()
+          uni.showToast({ title: '删除成功', icon: 'success' })
+        } catch (error) {
+          uni.showToast({ title: '删除失败', icon: 'none' })
         }
       }
     })
   }
 
-  // 检查登录状态
-  const checkLoginStatus = () => {
-    const token = uni.getStorageSync('token')
-    if (!token) {
-      uni.navigateTo({ url: '/pages/login/login' })
-      return false
-    }
-    return true
-  }
-
-  // 页面加载时获取消息列表
   onMounted(() => {
     if (checkLoginStatus()) {
-      fetchMessageList(true)
+      void fetchMessageGroups(true)
     }
   })
 
-  // 页面显示时重新加载数据
   onShow(() => {
     if (checkLoginStatus()) {
-      fetchMessageList(true)
+      void onRefresh()
     }
   })
 </script>
@@ -303,38 +293,25 @@
   color: #999999;
 }
 
-/* 系统消息样式 */
 .message-item {
   display: flex;
   align-items: center;
   background-color: #ffffff;
-  border-radius: 12rpx;
+  border-radius: 16rpx;
   padding: 24rpx;
   margin-bottom: 16rpx;
-  position: relative;
+  gap: 20rpx;
 }
 
 .message-item.unread {
   background-color: #f0f7ff;
 }
 
-.message-icon {
-  width: 80rpx;
-  height: 80rpx;
-  border-radius: 40rpx;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-right: 16rpx;
+.item-image {
+  width: 120rpx;
+  height: 120rpx;
+  border-radius: 16rpx;
   flex-shrink: 0;
-}
-
-.message-icon.system {
-  background-color: #e3f2fd;
-}
-
-.icon {
-  font-size: 40rpx;
 }
 
 .message-content {
@@ -342,47 +319,77 @@
   overflow: hidden;
 }
 
-.message-title {
-  font-size: 28rpx;
-  font-weight: bold;
-  margin-bottom: 8rpx;
-  display: block;
-  color: #333333;
+.message-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16rpx;
+  margin-bottom: 10rpx;
 }
 
-.message-text {
-  font-size: 24rpx;
-  color: #666666;
-  margin-bottom: 8rpx;
-  display: block;
+.message-title {
+  flex: 1;
+  font-size: 30rpx;
+  color: #333333;
+  font-weight: 600;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .message-time {
-  font-size: 20rpx;
+  flex-shrink: 0;
+  font-size: 22rpx;
   color: #999999;
+}
+
+.message-text {
+  font-size: 26rpx;
+  color: #666666;
   display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin-bottom: 10rpx;
+}
+
+.message-meta {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+}
+
+.message-count {
+  font-size: 22rpx;
+  color: #999999;
+}
+
+.message-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: space-between;
+  min-height: 120rpx;
 }
 
 .message-badge {
-  width: 16rpx;
-  height: 16rpx;
+  min-width: 36rpx;
+  height: 36rpx;
+  line-height: 36rpx;
+  padding: 0 10rpx;
+  border-radius: 18rpx;
   background-color: #ff4d4f;
-  border-radius: 50%;
-  margin-left: 16rpx;
-  flex-shrink: 0;
+  color: #ffffff;
+  font-size: 22rpx;
+  text-align: center;
 }
 
 .delete-btn {
-  padding: 16rpx;
-  margin-left: 8rpx;
-  flex-shrink: 0;
+  padding: 8rpx;
 }
 
 .delete-icon {
-  font-size: 32rpx;
+  font-size: 30rpx;
   opacity: 0.6;
 }
 

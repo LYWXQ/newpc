@@ -169,10 +169,16 @@ export const cancelOrder = (id: number, reason?: string): Promise<{ message: str
   return put(`/orders/${id}/cancel`, { reason })
 }
 
-/**
- * 获取我的订单统计
- */
-export const getOrderStats = (options?: any): Promise<{
+export interface RoleOrderStats {
+  pending: number
+  confirmed: number
+  using: number
+  returned: number
+  completed: number
+  active: number
+}
+
+export interface OrderStats {
   totalAsLender: number
   totalAsBorrower: number
   pendingCount: number
@@ -180,6 +186,15 @@ export const getOrderStats = (options?: any): Promise<{
   usingCount: number
   returnedCount: number
   completedCount: number
-}> => {
+  roleStats: {
+    lender: RoleOrderStats
+    borrower: RoleOrderStats
+  }
+}
+
+/**
+ * 获取我的订单统计
+ */
+export const getOrderStats = (options?: any): Promise<OrderStats> => {
   return get('/orders/stats', undefined, options)
 }

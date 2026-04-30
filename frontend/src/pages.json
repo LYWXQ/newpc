@@ -74,6 +74,12 @@
         "navigationBarTitleText": "消息中心"
       }
     },
+    {
+      "path": "pages/message-detail/message-detail",
+      "style": {
+        "navigationBarTitleText": "消息详情"
+      }
+    },
 
     {
       "path": "pages/search/search",

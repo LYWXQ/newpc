@@ -7,6 +7,7 @@ export interface PaginationData<T> {
   items?: T[]
   orders?: T[]
   messages?: T[]
+  groups?: T[]
   reviews?: T[]
   users?: T[]
   admins?: T[]

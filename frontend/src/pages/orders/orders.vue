@@ -2,25 +2,21 @@
   <view class="orders-container">
     <view class="role-tabs">
       <view
+        v-for="role in roleTabs"
+        :key="role.value"
         class="role-tab"
-        :class="{ active: currentRole === 'borrower' }"
-        @click="selectRole('borrower')"
+        :class="{ active: currentRole === role.value }"
+        @click="selectRole(role.value)"
       >
-        我借入的
-      </view>
-      <view
-        class="role-tab"
-        :class="{ active: currentRole === 'lender' }"
-        @click="selectRole('lender')"
-      >
-        我借出的
+        {{ role.label }}
+        <text class="badge" v-if="role.count > 0">{{ role.count }}</text>
       </view>
     </view>
 
     <view class="order-tabs">
       <view
         class="tab-item"
-        v-for="tab in tabs"
+        v-for="tab in displayTabs"
         :key="tab.value"
         :class="{ active: currentTab === tab.value }"
         @click="selectTab(tab.value)"
@@ -103,28 +99,76 @@
 </template>
 
 <script setup lang="ts">
-  import { ref, onMounted, computed, reactive } from 'vue'
+  import { ref, onMounted, computed } from 'vue'
   import { onShow } from '@dcloudio/uni-app'
-  import { getOrderList, getOrderStats, type Order, confirmOrder, rejectOrder, cancelOrder } from '@/api/orders'
+  import { getOrderList, getOrderStats, type Order, type OrderStats, confirmOrder, rejectOrder, cancelOrder } from '@/api/orders'
   import { useAuthStore } from '@/stores/auth'
   import { isLoggedIn } from '@/utils/auth'
   import { getImageUrl } from '@/utils/image'
 
+  type OrderRole = 'borrower' | 'lender'
+  type OrderTabValue = 'all' | 'pending' | 'active' | 'completed'
+
   const authStore = useAuthStore()
 
-  const currentUserId = computed(() => {
-    return authStore.userInfo?.id || 0
+  const emptyRoleStats = () => ({
+    pending: 0,
+    confirmed: 0,
+    using: 0,
+    returned: 0,
+    completed: 0,
+    active: 0
   })
 
-  const currentRole = ref<'borrower' | 'lender'>('borrower')
+  const currentUserId = computed(() => authStore.userInfo?.id || 0)
+  const currentRole = ref<OrderRole>('borrower')
+  const currentTab = ref<OrderTabValue>('all')
+  const orderStats = ref<OrderStats>({
+    totalAsLender: 0,
+    totalAsBorrower: 0,
+    pendingCount: 0,
+    confirmedCount: 0,
+    usingCount: 0,
+    returnedCount: 0,
+    completedCount: 0,
+    roleStats: {
+      lender: emptyRoleStats(),
+      borrower: emptyRoleStats()
+    }
+  })
 
-  const tabs = reactive([
-    { label: '全部', value: 'all', count: 0 },
-    { label: '待处理', value: 'pending', count: 0 },
-    { label: '进行中', value: 'active', count: 0 },
-    { label: '已完成', value: 'completed', count: 0 }
-  ])
-  const currentTab = ref('all')
+  const tabDefinitions = [
+    { label: '全部', value: 'all' as OrderTabValue },
+    { label: '待处理', value: 'pending' as OrderTabValue },
+    { label: '进行中', value: 'active' as OrderTabValue },
+    { label: '已完成', value: 'completed' as OrderTabValue }
+  ]
+
+  const roleStats = computed(() => orderStats.value.roleStats[currentRole.value] || emptyRoleStats())
+
+  const roleTabs = computed(() => {
+    const lenderCount = orderStats.value.roleStats.lender.pending + orderStats.value.roleStats.lender.active + orderStats.value.roleStats.lender.completed
+    const borrowerCount = orderStats.value.roleStats.borrower.pending + orderStats.value.roleStats.borrower.active + orderStats.value.roleStats.borrower.completed
+
+    return [
+      { label: '我借入的', value: 'borrower' as OrderRole, count: borrowerCount },
+      { label: '我借出的', value: 'lender' as OrderRole, count: lenderCount }
+    ]
+  })
+
+  const displayTabs = computed(() => {
+    const counts: Record<OrderTabValue, number> = {
+      all: roleStats.value.pending + roleStats.value.active + roleStats.value.completed,
+      pending: roleStats.value.pending,
+      active: roleStats.value.active,
+      completed: roleStats.value.completed
+    }
+
+    return tabDefinitions.map(tab => ({
+      ...tab,
+      count: counts[tab.value]
+    }))
+  })
 
   const orders = ref<Order[]>([])
   const loading = ref(false)
@@ -140,8 +184,7 @@
       })
       return
     }
-    loadOrderStats()
-    loadOrders()
+    void onRefresh()
   })
 
   onShow(() => {
@@ -153,39 +196,24 @@
     }
     const savedRole = uni.getStorageSync('orderRole')
     if (savedRole && (savedRole === 'lender' || savedRole === 'borrower')) {
-      if (currentRole.value !== savedRole) {
-        currentRole.value = savedRole
-      }
+      currentRole.value = savedRole
       uni.removeStorageSync('orderRole')
     }
-    onRefresh()
+    void onRefresh()
   })
 
   const loadOrderStats = async () => {
     try {
-      const stats = await getOrderStats()
-      tabs[0].count = 0
-      tabs[1].count = stats.pendingCount || 0
-      tabs[2].count = (stats.confirmedCount || 0) + (stats.usingCount || 0) + (stats.returnedCount || 0)
-      tabs[3].count = stats.completedCount || 0
+      orderStats.value = await getOrderStats()
     } catch (error) {
       console.error('获取订单统计失败:', error)
     }
   }
 
   const getStatusFilter = () => {
-    if (currentTab.value === 'pending') {
-      return 'pending'
-    }
-
-    if (currentTab.value === 'active') {
-      return 'confirmed,using,returned'
-    }
-
-    if (currentTab.value === 'completed') {
-      return 'completed'
-    }
-
+    if (currentTab.value === 'pending') return 'pending'
+    if (currentTab.value === 'active') return 'confirmed,using,returned'
+    if (currentTab.value === 'completed') return 'completed'
     return undefined
   }
 
@@ -195,7 +223,7 @@
     loading.value = true
 
     try {
-      const params: { page: number; limit: number; status?: string; role?: 'lender' | 'borrower' } = {
+      const params: { page: number; limit: number; status?: string; role?: OrderRole } = {
         page: page.value,
         limit,
         role: currentRole.value
@@ -224,20 +252,24 @@
     }
   }
 
-  const selectRole = (role: 'borrower' | 'lender') => {
-    currentRole.value = role
+  const resetOrderList = () => {
     page.value = 1
     orders.value = []
     hasMore.value = true
-    loadOrders()
   }
 
-  const selectTab = (tab: string) => {
+  const selectRole = (role: OrderRole) => {
+    if (currentRole.value === role) return
+    currentRole.value = role
+    resetOrderList()
+    void loadOrders()
+  }
+
+  const selectTab = (tab: OrderTabValue) => {
+    if (currentTab.value === tab) return
     currentTab.value = tab
-    page.value = 1
-    orders.value = []
-    hasMore.value = true
-    loadOrders()
+    resetOrderList()
+    void loadOrders()
   }
 
   const getStatusText = (order: Order) => {
@@ -334,9 +366,7 @@
     return order.status === 'pending' && isLender
   }
 
-  const getSecondaryActionText = (_order: Order) => {
-    return '拒绝'
-  }
+  const getSecondaryActionText = (_order: Order) => '拒绝'
 
   const handleSecondaryAction = async (order: Order) => {
     uni.showModal({
@@ -360,19 +390,15 @@
 
   const loadMore = () => {
     if (!hasMore.value || loading.value) return
-
     page.value++
-    loadOrders()
+    void loadOrders()
   }
 
   const onRefresh = async () => {
     refreshing.value = true
-    page.value = 1
-    hasMore.value = true
-
+    resetOrderList()
     await loadOrderStats()
     await loadOrders()
-
     refreshing.value = false
   }
 
@@ -465,6 +491,7 @@
   padding: 2rpx 10rpx;
   border-radius: 20rpx;
   margin-left: 8rpx;
+  min-width: 32rpx;
 }
 
 .orders-scroll {
