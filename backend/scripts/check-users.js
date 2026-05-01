@@ -22,6 +22,9 @@ const checkUsers = async () => {
     const testUserByStudentId = await User.findOne({ where: { studentId: '202214060422' } });
     console.log('按学号查找202214060422:', testUserByStudentId ? `找到 - 用户名: ${testUserByStudentId.username}` : '未找到');
 
+    const missingUser = await User.findOne({ where: { studentId: '202214060421' } });
+    console.log('按学号查找202214060421:', missingUser ? `找到 - 用户名: ${missingUser.username}` : '未找到');
+
     process.exit(0);
   } catch (error) {
     console.error('检查用户失败:', error);

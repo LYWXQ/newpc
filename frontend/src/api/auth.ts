@@ -1,9 +1,10 @@
 /**
  * 用户认证相关 API
  */
-import { get, post, upload } from '@/utils/request'
+import { get, post, put, upload } from '@/utils/request'
 
 export type DeletionStatus = 'none' | 'pending' | 'deleted'
+export type UserRole = 'user' | 'admin' | 'super_admin'
 
 // 用户信息接口
 export interface UserInfo {
@@ -12,9 +13,14 @@ export interface UserInfo {
   username: string
   avatar?: string
   creditScore: number
+  isViolationUser?: boolean
+  violationMarkedAt?: string | null
+  violationReason?: string | null
+  tradeRestrictedUntil?: string | null
+  publishRestrictedUntil?: string | null
   isVerified: boolean
   status: string
-  role: 'user'
+  role: UserRole
   phone?: string | null
   qq?: string | null
   email?: string | null
@@ -30,9 +36,17 @@ export interface UserInfo {
 }
 
 // 登录参数
+export type LoginType = 'user' | 'admin'
+
 export interface LoginParams {
   account: string
   password: string
+  loginType: LoginType
+}
+
+export interface ChangeOwnPasswordParams {
+  oldPassword: string
+  newPassword: string
 }
 
 // 注册参数
@@ -110,6 +124,14 @@ export const updateUserInfo = (data: Partial<UserInfo>): Promise<UserInfo> => {
   return post<UserInfo>('/users/profile', data)
 }
 
+export const mockStudentVerification = async (userInfo: Partial<UserInfo>): Promise<Partial<UserInfo>> => {
+  return Promise.resolve({
+    ...userInfo,
+    isVerified: true,
+    updatedAt: new Date().toISOString()
+  })
+}
+
 export const requestAccountDeletion = (): Promise<{
   message: string
   deletionStatus: 'pending'
@@ -121,6 +143,10 @@ export const requestAccountDeletion = (): Promise<{
 
 export const cancelAccountDeletion = (): Promise<{ message: string; user: UserInfo }> => {
   return post('/users/deletion-request/cancel')
+}
+
+export const changeOwnPassword = (data: ChangeOwnPasswordParams): Promise<{ message: string }> => {
+  return put('/users/password', data)
 }
 
 /**

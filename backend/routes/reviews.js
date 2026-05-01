@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { authenticateToken } = require('../middleware/auth');
 const { Review, Order, User, Item } = require('../models');
+const { createCreditRecord } = require('../services/creditService');
 
 const formatReview = (review) => ({
   ...review.toJSON(),
@@ -138,6 +139,21 @@ router.post('/', authenticateToken, async (req, res) => {
       content,
       images
     });
+
+    const numericRating = Number(rating);
+    const scoreDelta = numericRating >= 5 ? 2 : numericRating >= 4 ? 1 : numericRating >= 3 ? 0 : numericRating >= 2 ? -2 : -4;
+
+    if (scoreDelta !== 0) {
+      await createCreditRecord({
+        userId: revieweeId,
+        delta: scoreDelta,
+        sourceType: 'review',
+        sourceId: review.id,
+        reason: `订单评价 ${numericRating} 星`,
+        operatorId: reviewerId,
+        metadata: { orderId }
+      });
+    }
 
     const createdReview = await Review.findByPk(review.id, {
       include: getReviewInclude()

@@ -16,11 +16,49 @@ const initUsers = async () => {
       {
         username: 'user',
         studentId: '202214060422',
+        phone: '13800000001',
+        qq: '1234567',
         password: hashedPassword,
         role: 'user',
         creditScore: 100,
         isVerified: false,
         status: 'active'
+      },
+      {
+        username: 'buyer',
+        studentId: '202214060423',
+        phone: '13800000002',
+        qq: '1234568',
+        password: hashedPassword,
+        role: 'user',
+        creditScore: 100,
+        isVerified: true,
+        status: 'active'
+      },
+      {
+        username: 'seller',
+        studentId: '202214060424',
+        phone: '13800000003',
+        qq: '1234569',
+        password: hashedPassword,
+        role: 'user',
+        creditScore: 100,
+        isVerified: true,
+        status: 'active'
+      },
+      {
+        username: 'lowcredit',
+        studentId: '202214060425',
+        phone: '13800000004',
+        qq: '1234570',
+        password: hashedPassword,
+        role: 'user',
+        creditScore: 55,
+        isVerified: true,
+        status: 'active',
+        isViolationUser: true,
+        violationMarkedAt: new Date(),
+        violationReason: '初始化低信誉测试账号'
       }
     ];
 
@@ -40,7 +78,10 @@ const initUsers = async () => {
 
     console.log('✅ 用户初始化完成！');
     console.log('\n测试账号：');
-    console.log('  user (普通用户): user / 123456 (学号: 202214060422)');
+    console.log('  user (普通用户): 学号 202214060422 或手机号 13800000001 / 123456');
+    console.log('  buyer (普通用户): buyer / 123456');
+    console.log('  seller (普通用户): seller / 123456');
+    console.log('  lowcredit (低信誉): lowcredit / 123456');
 
     process.exit(0);
   } catch (error) {

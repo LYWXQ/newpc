@@ -3,6 +3,7 @@ const router = express.Router();
 const { authenticateToken } = require('../middleware/auth');
 const { Item, User } = require('../models');
 const { Op } = require('sequelize');
+const { ensureUserCanPublish } = require('../services/creditService');
 
 // 获取物品列表（可选认证）
 router.get('/', async (req, res, next) => {
@@ -146,7 +147,9 @@ router.post('/', authenticateToken, async (req, res) => {
   try {
     const { title, description, category, images, price, deposit, availableTime, location, transactionType, salePrice, isLongTermRent } = req.body;
     const userId = req.user.id;
-    
+
+    ensureUserCanPublish(req.user);
+
     const item = await Item.create({
       title,
       description,
@@ -186,7 +189,11 @@ router.put('/:id', authenticateToken, async (req, res) => {
     }
     
     const { title, description, category, images, price, deposit, availableTime, location, status, transactionType, salePrice, isLongTermRent } = req.body;
-    
+
+    if (status === 'available' && item.status !== 'available') {
+      ensureUserCanPublish(req.user);
+    }
+
     await item.update({
       title: title || item.title,
       description: description || item.description,

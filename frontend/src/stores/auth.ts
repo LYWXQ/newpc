@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import type { UserInfo } from '@/api/auth'
+import type { UserInfo, UserRole } from '@/api/auth'
 import { syncMessageTabBadge } from '@/utils/messageBadge'
 
 export const useAuthStore = defineStore('auth', () => {
@@ -48,7 +48,9 @@ export const useAuthStore = defineStore('auth', () => {
 
   const username = computed(() => userInfo.value.username || '')
   const studentId = computed(() => userInfo.value.studentId || '')
-  const role = computed(() => userInfo.value.role || 'user')
+  const role = computed<UserRole>(() => userInfo.value.role || 'user')
+  const isAdmin = computed(() => role.value === 'admin' || role.value === 'super_admin')
+  const isSuperAdmin = computed(() => role.value === 'super_admin')
 
   return {
     isLoggedIn,
@@ -57,6 +59,8 @@ export const useAuthStore = defineStore('auth', () => {
     username,
     studentId,
     role,
+    isAdmin,
+    isSuperAdmin,
     initAuth,
     login,
     logout,

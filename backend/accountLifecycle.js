@@ -1,7 +1,7 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { Op } = require('sequelize');
-const { User, Order, Item, Favorite } = require('./models');
+const { User, Order, Item, Favorite, Dispute } = require('./models');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 const DELETION_GRACE_PERIOD_MS = 7 * 24 * 60 * 60 * 1000;
@@ -15,7 +15,8 @@ const DELETION_STATUS = {
   DELETED: 'deleted'
 };
 
-const normalizeUserRole = () => 'user';
+const ALLOWED_USER_ROLES = ['user', 'admin', 'super_admin'];
+const normalizeUserRole = (role) => ALLOWED_USER_ROLES.includes(role) ? role : 'user';
 
 const serializeUser = (user) => ({
   id: user.id,
@@ -28,6 +29,11 @@ const serializeUser = (user) => ({
   school: user.school,
   major: user.major,
   creditScore: user.creditScore,
+  isViolationUser: user.isViolationUser,
+  violationMarkedAt: user.violationMarkedAt,
+  violationReason: user.violationReason,
+  tradeRestrictedUntil: user.tradeRestrictedUntil,
+  publishRestrictedUntil: user.publishRestrictedUntil,
   isVerified: user.isVerified,
   role: normalizeUserRole(user.role),
   status: user.status,
@@ -104,10 +110,29 @@ const checkUserHasActiveBusiness = async (userId) => {
     }
   });
 
+  const activeDisputeCount = await Dispute.count({
+    where: {
+      [Op.and]: [
+        {
+          [Op.or]: [
+            { lenderId: userId },
+            { borrowerId: userId }
+          ]
+        },
+        {
+          status: {
+            [Op.in]: ['open', 'awaiting_counterparty', 'under_review']
+          }
+        }
+      ]
+    }
+  });
+
   return {
-    hasActiveBusiness: activeOrderCount > 0 || activeItemCount > 0,
+    hasActiveBusiness: activeOrderCount > 0 || activeItemCount > 0 || activeDisputeCount > 0,
     activeOrderCount,
-    activeItemCount
+    activeItemCount,
+    activeDisputeCount
   };
 };
 
@@ -183,7 +208,12 @@ const anonymizeUserAccount = async (userOrId) => {
     school: null,
     major: null,
     isVerified: false,
-    role: normalizeUserRole(),
+    role: 'user',
+    isViolationUser: false,
+    violationMarkedAt: null,
+    violationReason: null,
+    tradeRestrictedUntil: null,
+    publishRestrictedUntil: null,
     status: DELETION_STATUS.DELETED,
     deletionStatus: DELETION_STATUS.DELETED,
     anonymizedAt

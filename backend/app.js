@@ -2,7 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const sequelize = require('./config/database');
-const { User, Item, Order, Review, Message, Favorite, OrderReminderLog } = require('./models');
+const { User, Item, Order, Review, Message, Favorite, OrderReminderLog, Dispute, CreditRecord, UserRestriction, AdminActionLog } = require('./models');
 const { sweepExpiredDeletionUsers } = require('./accountLifecycle');
 const { startOrderReminderScheduler } = require('./services/orderReminderScheduler');
 
@@ -29,6 +29,8 @@ app.use('/api/messages', require('./routes/messages'));
 app.use('/api/recommendations', require('./routes/recommendations'));
 app.use('/api/upload', require('./routes/upload'));
 app.use('/api/favorites', require('./routes/favorites'));
+app.use('/api/admin', require('./routes/admin'));
+app.use('/api/disputes', require('./routes/disputes'));
 
 // 健康检查
 app.get('/health', (req, res) => {
@@ -54,7 +56,7 @@ const ensureSchemaCompatibility = async () => {
 };
 
 const syncApplicationModels = async () => {
-  const modelsWithAlter = [User, Item, Order, Review, Message, Favorite]
+  const modelsWithAlter = [User, Item, Order, Review, Message, Favorite, Dispute, CreditRecord, UserRestriction, AdminActionLog]
 
   for (const model of modelsWithAlter) {
     await model.sync({ alter: { drop: false } })
@@ -77,14 +79,6 @@ const startServer = async () => {
   try {
     await sequelize.authenticate();
     console.log('Database connection established successfully.');
-    
-    // 先删除disputes表（如果存在）
-    try {
-      await sequelize.query('DROP TABLE IF EXISTS disputes;');
-      console.log('Disputes table dropped if existed.');
-    } catch (err) {
-      console.log('No disputes table found, continuing...');
-    }
     
     // 按模型同步，避免 OrderReminderLog 在 alter 阶段生成超长索引名
     await syncApplicationModels();

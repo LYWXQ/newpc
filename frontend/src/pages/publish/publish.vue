@@ -204,9 +204,13 @@
         </view>
       </view>
 
+      <view class="restriction-banner" v-if="publishRestrictionMessage">
+        <text class="restriction-text">{{ publishRestrictionMessage }}</text>
+      </view>
+
       <button
         class="submit-button"
-        :disabled="isSubmitting"
+        :disabled="isSubmitting || Boolean(publishRestrictionMessage)"
         @click="submitForm"
       >
         {{ isSubmitting ? (isEditMode ? "保存中..." : "发布中...") : (isEditMode ? "保存修改" : "发布物品") }}
@@ -218,9 +222,12 @@
 <script setup lang="ts">
   import { ref, computed, onMounted } from 'vue'
   import { createItem, updateItem, getItemDetail, type CreateItemParams, type Item } from '@/api/items'
+  import { getCurrentUser } from '@/api/auth'
   import { upload } from '@/utils/request'
   import { isLoggedIn } from '@/utils/auth'
+  import { useAuthStore } from '@/stores/auth'
 
+  const authStore = useAuthStore()
   const itemId = ref<number | null>(null)
   const isEditMode = ref(false)
   const originalStatus = ref<string>('available') // 保存原始状态
@@ -275,16 +282,41 @@
     return ''
   })
 
+  const publishRestrictionMessage = computed(() => {
+    const user = authStore.userInfo
+    if (user.role === 'admin' || user.role === 'super_admin') {
+      return '后台账号不参与普通物品发布'
+    }
+    if (user.isViolationUser) {
+      return '当前账号已被标记为违规用户，暂不可发布物品'
+    }
+    if ((user.creditScore || 100) < 60) {
+      return '当前信誉分低于 60，暂不可发布物品'
+    }
+    if (user.publishRestrictedUntil) {
+      return '当前账号处于发布限制期，暂不可发布物品'
+    }
+    return ''
+  })
+
   const isSubmitting = ref(false)
   const categories = ['图书', '电子产品', '运动器材', '生活用品', '服装', '其他']
 
-  onMounted(() => {
+  onMounted(async () => {
     if (!isLoggedIn()) {
       uni.reLaunch({
         url: '/pages/login/login'
       })
       return
     }
+
+    try {
+      const user = await getCurrentUser(undefined, { showLoading: false })
+      authStore.updateUserInfo(user)
+    } catch (error) {
+      console.error('获取用户信息失败:', error)
+    }
+
     const pages = getCurrentPages()
     const currentPage = pages[pages.length - 1] as any
     const options = currentPage?.options || {}
@@ -535,6 +567,11 @@
 
   const submitForm = async () => {
     if (isSubmitting.value) return
+
+    if (publishRestrictionMessage.value) {
+      uni.showToast({ title: publishRestrictionMessage.value, icon: 'none' })
+      return
+    }
 
     if (!validateForm()) {
       return
@@ -889,6 +926,20 @@
   font-size: 24rpx;
   color: #adb5bd;
   margin-top: 8rpx;
+}
+
+.restriction-banner {
+  margin-top: 24rpx;
+  padding: 20rpx 24rpx;
+  border-radius: 14rpx;
+  background: #fff7e6;
+  border: 2rpx solid #ffd591;
+}
+
+.restriction-text {
+  font-size: 24rpx;
+  color: #d46b08;
+  line-height: 1.7;
 }
 
 .submit-button {

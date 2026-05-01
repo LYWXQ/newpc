@@ -1,3 +1,9 @@
+import type { UserInfo, UserRole } from '@/api/auth'
+
+const getStoredUserInfo = (): Partial<UserInfo> => {
+  return uni.getStorageSync('userInfo') || {}
+}
+
 /**
  * 权限检查工具函数
  * 提供统一的登录状态检查和权限控制功能
@@ -102,6 +108,23 @@ export const checkLogin = (): boolean => {
 /**
  * 清除登录状态
  */
+export const getCurrentUserRole = (): UserRole => {
+  return getStoredUserInfo().role || 'user'
+}
+
+export const isAdmin = (): boolean => {
+  const role = getCurrentUserRole()
+  return role === 'admin' || role === 'super_admin'
+}
+
+export const isSuperAdmin = (): boolean => {
+  return getCurrentUserRole() === 'super_admin'
+}
+
+export const hasAnyRole = (roles: UserRole[]): boolean => {
+  return roles.includes(getCurrentUserRole())
+}
+
 export const clearAuth = (): void => {
   uni.removeStorageSync('token')
   uni.removeStorageSync('userInfo')
@@ -116,5 +139,9 @@ export default {
   requiresAuth,
   requireAuth,
   handleLoginSuccess,
+  getCurrentUserRole,
+  isAdmin,
+  isSuperAdmin,
+  hasAnyRole,
   clearAuth
 }

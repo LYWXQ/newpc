@@ -14,6 +14,7 @@ interface RequestOptions {
   params?: any
   header?: any
   showLoading?: boolean
+  silentError?: boolean
 }
 
 /**
@@ -21,6 +22,11 @@ interface RequestOptions {
  */
 const getToken = (): string => {
   return uni.getStorageSync('token') || ''
+}
+
+const clearStoredAuth = () => {
+  uni.removeStorageSync('token')
+  uni.removeStorageSync('userInfo')
 }
 
 /**
@@ -55,7 +61,7 @@ const showError = (message: string) => {
  * 统一请求方法
  */
 export const request = <T = any>(options: RequestOptions): Promise<T> => {
-  const { url, method = 'GET', data, params, header = {}, showLoading: showLoadingFlag = true } = options
+  const { url, method = 'GET', data, params, header = {}, showLoading: showLoadingFlag = true, silentError = false } = options
 
   // 构建完整 URL
   let fullUrl = `${BASE_URL}${url}`
@@ -102,7 +108,9 @@ export const request = <T = any>(options: RequestOptions): Promise<T> => {
           
           // 处理业务逻辑错误（如果后端返回了 code 字段）
           if (result.code && result.code !== 200 && result.code !== 201) {
-            showError(result.message || '请求失败')
+            if (!silentError) {
+              showError(result.message || '请求失败')
+            }
             reject(result)
             return
           }
@@ -115,7 +123,9 @@ export const request = <T = any>(options: RequestOptions): Promise<T> => {
           error.code = statusCode
           error.response = result
 
-          showError(error.message)
+          if (!silentError) {
+            showError(error.message)
+          }
           reject(error)
         } else if (statusCode === 401) {
           const result = (responseData || {}) as any
@@ -124,8 +134,7 @@ export const request = <T = any>(options: RequestOptions): Promise<T> => {
           error.response = result
 
           if (!url.includes('/auth/login') && !url.includes('/auth/login/resolve-deletion')) {
-            uni.removeStorageSync('token')
-            uni.removeStorageSync('userInfo')
+            clearStoredAuth()
             showError('登录已过期，请重新登录')
 
             setTimeout(() => {
@@ -144,9 +153,8 @@ export const request = <T = any>(options: RequestOptions): Promise<T> => {
           error.code = statusCode
           error.response = result
 
-          if (!url.includes('/auth/login') && !url.includes('/auth/login/resolve-deletion')) {
-            uni.removeStorageSync('token')
-            uni.removeStorageSync('userInfo')
+          if (result.message === 'Invalid or expired token') {
+            clearStoredAuth()
             showError('登录已过期，请重新登录')
 
             setTimeout(() => {
@@ -154,25 +162,33 @@ export const request = <T = any>(options: RequestOptions): Promise<T> => {
                 url: '/pages/login/login'
               })
             }, 1500)
-          } else {
+          } else if (!silentError) {
             showError(error.message)
           }
 
           reject(error)
         } else if (statusCode === 404) {
-          showError('请求的资源不存在')
+          if (!silentError) {
+            showError('请求的资源不存在')
+          }
           reject(new Error('Not Found'))
         } else if (statusCode >= 500) {
-          showError('服务器错误，请稍后重试')
+          if (!silentError) {
+            showError('服务器错误，请稍后重试')
+          }
           reject(new Error('Server Error'))
         } else {
-          showError('网络请求失败')
+          if (!silentError) {
+            showError('网络请求失败')
+          }
           reject(new Error('Request Failed'))
         }
       },
       fail: (err) => {
         console.error('Request failed:', err)
-        showError('网络连接失败，请检查网络')
+        if (!silentError) {
+          showError('网络连接失败，请检查网络')
+        }
         reject(err)
       },
       complete: () => {

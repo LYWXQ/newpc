@@ -1,8 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const { authenticateToken } = require('../middleware/auth');
-const { Order, Item, User } = require('../models');
+const { Order, Item, User, Dispute } = require('../models');
 const { Op } = require('sequelize');
+const { ensureUserCanTrade, createCreditRecord } = require('../services/creditService');
+const { createDispute, loadDisputeById } = require('../services/disputeService');
 
 // 生成订单号
 const generateOrderNo = () => {
@@ -37,19 +39,6 @@ const sendSystemMessage = async (receiverId, content, relatedId, relatedType, it
     });
   } catch (error) {
     console.error('Failed to send system message:', error);
-  }
-};
-
-// 更新信誉分
-const updateCreditScore = async (userId, change) => {
-  try {
-    const user = await User.findByPk(userId);
-    if (user) {
-      const newScore = Math.max(0, Math.min(150, user.creditScore + change));
-      await user.update({ creditScore: newScore });
-    }
-  } catch (error) {
-    console.error('Failed to update credit score:', error);
   }
 };
 
@@ -336,6 +325,12 @@ router.post('/', authenticateToken, async (req, res) => {
   try {
     const { itemId, startDate, endDate, note, pickupLocation, returnLocation } = req.body;
     const borrowerId = req.user.id;
+
+    try {
+      ensureUserCanTrade(req.user);
+    } catch (error) {
+      return res.status(400).json({ message: error.message });
+    }
 
     const item = await Item.findByPk(itemId);
     if (!item) {
@@ -723,8 +718,8 @@ router.put('/:id/confirm-pickup', authenticateToken, async (req, res) => {
       );
     } else {
       await completeOrderAndSyncItem(order, confirmedAt);
-      await updateCreditScore(order.borrowerId, 5);
-      await updateCreditScore(order.lenderId, 2);
+      await createCreditRecord({ userId: order.borrowerId, delta: 5, sourceType: 'order_completion', sourceId: order.id, reason: '订单完成加分' });
+      await createCreditRecord({ userId: order.lenderId, delta: 2, sourceType: 'order_completion', sourceId: order.id, reason: '订单完成加分' });
       await sendSystemMessage(
         order.lenderId,
         `您已确认交付物品：${order.item.title}。订单已完成。`,
@@ -959,8 +954,8 @@ router.put('/:id/complete', authenticateToken, async (req, res) => {
 
     await completeOrderAndSyncItem(order);
 
-    await updateCreditScore(order.borrowerId, 5);
-    await updateCreditScore(order.lenderId, 2);
+    await createCreditRecord({ userId: order.borrowerId, delta: 5, sourceType: 'order_completion', sourceId: order.id, reason: '订单完成加分' });
+    await createCreditRecord({ userId: order.lenderId, delta: 2, sourceType: 'order_completion', sourceId: order.id, reason: '订单完成加分' });
 
     await sendSystemMessage(
       order.borrowerId,
@@ -1030,6 +1025,64 @@ router.put('/:id/cancel', authenticateToken, async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({ message: 'Failed to cancel order', error: error.message });
+  }
+});
+
+router.get('/:id/dispute', authenticateToken, async (req, res) => {
+  try {
+    const order = await loadOrderById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: 'Order not found' });
+    }
+
+    if (order.lenderId !== req.user.id && order.borrowerId !== req.user.id) {
+      return res.status(403).json({ message: 'Not authorized to view order dispute' });
+    }
+
+    const dispute = await Dispute.findOne({ where: { orderId: order.id } });
+    if (!dispute) {
+      return res.status(404).json({ message: 'Dispute not found' });
+    }
+
+    const fullDispute = await loadDisputeById(dispute.id);
+
+    res.json({ dispute: fullDispute });
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to get order dispute', error: error.message });
+  }
+});
+
+router.post('/:id/disputes', authenticateToken, async (req, res) => {
+  try {
+    const order = await loadOrderById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: 'Order not found' });
+    }
+
+    if (order.lenderId !== req.user.id && order.borrowerId !== req.user.id) {
+      return res.status(403).json({ message: 'Not authorized to create dispute for this order' });
+    }
+
+    const { statement, images = [] } = req.body;
+    if (!statement) {
+      return res.status(400).json({ message: 'Dispute statement is required' });
+    }
+
+    const dispute = await createDispute({
+      order,
+      initiatorId: req.user.id,
+      statement,
+      images
+    });
+
+    res.status(201).json({
+      message: 'Dispute created successfully',
+      dispute
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to create dispute', error: error.message });
   }
 });
 

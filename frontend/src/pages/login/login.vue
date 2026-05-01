@@ -7,13 +7,18 @@
     </view>
 
     <view class="login-form">
+      <view class="login-tabs">
+        <view class="login-tab" :class="{ active: loginType === 'user' }" @click="switchLoginType('user')">普通用户登录</view>
+        <view class="login-tab" :class="{ active: loginType === 'admin' }" @click="switchLoginType('admin')">后台登录</view>
+      </view>
+
       <view class="form-item">
-        <text class="label">学号/手机号/用户名</text>
+        <text class="label">{{ loginType === 'user' ? '学号/手机号' : '管理员账号' }}</text>
         <input
           type="text"
           v-model="account"
           name="account"
-          placeholder="请输入学号、手机号或用户名"
+          :placeholder="loginType === 'user' ? '请输入学号或手机号' : '请输入管理员账号'"
           maxlength="50"
         >
       </view>
@@ -37,7 +42,8 @@
       </button>
 
       <view class="form-footer">
-        <text class="link" @click="goToRegister">还没有账号？去注册</text>
+        <text v-if="loginType === 'user'" class="link" @click="goToRegister">还没有账号？去注册</text>
+        <text v-else class="link hint">后台账号仅限管理员和超级管理员</text>
         <text class="link" @click="goToForgot">忘记密码？</text>
       </view>
     </view>
@@ -53,10 +59,11 @@
 
 <script setup lang="ts">
   import { ref } from 'vue'
-  import { login, resolveDeletionLogin, type LoginResponse, type LoginSuccessResponse, type PendingDeletionLoginResponse, type UserInfo } from '@/api/auth'
+  import { login, resolveDeletionLogin, type LoginResponse, type LoginSuccessResponse, type LoginType, type PendingDeletionLoginResponse, type UserInfo } from '@/api/auth'
   import { useAuthStore } from '@/stores/auth'
 
   const authStore = useAuthStore()
+  const loginType = ref<LoginType>('user')
   const account = ref('')
   const password = ref('')
   const loading = ref(false)
@@ -75,6 +82,18 @@
     uni.showToast({ title: '登录成功', icon: 'success' })
 
     setTimeout(() => {
+      if (user.role === 'admin' || user.role === 'super_admin') {
+        uni.navigateTo({ url: '/pages/admin/dashboard' })
+        return
+      }
+
+      const redirectPath = uni.getStorageSync('redirectPath') || ''
+      if (redirectPath && redirectPath !== '/pages/login/login' && redirectPath !== '/pages/register/register') {
+        uni.removeStorageSync('redirectPath')
+        uni.redirectTo({ url: redirectPath })
+        return
+      }
+
       uni.switchTab({ url: '/pages/index/index' })
     }, 1500)
   }
@@ -114,10 +133,17 @@
     })
   }
 
+  const switchLoginType = (type: LoginType) => {
+    if (loginType.value === type) return
+    loginType.value = type
+    account.value = ''
+    password.value = ''
+  }
+
   const handleLogin = async () => {
     if (!account.value.trim()) {
       uni.showToast({
-        title: '请输入学号、手机号或用户名',
+        title: loginType.value === 'user' ? '请输入学号或手机号' : '请输入管理员账号',
         icon: 'none'
       })
       return
@@ -131,8 +157,9 @@
 
     try {
       const res = await login({
-        account: account.value,
-        password: password.value
+        account: account.value.trim(),
+        password: password.value,
+        loginType: loginType.value
       })
 
       if (isPendingDeletionResponse(res)) {
@@ -144,7 +171,8 @@
         throw new Error('登录响应异常')
       }
 
-      completeLogin(res.token, res.user)
+      const successResponse: LoginSuccessResponse = res
+      completeLogin(successResponse.token, successResponse.user)
     } catch (error: any) {
       console.error('登录失败:', error)
       uni.showToast({
@@ -218,6 +246,29 @@
   margin-bottom: 40rpx;
 }
 
+.login-tabs {
+  display: flex;
+  gap: 16rpx;
+  margin-bottom: 32rpx;
+}
+
+.login-tab {
+  flex: 1;
+  height: 76rpx;
+  line-height: 76rpx;
+  text-align: center;
+  border-radius: 38rpx;
+  background: #f3f4f6;
+  color: #6b7280;
+  font-size: 28rpx;
+  font-weight: 500;
+}
+
+.login-tab.active {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: #fff;
+}
+
 .form-item {
   margin-bottom: 40rpx;
 }
@@ -272,6 +323,10 @@
 .link {
   font-size: 26rpx;
   color: #667eea;
+}
+
+.hint {
+  color: #6b7280;
 }
 
 .login-footer {

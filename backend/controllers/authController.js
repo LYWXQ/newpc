@@ -85,25 +85,34 @@ const register = async (req, res) => {
   }
 };
 
-// 用户登录（统一支持学号、手机号或用户名登录）
+// 用户登录
 const login = async (req, res) => {
   try {
-    const { account, password } = req.body;
+    const { account, password, loginType } = req.body;
     const normalizedAccount = String(account || '').trim();
+
+    if (!['user', 'admin'].includes(loginType)) {
+      return res.status(400).json({ message: '登录类型无效' });
+    }
 
     if (!normalizedAccount || !password) {
       return res.status(400).json({ message: '账号和密码不能为空' });
     }
 
-    const user = await User.findOne({
-      where: {
-        [Op.or]: [
-          { studentId: normalizedAccount },
-          { phone: normalizedAccount },
-          { username: normalizedAccount }
-        ]
-      }
-    });
+    const where = loginType === 'user'
+      ? {
+          role: 'user',
+          [Op.or]: [
+            { studentId: normalizedAccount },
+            { phone: normalizedAccount }
+          ]
+        }
+      : {
+          role: { [Op.in]: ['admin', 'super_admin'] },
+          username: normalizedAccount
+        };
+
+    const user = await User.findOne({ where });
 
     if (!user) {
       return res.status(401).json({ message: '账号或密码错误' });
@@ -112,6 +121,10 @@ const login = async (req, res) => {
     const isValidPassword = await bcrypt.compare(password, user.password);
     if (!isValidPassword) {
       return res.status(401).json({ message: '账号或密码错误' });
+    }
+
+    if (user.status === 'inactive') {
+      return res.status(403).json({ message: '账号已停用' });
     }
 
     if (user.status === 'banned') {

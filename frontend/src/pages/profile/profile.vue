@@ -27,6 +27,10 @@
       </view>
     </view>
 
+    <view class="profile-tip-card" v-if="authStore.isLoggedIn && governanceTips.length > 0">
+      <text class="profile-tip">{{ governanceTips.join('；') }}</text>
+    </view>
+
     <view class="stats-grid" v-if="authStore.isLoggedIn">
       <view class="stat-item" @click="goToOrders('lender')">
         <text class="stat-num">{{ dashboard.totalAsLender }}</text>
@@ -76,6 +80,11 @@
         <text class="menu-text">我的评价</text>
         <text class="menu-arrow">＞</text>
       </view>
+      <view class="menu-item" @click="goToDisputes">
+        <text class="menu-icon">⚖️</text>
+        <text class="menu-text">我的纠纷</text>
+        <text class="menu-arrow">＞</text>
+      </view>
       <view class="menu-item" @click="goToFavorites">
         <text class="menu-icon">❤️</text>
         <text class="menu-text">我的收藏</text>
@@ -83,6 +92,11 @@
           <text class="menu-count" v-if="dashboard.favoriteCount > 0">{{ dashboard.favoriteCount }}</text>
           <text class="menu-arrow">＞</text>
         </view>
+      </view>
+      <view v-if="authStore.isAdmin" class="menu-item" @click="goToAdminDashboard">
+        <text class="menu-icon">🛠️</text>
+        <text class="menu-text">后台管理</text>
+        <text class="menu-arrow">＞</text>
       </view>
       <view class="menu-item" @click="goToSettings">
         <text class="menu-icon">⚙️</text>
@@ -98,9 +112,9 @@
 </template>
 
 <script setup lang="ts">
-  import { onMounted, ref } from 'vue'
+  import { computed, onMounted, ref } from 'vue'
   import { onShow } from '@dcloudio/uni-app'
-  import { getCurrentUser } from '@/api/auth'
+  import { getCurrentUser, mockStudentVerification } from '@/api/auth'
   import { getMyItemsCount } from '@/api/items'
   import { getUnreadCount } from '@/api/messages'
   import { getOrderStats } from '@/api/orders'
@@ -122,6 +136,24 @@
   })
 
   const dashboard = ref(createDashboard())
+  const isVerifying = ref(false)
+
+  const governanceTips = computed(() => {
+    const tips: string[] = []
+    if (authStore.userInfo.isViolationUser) {
+      tips.push('当前账号已被标记为违规用户')
+    }
+    if (authStore.userInfo.tradeRestrictedUntil) {
+      tips.push('当前账号处于交易限制期')
+    }
+    if (authStore.userInfo.publishRestrictedUntil) {
+      tips.push('当前账号处于发布限制期')
+    }
+    if ((authStore.userInfo.creditScore || 100) < 60) {
+      tips.push('当前信誉分低于 60，无法交易、发布和注销')
+    }
+    return tips
+  })
 
   onMounted(() => {
     checkLoginStatus()
@@ -208,6 +240,16 @@
     uni.navigateTo({ url: '/pages/favorites/favorites' })
   }
 
+  const goToDisputes = () => {
+    if (!checkLogin()) return
+    uni.navigateTo({ url: '/pages/dispute/list' })
+  }
+
+  const goToAdminDashboard = () => {
+    if (!checkLogin()) return
+    uni.navigateTo({ url: '/pages/admin/dashboard' })
+  }
+
   const goToSettings = () => {
     if (!checkLogin()) return
     uni.navigateTo({ url: '/pages/settings/settings' })
@@ -217,13 +259,33 @@
     uni.navigateTo({ url: '/pages/login/login' })
   }
 
-  const handleVerifyClick = () => {
+  const handleVerifyClick = async () => {
+    if (!checkLogin()) return
+
     if (authStore.userInfo.isVerified) {
       uni.showToast({ title: '您已通过认证', icon: 'success' })
       return
     }
 
-    uni.showToast({ title: '认证功能即将上线，敬请期待', icon: 'none' })
+    if (isVerifying.value) return
+
+    isVerifying.value = true
+
+    try {
+      const user = await mockStudentVerification(authStore.userInfo)
+      authStore.updateUserInfo(user)
+      uni.showModal({
+        title: '认证成功',
+        content: '已使用模拟接口完成认证，第三方接口待接入',
+        showCancel: false,
+        confirmText: '完成'
+      })
+    } catch (error) {
+      console.error('学生认证失败:', error)
+      uni.showToast({ title: '认证失败，请稍后重试', icon: 'none' })
+    } finally {
+      isVerifying.value = false
+    }
   }
 </script>
 

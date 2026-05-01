@@ -6,6 +6,10 @@
         <text class="menu-text">编辑资料</text>
         <text class="menu-arrow">＞</text>
       </view>
+      <view v-if="authStore.role === 'user'" class="menu-item" @click="goToChangePassword">
+        <text class="menu-text">修改密码</text>
+        <text class="menu-arrow">＞</text>
+      </view>
       <view class="menu-item" @click="handleLogout">
         <text class="menu-text">退出登录</text>
         <text class="menu-arrow">＞</text>
@@ -61,6 +65,10 @@
 
   const goToEditProfile = () => {
     uni.navigateTo({ url: '/pages/edit-profile/edit-profile' })
+  }
+
+  const goToChangePassword = () => {
+    uni.navigateTo({ url: '/pages/change-password/change-password' })
   }
 
   const handleLogout = () => {

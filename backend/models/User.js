@@ -60,6 +60,32 @@ const User = sequelize.define('User', {
     defaultValue: 100,
     comment: '诚信分'
   },
+  isViolationUser: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+    defaultValue: false,
+    comment: '是否为违规用户'
+  },
+  violationMarkedAt: {
+    type: DataTypes.DATE,
+    allowNull: true,
+    comment: '标记违规时间'
+  },
+  violationReason: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+    comment: '违规原因'
+  },
+  tradeRestrictedUntil: {
+    type: DataTypes.DATE,
+    allowNull: true,
+    comment: '交易限制截止时间'
+  },
+  publishRestrictedUntil: {
+    type: DataTypes.DATE,
+    allowNull: true,
+    comment: '发布限制截止时间'
+  },
   isVerified: {
     type: DataTypes.BOOLEAN,
     defaultValue: false,
@@ -97,9 +123,10 @@ const User = sequelize.define('User', {
     comment: '匿名化时间'
   },
   role: {
-    type: DataTypes.STRING(20),
+    type: DataTypes.ENUM('user', 'admin', 'super_admin'),
+    allowNull: false,
     defaultValue: 'user',
-    comment: '用户角色：当前仅保留普通用户 user'
+    comment: '用户角色'
   }
 }, {
   tableName: 'users',

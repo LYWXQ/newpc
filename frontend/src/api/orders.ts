@@ -37,6 +37,7 @@ interface ItemInfo {
 
 export interface Order {
   id: number
+  orderNo?: string
   itemId: number
   lenderId: number
   borrowerId: number
@@ -67,6 +68,13 @@ export interface Order {
   item?: ItemInfo
   lender?: UserInfo
   borrower?: UserInfo
+  dispute?: {
+    id: number
+    status: string
+    verdict?: string | null
+    createdAt?: string
+    resolvedAt?: string | null
+  } | null
 }
 
 export interface CreateOrderParams {

@@ -10,6 +10,9 @@ export interface PaginationData<T> {
   groups?: T[]
   reviews?: T[]
   users?: T[]
+  admins?: T[]
+  disputes?: T[]
+  logs?: T[]
   pagination: {
     total: number
     page: number

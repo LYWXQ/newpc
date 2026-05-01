@@ -1,7 +1,8 @@
 const express = require('express');
+const bcrypt = require('bcryptjs');
 const router = express.Router();
 const { authenticateToken } = require('../middleware/auth');
-const { User } = require('../models');
+const { User, UserRestriction } = require('../models');
 const {
   cancelUserDeletion,
   checkUserHasActiveBusiness,
@@ -67,6 +68,33 @@ const updateProfile = async (req, res) => {
 router.put('/profile', authenticateToken, updateProfile);
 router.post('/profile', authenticateToken, updateProfile);
 
+router.put('/password', authenticateToken, async (req, res) => {
+  try {
+    const { oldPassword, newPassword } = req.body;
+    const user = req.user;
+
+    if (user.role !== 'user') {
+      return res.status(403).json({ message: '仅普通用户可通过此入口修改密码' });
+    }
+
+    if (!oldPassword || !newPassword) {
+      return res.status(400).json({ message: '旧密码和新密码不能为空' });
+    }
+
+    const isValidOldPassword = await bcrypt.compare(oldPassword, user.password);
+    if (!isValidOldPassword) {
+      return res.status(400).json({ message: '旧密码错误' });
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    await user.update({ password: hashedPassword });
+
+    res.json({ message: '密码修改成功' });
+  } catch (error) {
+    res.status(500).json({ message: '修改密码失败', error: error.message });
+  }
+});
+
 // 上传头像
 router.post('/avatar', authenticateToken, async (req, res) => {
   try {
@@ -103,6 +131,31 @@ router.post('/deletion-request', authenticateToken, async (req, res) => {
 
     if (user.deletionStatus === 'deleted' || user.status === 'deleted') {
       return res.status(403).json({ message: '账号已注销' });
+    }
+
+    if (user.role === 'admin' || user.role === 'super_admin') {
+      return res.status(403).json({ message: '后台账号不支持通过普通用户流程注销' });
+    }
+
+    if (user.isViolationUser) {
+      return res.status(400).json({
+        message: '当前账号已被标记为违规，暂无法注销',
+        code: 'DELETION_BLOCKED_BY_VIOLATION'
+      });
+    }
+
+    const activeRestrictionCount = await UserRestriction.count({
+      where: {
+        userId: user.id,
+        isActive: true
+      }
+    });
+
+    if (activeRestrictionCount > 0) {
+      return res.status(400).json({
+        message: '当前账号存在生效中的限制记录，暂无法注销',
+        code: 'DELETION_BLOCKED_BY_RESTRICTION'
+      });
     }
 
     const activeBusiness = await checkUserHasActiveBusiness(user.id);

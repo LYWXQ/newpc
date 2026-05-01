@@ -118,6 +118,18 @@
         </view>
       </view>
 
+      <view class="dispute-section" v-if="showDisputeSection">
+        <text class="section-title">纠纷处理</text>
+        <view class="info-item" v-if="disputeRecord">
+          <text class="info-label">当前状态：</text>
+          <text class="info-value highlight">{{ disputeStatusText }}</text>
+        </view>
+        <view class="info-item" v-if="disputeRecord?.resolutionNote">
+          <text class="info-label">处理结果：</text>
+          <text class="info-value">{{ disputeRecord?.resolutionNote }}</text>
+        </view>
+      </view>
+
       <view class="action-buttons">
         <template v-if="order.status === 'pending' && isLender">
           <button class="approve-button" @click="handleApprove">同意</button>
@@ -156,6 +168,8 @@
           <button class="review-button" @click="goToReview">评价订单</button>
         </template>
 
+        <button class="confirm-button" v-if="canApplyDispute" @click="goToApplyDispute">申请纠纷</button>
+        <button class="review-button" v-if="canViewDispute" @click="goToDisputeDetail">查看纠纷</button>
         <button class="cancel-button" v-if="canCancel" @click="handleCancel">取消订单</button>
       </view>
 
@@ -237,12 +251,14 @@
     type Order
   } from '@/api/orders'
   import { getOrderReview, type Review } from '@/api/reviews'
+  import { getOrderDispute, type Dispute } from '@/api/disputes'
   import { useAuthStore } from '@/stores/auth'
   import { getImageUrl } from '@/utils/image'
 
   const order = ref<Order | null>(null)
   const orderId = ref<number>(0)
   const reviews = ref<Review[]>([])
+  const disputeRecord = ref<Dispute | null>(null)
   const canReviewFlag = ref(false)
   const showPickupDialog = ref(false)
   const pickupCodeInput = ref('')
@@ -291,6 +307,30 @@
   const canCancel = computed(() => {
     if (!order.value) return false
     return ['pending', 'confirmed'].includes(order.value.status)
+  })
+
+  const showDisputeSection = computed(() => {
+    if (!order.value) return false
+    return ['confirmed', 'using', 'returned', 'completed'].includes(order.value.status) || Boolean(disputeRecord.value)
+  })
+
+  const canApplyDispute = computed(() => {
+    if (!order.value || disputeRecord.value) return false
+    return ['confirmed', 'using', 'returned'].includes(order.value.status) && (isBorrower.value || isLender.value)
+  })
+
+  const canViewDispute = computed(() => Boolean(disputeRecord.value))
+
+  const disputeStatusText = computed(() => {
+    if (!disputeRecord.value) return ''
+    const statusMap: Record<string, string> = {
+      open: '待处理',
+      awaiting_counterparty: '待对方回应',
+      under_review: '待管理员处理',
+      resolved: '已处理',
+      cancelled: '已取消'
+    }
+    return statusMap[disputeRecord.value.status] || disputeRecord.value.status
   })
 
   const canReview = computed(() => {
@@ -406,6 +446,15 @@
     }
   }
 
+  const loadOrderDispute = async () => {
+    try {
+      const res = await getOrderDispute(orderId.value, { showLoading: false, silentError: true })
+      disputeRecord.value = res.dispute || null
+    } catch (error) {
+      disputeRecord.value = null
+    }
+  }
+
   const loadOrderDetail = async () => {
     if (!orderId.value) {
       uni.showToast({ title: '订单ID无效', icon: 'none' })
@@ -416,6 +465,8 @@
       uni.showLoading({ title: '加载中...' })
       const res = await getOrderDetail(orderId.value)
       order.value = res.order
+
+      await loadOrderDispute()
 
       if (res.order.status === 'completed') {
         await loadOrderReview()
@@ -435,6 +486,19 @@
   const goToReview = () => {
     uni.navigateTo({
       url: `/pages/review/review?orderId=${orderId.value}`
+    })
+  }
+
+  const goToApplyDispute = () => {
+    uni.navigateTo({
+      url: `/pages/dispute/apply?orderId=${orderId.value}`
+    })
+  }
+
+  const goToDisputeDetail = () => {
+    if (!disputeRecord.value) return
+    uni.navigateTo({
+      url: `/pages/dispute/detail?id=${disputeRecord.value.id}`
     })
   }
 

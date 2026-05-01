@@ -172,19 +172,19 @@
 
       <!-- 操作按钮 -->
       <view class="action-buttons" v-if="!isOwnItem">
-        <button 
-          class="favorite-button" 
+        <button
+          class="favorite-button"
           :class="{ 'is-favorite': isFavorite }"
           @click="toggleFavorite"
         >
           {{ isFavorite ? '取消收藏' : '收藏' }}
         </button>
-        <button 
-          class="chat-button" 
-          :class="{ 'disabled': !canBorrow }"
+        <button
+          class="chat-button"
+          :class="{ 'disabled': !canTradeItem }"
           @click="contactOwner"
         >
-          {{ canBorrow ? '发起交易' : '暂不可借' }}
+          {{ canTradeItem ? '发起交易' : tradeRestrictionMessage || '暂不可借' }}
         </button>
       </view>
     </view>
@@ -299,6 +299,7 @@
   import { createOrder, type CreateOrderParams } from '@/api/orders'
   import { getItemReviews, type Review } from '@/api/reviews'
   import { addFavorite, removeFavorite, checkFavoriteStatus } from '@/api/favorites'
+  import { getCurrentUser, type UserInfo } from '@/api/auth'
   import { useAuthStore } from '@/stores/auth'
   import { formatItemStatus, canBorrow as canBorrowItem } from '@/utils/constants'
   import { checkLogin } from '@/utils/auth'
@@ -350,6 +351,26 @@
   const canBorrow = computed(() => {
     return item.value ? canBorrowItem(item.value.status) : false
   })
+
+  const tradeRestrictionMessage = computed(() => {
+    const user = authStore.userInfo
+    if (!authStore.isLoggedIn) return ''
+    if (user.role === 'admin' || user.role === 'super_admin') {
+      return '后台账号不参与普通交易'
+    }
+    if (user.isViolationUser) {
+      return '当前账号已被标记为违规，暂不可交易'
+    }
+    if ((user.creditScore || 100) < 60) {
+      return '当前信誉分过低，暂不可交易'
+    }
+    if (user.tradeRestrictedUntil) {
+      return '当前账号处于交易限制期，暂不可交易'
+    }
+    return ''
+  })
+
+  const canTradeItem = computed(() => canBorrow.value && !tradeRestrictionMessage.value)
 
   // 计算属性：是否可以提交订单
   const canSubmit = computed(() => {
@@ -581,6 +602,11 @@
       return
     }
 
+    if (tradeRestrictionMessage.value) {
+      uni.showToast({ title: tradeRestrictionMessage.value, icon: 'none' })
+      return
+    }
+
     openBorrowDialog()
   }
 
@@ -748,9 +774,20 @@
     const id = options?.id
     if (id) {
       itemId.value = parseInt(id, 10)
-      loadItemDetail().then(() => {
-        checkFavorite()
-      })
+      if (authStore.isLoggedIn) {
+        getCurrentUser(undefined, { showLoading: false })
+          .then((user: UserInfo) => authStore.updateUserInfo(user))
+          .catch(() => null)
+          .finally(() => {
+            loadItemDetail().then(() => {
+              checkFavorite()
+            })
+          })
+      } else {
+        loadItemDetail().then(() => {
+          checkFavorite()
+        })
+      }
     } else {
       error.value = '缺少物品ID参数'
     }
