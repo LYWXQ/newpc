@@ -52,7 +52,9 @@
       "mcp__Chrome_DevTools_MCP__take_snapshot",
       "mcp__Chrome_DevTools_MCP__type_text",
       "mcp__Chrome_DevTools_MCP__upload_file",
-      "mcp__Chrome_DevTools_MCP__wait_for"
+      "mcp__Chrome_DevTools_MCP__wait_for",
+      "Bash(npm run type-check)",
+      "Bash(npm run dev)"
     ]
   }
 }

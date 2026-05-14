@@ -1,0 +1,72 @@
+- generic [ref=e73]:
+  - generic [ref=e75]:
+    - img [ref=e78] [cursor=pointer]
+    - generic [ref=e81]: 注册
+  - generic [ref=e85]:
+    - generic [ref=e86]:
+      - generic [ref=e87]: 注册账号
+      - generic [ref=e88]: 加入校园闲置共享平台
+    - generic [ref=e93]:
+      - generic [ref=e94]:
+        - generic [ref=e96]:
+          - generic [ref=e97]: "*"
+          - text: 学号
+        - generic [ref=e99]:
+          - generic: 请输入学号
+          - textbox [ref=e100]
+      - generic [ref=e101]:
+        - generic [ref=e103]:
+          - generic [ref=e104]: "*"
+          - text: 用户名
+        - generic [ref=e106]:
+          - generic: 请输入用户名
+          - textbox [ref=e107]
+      - generic [ref=e108]:
+        - generic [ref=e109]: 学校
+        - generic [ref=e111]:
+          - generic: 请搜索并选择学校
+          - textbox [ref=e112]
+      - generic [ref=e113]:
+        - generic [ref=e114]: 专业
+        - generic [ref=e116]:
+          - generic: 请输入专业
+          - textbox [ref=e117]
+      - generic [ref=e118]:
+        - generic [ref=e120]:
+          - generic [ref=e121]: "*"
+          - text: 手机号
+        - generic [ref=e123]:
+          - generic: 请输入手机号
+          - spinbutton [ref=e124]
+      - generic [ref=e125]:
+        - generic [ref=e127]:
+          - generic [ref=e128]: "*"
+          - text: QQ
+        - generic [ref=e130]:
+          - generic: 请输入QQ号
+          - spinbutton [ref=e131]
+      - generic [ref=e132]:
+        - generic [ref=e134]:
+          - generic [ref=e135]: "*"
+          - text: 密码
+        - generic [ref=e137]:
+          - generic: 请输入密码（6-20位）
+          - textbox [ref=e138]
+      - generic [ref=e139]:
+        - generic [ref=e141]:
+          - generic [ref=e142]: "*"
+          - text: 确认密码
+        - generic [ref=e144]:
+          - generic: 请再次输入密码
+          - textbox [ref=e145]
+      - generic [ref=e151]:
+        - generic [ref=e152]: "*"
+        - text: 我已阅读并同意
+        - generic [ref=e153]: 《用户协议》
+        - text: 和
+        - generic [ref=e154]: 《隐私政策》
+      - generic [ref=e155]:
+        - generic [ref=e156]: "*"
+        - generic [ref=e157]: 为必填项
+      - generic [ref=e158] [cursor=pointer]: 注册
+      - generic [ref=e160]: 已有账号？去登录

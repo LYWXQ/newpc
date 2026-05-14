@@ -1,0 +1,22 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e429]:
+    - generic [ref=e431]:
+      - img [ref=e434] [cursor=pointer]
+      - generic [ref=e437]: 消息详情
+    - generic [ref=e441]:
+      - generic [ref=e442]:
+        - img [ref=e445]
+        - generic [ref=e446]:
+          - generic [ref=e447]: 免费物品
+          - generic [ref=e448]: 共 1 条系统消息
+      - generic [ref=e452]:
+        - generic [ref=e453]:
+          - generic [ref=e454]:
+            - generic [ref=e455]: 测试系统消息：请尽快查看该物品的最新状态
+            - generic [ref=e456]: 2026/4/30 10:12
+          - generic [ref=e459]: 🗑️
+        - generic [ref=e461]: 没有更多了
+  - generic:
+    - generic:
+      - generic:
+        - paragraph: 加载中...

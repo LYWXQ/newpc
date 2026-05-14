@@ -1,0 +1,77 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="900" viewBox="0 0 1200 900">
+  <defs>
+    <style>
+      .bg { fill: #f7f9fc; }
+      .frame { fill: #ffffff; stroke: #2f4f6f; stroke-width: 2.2; rx: 14; ry: 14; }
+      .layer { fill: #eaf2fb; stroke: #4f78a8; stroke-width: 1.8; rx: 12; ry: 12; }
+      .box { fill: #ffffff; stroke: #4f78a8; stroke-width: 1.6; rx: 10; ry: 10; }
+      .db { fill: #dbe9f8; stroke: #4f78a8; stroke-width: 1.8; }
+      .title { font: 700 28px 'Microsoft YaHei', sans-serif; fill: #1d3557; }
+      .label { font: 700 20px 'Microsoft YaHei', sans-serif; fill: #1d3557; }
+      .text { font: 16px 'Microsoft YaHei', sans-serif; fill: #2b2b2b; }
+      .small { font: 15px 'Microsoft YaHei', sans-serif; fill: #2b2b2b; }
+      .arrow { stroke: #355c7d; stroke-width: 2.4; fill: none; marker-end: url(#m); }
+    </style>
+    <marker id="m" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#355c7d"/>
+    </marker>
+  </defs>
+
+  <rect class="bg" x="0" y="0" width="1200" height="900"/>
+  <text class="title" x="600" y="48" text-anchor="middle">图 3.1 系统架构图</text>
+
+  <rect class="frame" x="80" y="80" width="1040" height="720"/>
+
+  <rect class="layer" x="140" y="120" width="920" height="100"/>
+  <text class="label" x="180" y="155">用户层</text>
+  <rect class="box" x="250" y="145" width="250" height="50"/>
+  <text class="text" x="375" y="177" text-anchor="middle">uni-app 前端（H5/小程序）</text>
+  <rect class="box" x="700" y="145" width="220" height="50"/>
+  <text class="text" x="810" y="177" text-anchor="middle">管理员端页面</text>
+
+  <rect class="layer" x="140" y="255" width="920" height="130"/>
+  <text class="label" x="180" y="290">接口与表示层</text>
+  <rect class="box" x="215" y="305" width="180" height="48"/>
+  <text class="text" x="305" y="335" text-anchor="middle">页面与组件</text>
+  <rect class="box" x="425" y="305" width="180" height="48"/>
+  <text class="text" x="515" y="335" text-anchor="middle">Vue 3 + TypeScript</text>
+  <rect class="box" x="635" y="305" width="180" height="48"/>
+  <text class="text" x="725" y="335" text-anchor="middle">Pinia 状态管理</text>
+  <rect class="box" x="845" y="305" width="150" height="48"/>
+  <text class="text" x="920" y="335" text-anchor="middle">request 封装</text>
+
+  <rect class="layer" x="140" y="420" width="920" height="160"/>
+  <text class="label" x="180" y="455">业务服务层（Node.js + Express）</text>
+  <rect class="box" x="190" y="480" width="140" height="45"/>
+  <text class="small" x="260" y="508" text-anchor="middle">auth/users</text>
+  <rect class="box" x="350" y="480" width="140" height="45"/>
+  <text class="small" x="420" y="508" text-anchor="middle">items/orders</text>
+  <rect class="box" x="510" y="480" width="140" height="45"/>
+  <text class="small" x="580" y="508" text-anchor="middle">messages/reviews</text>
+  <rect class="box" x="670" y="480" width="140" height="45"/>
+  <text class="small" x="740" y="508" text-anchor="middle">favorites/disputes</text>
+  <rect class="box" x="830" y="480" width="140" height="45"/>
+  <text class="small" x="900" y="508" text-anchor="middle">admin/upload</text>
+
+  <rect class="box" x="240" y="535" width="190" height="32"/>
+  <text class="small" x="335" y="556" text-anchor="middle">JWT 身份认证</text>
+  <rect class="box" x="455" y="535" width="190" height="32"/>
+  <text class="small" x="550" y="556" text-anchor="middle">Multer 图片上传</text>
+  <rect class="box" x="670" y="535" width="210" height="32"/>
+  <text class="small" x="775" y="556" text-anchor="middle">订单提醒定时任务</text>
+
+  <rect class="layer" x="140" y="615" width="920" height="80"/>
+  <text class="label" x="180" y="650">数据访问层</text>
+  <rect class="box" x="450" y="635" width="300" height="42"/>
+  <text class="text" x="600" y="662" text-anchor="middle">Sequelize ORM</text>
+
+  <ellipse class="db" cx="600" cy="765" rx="170" ry="30"/>
+  <rect class="db" x="430" y="765" width="340" height="52"/>
+  <ellipse class="db" cx="600" cy="817" rx="170" ry="30"/>
+  <text class="label" x="600" y="792" text-anchor="middle">MySQL 数据库</text>
+
+  <path class="arrow" d="M600 220 L600 255"/>
+  <path class="arrow" d="M600 385 L600 420"/>
+  <path class="arrow" d="M600 580 L600 615"/>
+  <path class="arrow" d="M600 695 L600 730"/>
+</svg>

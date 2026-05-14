@@ -1,0 +1,32 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e188]:
+    - generic [ref=e190]:
+      - img [ref=e193] [cursor=pointer]
+      - generic [ref=e196]: 消息详情
+    - generic [ref=e200]:
+      - generic [ref=e201]:
+        - img [ref=e204]
+        - generic [ref=e205]:
+          - generic [ref=e206]: badge test item
+          - generic [ref=e207]: 共 3 条系统消息
+      - generic [ref=e211]:
+        - generic [ref=e212]:
+          - generic [ref=e213]:
+            - generic [ref=e214]: click clears badge test
+            - generic [ref=e215]: 2026/4/30 10:55
+          - generic [ref=e218]: 🗑️
+        - generic [ref=e219]:
+          - generic [ref=e220]:
+            - generic [ref=e221]: tab badge verification message
+            - generic [ref=e222]: 2026/4/30 10:41
+          - generic [ref=e225]: 🗑️
+        - generic [ref=e226]:
+          - generic [ref=e227]:
+            - generic [ref=e228]: 有新的交易请求：badge test item，请确认交易时间、交还时间和交接地点。
+            - generic [ref=e229]: 2026/4/30 10:19
+          - generic [ref=e232]: 🗑️
+        - generic [ref=e234]: 没有更多了
+  - generic:
+    - generic:
+      - generic:
+        - paragraph: 加载中...

@@ -1,0 +1,82 @@
+<mxfile host="app.diagrams.net" modified="2026-05-07T09:00:00.000Z" agent="Codex" version="24.7.17">
+  <diagram id="fig3-11-er" name="图3.11 数据库E-R图">
+    <mxGraphModel dx="1800" dy="1000" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1800" pageHeight="1400" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <mxCell id="title" value="图3.11 数据库 E-R 图" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=22;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="700" y="20" width="400" height="30" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="note" value="说明：管理员与超级管理员通过 users.role 区分；图中仅展示主键、主要业务字段和外键。" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#999999;fontSize=14;align=left;spacingLeft=10;" vertex="1" parent="1">
+          <mxGeometry x="1120" y="60" width="520" height="56" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="user" value="users&#xa;PK id&#xa;studentId&#xa;username&#xa;phone&#xa;creditScore&#xa;status&#xa;deletionStatus&#xa;role" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#333333;fontSize=15;align=left;verticalAlign=top;spacingTop=8;spacingLeft=10;" vertex="1" parent="1">
+          <mxGeometry x="80" y="120" width="190" height="200" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="item" value="items&#xa;PK id&#xa;title&#xa;category&#xa;price&#xa;deposit&#xa;transactionType&#xa;status&#xa;FK userId" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#333333;fontSize=15;align=left;verticalAlign=top;spacingTop=8;spacingLeft=10;" vertex="1" parent="1">
+          <mxGeometry x="380" y="120" width="190" height="200" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="order" value="orders&#xa;PK id&#xa;orderNo&#xa;startDate&#xa;endDate&#xa;totalDays&#xa;totalPrice&#xa;status&#xa;pickupCode&#xa;returnCode&#xa;FK itemId&#xa;FK lenderId&#xa;FK borrowerId" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#333333;fontSize=15;align=left;verticalAlign=top;spacingTop=8;spacingLeft=10;" vertex="1" parent="1">
+          <mxGeometry x="680" y="100" width="220" height="280" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="review" value="reviews&#xa;PK id&#xa;rating&#xa;content&#xa;images&#xa;FK orderId&#xa;FK reviewerId&#xa;FK revieweeId" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#333333;fontSize=15;align=left;verticalAlign=top;spacingTop=8;spacingLeft=10;" vertex="1" parent="1">
+          <mxGeometry x="1020" y="120" width="190" height="190" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="message" value="messages&#xa;PK id&#xa;content&#xa;type&#xa;isRead&#xa;relatedId&#xa;relatedType&#xa;FK senderId&#xa;FK receiverId&#xa;FK itemId" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#333333;fontSize=15;align=left;verticalAlign=top;spacingTop=8;spacingLeft=10;" vertex="1" parent="1">
+          <mxGeometry x="1320" y="120" width="200" height="220" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="favorite" value="favorites&#xa;PK id&#xa;FK userId&#xa;FK itemId" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#333333;fontSize=15;align=left;verticalAlign=top;spacingTop=8;spacingLeft=10;" vertex="1" parent="1">
+          <mxGeometry x="360" y="420" width="160" height="110" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="dispute" value="disputes&#xa;PK id&#xa;status&#xa;verdict&#xa;lossAmount&#xa;resolvedAt&#xa;FK orderId&#xa;FK itemId&#xa;FK borrowerId&#xa;FK lenderId&#xa;FK initiatorId&#xa;FK respondentId&#xa;FK adminId" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#333333;fontSize=15;align=left;verticalAlign=top;spacingTop=8;spacingLeft=10;" vertex="1" parent="1">
+          <mxGeometry x="1020" y="380" width="220" height="260" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="credit" value="credit_records&#xa;PK id&#xa;changeType&#xa;sourceType&#xa;delta&#xa;scoreBefore&#xa;scoreAfter&#xa;FK userId&#xa;FK operatorId" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#333333;fontSize=15;align=left;verticalAlign=top;spacingTop=8;spacingLeft=10;" vertex="1" parent="1">
+          <mxGeometry x="80" y="420" width="210" height="190" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="restriction" value="user_restrictions&#xa;PK id&#xa;restrictionType&#xa;sourceType&#xa;startsAt&#xa;endsAt&#xa;isActive&#xa;FK userId&#xa;FK operatorId" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#333333;fontSize=15;align=left;verticalAlign=top;spacingTop=8;spacingLeft=10;" vertex="1" parent="1">
+          <mxGeometry x="80" y="700" width="220" height="200" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="reminder" value="order_reminder_logs&#xa;PK id&#xa;reminderType&#xa;reminderDate&#xa;FK orderId&#xa;FK receiverId" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#333333;fontSize=15;align=left;verticalAlign=top;spacingTop=8;spacingLeft=10;" vertex="1" parent="1">
+          <mxGeometry x="680" y="450" width="200" height="160" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="adminlog" value="admin_action_logs&#xa;PK id&#xa;actionType&#xa;summary&#xa;detail&#xa;FK adminId&#xa;FK targetUserId&#xa;FK targetOrderId&#xa;FK targetDisputeId" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#333333;fontSize=15;align=left;verticalAlign=top;spacingTop=8;spacingLeft=10;" vertex="1" parent="1">
+          <mxGeometry x="1320" y="430" width="230" height="220" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="e1" value="1 : N 发布" style="endArrow=none;startArrow=none;html=1;strokeWidth=2;fontSize=13;" edge="1" parent="1" source="user" target="item"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e2" value="1 : N 借出" style="endArrow=none;startArrow=none;html=1;strokeWidth=2;fontSize=13;" edge="1" parent="1" source="user" target="order"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="270" y="150"/><mxPoint x="640" y="150"/></Array></mxGeometry></mxCell>
+        <mxCell id="e3" value="1 : N 借入" style="endArrow=none;startArrow=none;html=1;strokeWidth=2;fontSize=13;dashed=1;" edge="1" parent="1" source="user" target="order"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="270" y="300"/><mxPoint x="640" y="300"/></Array></mxGeometry></mxCell>
+        <mxCell id="e4" value="1 : N 生成" style="endArrow=none;startArrow=none;html=1;strokeWidth=2;fontSize=13;" edge="1" parent="1" source="item" target="order"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e5" value="1 : N 评价" style="endArrow=none;startArrow=none;html=1;strokeWidth=2;fontSize=13;" edge="1" parent="1" source="order" target="review"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e6" value="1 : N reviewer/reviewee" style="endArrow=none;startArrow=none;html=1;strokeWidth=2;fontSize=13;" edge="1" parent="1" source="user" target="review"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="270" y="100"/><mxPoint x="980" y="100"/></Array></mxGeometry></mxCell>
+        <mxCell id="e7" value="1 : N sender/receiver" style="endArrow=none;startArrow=none;html=1;strokeWidth=2;fontSize=13;" edge="1" parent="1" source="user" target="message"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="240" y="80"/><mxPoint x="1290" y="80"/></Array></mxGeometry></mxCell>
+        <mxCell id="e8" value="1 : N 关联" style="endArrow=none;startArrow=none;html=1;strokeWidth=2;fontSize=13;" edge="1" parent="1" source="item" target="message"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e9" value="1 : N 收藏" style="endArrow=none;startArrow=none;html=1;strokeWidth=2;fontSize=13;" edge="1" parent="1" source="user" target="favorite"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e10" value="1 : N 被收藏" style="endArrow=none;startArrow=none;html=1;strokeWidth=2;fontSize=13;" edge="1" parent="1" source="item" target="favorite"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e11" value="1 : 1 对应" style="endArrow=none;startArrow=none;html=1;strokeWidth=2;fontSize=13;" edge="1" parent="1" source="order" target="dispute"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e12" value="1 : N 涉及" style="endArrow=none;startArrow=none;html=1;strokeWidth=2;fontSize=13;" edge="1" parent="1" source="item" target="dispute"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e13" value="1 : N 多角色" style="endArrow=none;startArrow=none;html=1;strokeWidth=2;fontSize=13;" edge="1" parent="1" source="user" target="dispute"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="260" y="380"/><mxPoint x="980" y="380"/></Array></mxGeometry></mxCell>
+        <mxCell id="e14" value="1 : N 用户/操作人" style="endArrow=none;startArrow=none;html=1;strokeWidth=2;fontSize=13;" edge="1" parent="1" source="user" target="credit"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e15" value="1 : N 用户/操作人" style="endArrow=none;startArrow=none;html=1;strokeWidth=2;fontSize=13;" edge="1" parent="1" source="user" target="restriction"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e16" value="1 : N 提醒" style="endArrow=none;startArrow=none;html=1;strokeWidth=2;fontSize=13;" edge="1" parent="1" source="order" target="reminder"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e17" value="1 : N 接收" style="endArrow=none;startArrow=none;html=1;strokeWidth=2;fontSize=13;" edge="1" parent="1" source="user" target="reminder"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="270" y="520"/><mxPoint x="640" y="520"/></Array></mxGeometry></mxCell>
+        <mxCell id="e18" value="1 : N admin/targetUser" style="endArrow=none;startArrow=none;html=1;strokeWidth=2;fontSize=13;" edge="1" parent="1" source="user" target="adminlog"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="260" y="940"/><mxPoint x="1280" y="940"/><mxPoint x="1280" y="530"/></Array></mxGeometry></mxCell>
+        <mxCell id="e19" value="1 : N 目标订单" style="endArrow=none;startArrow=none;html=1;strokeWidth=2;fontSize=13;" edge="1" parent="1" source="order" target="adminlog"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="920" y="240"/><mxPoint x="1260" y="240"/><mxPoint x="1260" y="500"/></Array></mxGeometry></mxCell>
+        <mxCell id="e20" value="1 : N 目标纠纷" style="endArrow=none;startArrow=none;html=1;strokeWidth=2;fontSize=13;" edge="1" parent="1" source="dispute" target="adminlog"><mxGeometry relative="1" as="geometry"/></mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

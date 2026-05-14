@@ -3,13 +3,8 @@
 ## 技能库
 - 本项目保留原始技能库：`.trae/skills/`
 - 本项目同时提供 Claude Code 标准技能目录：`.claude/skills/`
-- 优先将以下技能用于本项目开发与排错：
-  - `frontend-project`
-  - `backend-project`
-  - `fullstack-development`
-  - `frontend-tester`
-  - `uniapp`
-  - `vue-best-practices`
+- 旧的 `frontend-project`、`backend-project` 及数据库导向技能已移除，后续应以当前代码实际内容为准读取与分析
+- 可按需使用仍然有效的通用技能辅助开发与验证，例如：`frontend-tester`、`uniapp`、`vue-best-practices`
 
 ## 项目结构
 - `frontend/`：uni-app + Vue 3 + Vite 前端

@@ -1,0 +1,56 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e3]:
+    - generic [ref=e466]:
+      - generic [ref=e470]: 我的订单
+      - generic [ref=e474]:
+        - generic [ref=e475]:
+          - generic [ref=e476]:
+            - text: 我借入的
+            - generic [ref=e477]: "2"
+          - generic [ref=e478]: 我借出的
+        - generic [ref=e479]:
+          - generic [ref=e480]: 全部
+          - generic [ref=e482]: 待处理
+          - generic [ref=e484]: 进行中
+          - generic [ref=e485]: 已完成
+        - generic [ref=e490]:
+          - generic [ref=e538]:
+            - generic [ref=e539]:
+              - generic [ref=e540]: "订单号: 5"
+              - generic [ref=e541]: 待处理
+            - generic [ref=e542]:
+              - img [ref=e545]
+              - generic [ref=e546]:
+                - generic [ref=e547]: badge test item
+                - generic [ref=e548]: 交易 5月2日 · 交还 5月4日
+                - generic [ref=e549]:
+                  - generic [ref=e550]: "租金: ¥3.00"
+                  - generic [ref=e551]: "押金: ¥5.00"
+            - generic [ref=e552]:
+              - generic [ref=e553]:
+                - img [ref=e556]
+                - generic [ref=e557]: �����û�B
+              - generic [ref=e558]:
+                - generic [ref=e559] [cursor=pointer]: 同意
+                - generic [ref=e560] [cursor=pointer]: 拒绝
+          - generic [ref=e562]: 没有更多了
+    - generic [ref=e7]:
+      - generic [ref=e10] [cursor=pointer]:
+        - img [ref=e12]
+        - generic [ref=e13]: 首页
+      - generic [ref=e15] [cursor=pointer]:
+        - img [ref=e17]
+        - generic [ref=e18]: 订单
+      - generic [ref=e20] [cursor=pointer]:
+        - img [ref=e22]
+        - generic [ref=e23]: 发布
+      - generic [ref=e25] [cursor=pointer]:
+        - img [ref=e27]
+        - generic [ref=e28]: 消息
+      - generic [ref=e30] [cursor=pointer]:
+        - img [ref=e32]
+        - generic [ref=e33]: 我的
+  - generic:
+    - generic:
+      - generic:
+        - paragraph: 加载中...

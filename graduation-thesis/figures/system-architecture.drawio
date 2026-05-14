@@ -1,0 +1,82 @@
+<mxfile host="app.diagrams.net" modified="2026-05-06T16:10:00.000Z" agent="Codex" version="24.7.17">
+  <diagram id="system-architecture" name="系统架构图">
+    <mxGraphModel dx="1280" dy="720" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <mxCell id="title" value="图 3.1 系统架构图" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;fontSize=22;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="380" y="20" width="260" height="30" as="geometry"/>
+        </mxCell>
+        <mxCell id="userLayer" value="用户层" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#333333;fontSize=18;align=left;verticalAlign=top;spacingTop=10;spacingLeft=12;" vertex="1" parent="1">
+          <mxGeometry x="40" y="70" width="940" height="110" as="geometry"/>
+        </mxCell>
+        <mxCell id="userFront" value="终端显示层&#xa;（uni-app 前端）" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#333333;fontSize=18;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="250" y="100" width="250" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="userOpenApi" value="开放接口层" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#333333;fontSize=18;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="650" y="100" width="180" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="serverBox" value="Node Server" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#333333;fontSize=18;align=left;verticalAlign=top;spacingTop=10;spacingLeft=12;" vertex="1" parent="1">
+          <mxGeometry x="40" y="210" width="940" height="470" as="geometry"/>
+        </mxCell>
+        <mxCell id="reqLayer" value="请求处理层" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#B8C8EA;strokeColor=#333333;fontSize=16;align=left;verticalAlign=top;spacingTop=8;spacingLeft=10;" vertex="1" parent="1">
+          <mxGeometry x="90" y="270" width="660" height="100" as="geometry"/>
+        </mxCell>
+        <mxCell id="apiBox" value="RESTful&#xa;API" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#333333;fontSize=18;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="290" y="300" width="90" height="45" as="geometry"/>
+        </mxCell>
+        <mxCell id="controllerBox" value="Express&#xa;Router" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#333333;fontSize=18;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="470" y="295" width="120" height="55" as="geometry"/>
+        </mxCell>
+        <mxCell id="bizLayer" value="业务逻辑层" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#B8C8EA;strokeColor=#333333;fontSize=16;align=left;verticalAlign=top;spacingTop=8;spacingLeft=10;" vertex="1" parent="1">
+          <mxGeometry x="90" y="400" width="840" height="100" as="geometry"/>
+        </mxCell>
+        <mxCell id="serviceBox" value="Service" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#333333;fontSize=18;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="260" y="435" width="120" height="45" as="geometry"/>
+        </mxCell>
+        <mxCell id="expressBox" value="Node.js&#xa;Express" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#333333;fontSize=18;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="460" y="430" width="150" height="55" as="geometry"/>
+        </mxCell>
+        <mxCell id="supportBox" value="JWT / 上传 /&#xa;提醒任务" style="shape=cylinder;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#8FB0E3;strokeColor=#333333;fontSize=18;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="760" y="422" width="110" height="68" as="geometry"/>
+        </mxCell>
+        <mxCell id="dataLayer" value="数据访问层" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#B8C8EA;strokeColor=#333333;fontSize=16;align=left;verticalAlign=top;spacingTop=8;spacingLeft=10;" vertex="1" parent="1">
+          <mxGeometry x="90" y="530" width="660" height="100" as="geometry"/>
+        </mxCell>
+        <mxCell id="ormBox" value="ORM" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#333333;fontSize=18;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="255" y="565" width="110" height="45" as="geometry"/>
+        </mxCell>
+        <mxCell id="sequelizeBox" value="Sequelize" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#333333;fontSize=18;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="460" y="565" width="140" height="45" as="geometry"/>
+        </mxCell>
+        <mxCell id="dbLayer" value="数据库" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#333333;fontSize=18;align=left;verticalAlign=top;spacingTop=10;spacingLeft=12;" vertex="1" parent="1">
+          <mxGeometry x="40" y="710" width="560" height="110" as="geometry"/>
+        </mxCell>
+        <mxCell id="mysqlBox" value="MySQL" style="shape=cylinder;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#8FB0E3;strokeColor=#333333;fontSize=18;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="240" y="745" width="110" height="55" as="geometry"/>
+        </mxCell>
+        <mxCell id="osLayer" value="操作系统" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#333333;fontSize=18;align=left;verticalAlign=top;spacingTop=10;spacingLeft=12;" vertex="1" parent="1">
+          <mxGeometry x="40" y="850" width="940" height="90" as="geometry"/>
+        </mxCell>
+        <mxCell id="osBox" value="Windows" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#E6E6E6;strokeColor=#333333;fontSize=18;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="380" y="880" width="170" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="arrow1" value="" style="endArrow=block;startArrow=block;html=1;rounded=0;strokeWidth=2;" edge="1" parent="1" source="userFront" target="apiBox">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="arrow2" value="DTO" style="endArrow=block;startArrow=block;html=1;rounded=0;strokeWidth=2;fontSize=14;" edge="1" parent="1" source="apiBox" target="serviceBox">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="arrow3" value="DTO" style="endArrow=block;startArrow=block;html=1;rounded=0;strokeWidth=2;fontSize=14;" edge="1" parent="1" source="serviceBox" target="ormBox">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="arrow4" value="SQL" style="endArrow=block;startArrow=block;html=1;rounded=0;strokeWidth=2;fontSize=14;" edge="1" parent="1" source="ormBox" target="mysqlBox">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="arrow5" value="" style="endArrow=block;startArrow=block;html=1;rounded=0;strokeWidth=2;" edge="1" parent="1" source="userOpenApi" target="supportBox">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

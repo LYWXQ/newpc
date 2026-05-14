@@ -1,0 +1,28 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e608]:
+    - generic [ref=e610]:
+      - img [ref=e613] [cursor=pointer]
+      - generic [ref=e616]: 管理工作台
+    - generic [ref=e620]:
+      - generic [ref=e621]:
+        - generic [ref=e622]: 后台工作台
+        - generic [ref=e623]: 欢迎，admin
+        - generic [ref=e625]: 角色：管理员
+      - generic [ref=e626]:
+        - generic [ref=e627]:
+          - generic [ref=e628]: 用户管理
+          - generic [ref=e629]: 查看用户、违规状态、限制与信用分
+        - generic [ref=e630]:
+          - generic [ref=e631]: 订单管理
+          - generic [ref=e632]: 搜索订单并查看交易详情
+        - generic [ref=e633]:
+          - generic [ref=e634]: 纠纷管理
+          - generic [ref=e635]: 处理用户纠纷并执行处罚
+      - generic [ref=e636]:
+        - generic [ref=e637] [cursor=pointer]: 查看普通用户纠纷页
+        - generic [ref=e638] [cursor=pointer]: 退出登录
+  - generic:
+    - generic:
+      - generic:
+        - img
+        - paragraph: 登录成功

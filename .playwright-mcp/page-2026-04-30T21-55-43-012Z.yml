@@ -1,0 +1,23 @@
+- generic [ref=e639]:
+  - generic [ref=e641]:
+    - img [ref=e644] [cursor=pointer]
+    - generic [ref=e647]: 纠纷处理
+  - generic [ref=e651]:
+    - generic [ref=e652]:
+      - generic [ref=e653]: 佳能单反相机 EOS 200D
+      - generic [ref=e654]: 状态：待管理员处理
+      - generic [ref=e655]: 发起方说明
+      - generic [ref=e656]: 卖方临时变更交接地点，影响正常取货，希望管理员介入。
+      - generic [ref=e657]: 对方回应
+      - generic [ref=e658]: 交接地点调整前已在站内说明，可接受管理员核验聊天与时间记录。
+    - generic [ref=e659]:
+      - generic [ref=e662] [cursor=pointer]: 卖方负责
+      - generic [ref=e664]:
+        - generic: 损失金额（可选）
+        - spinbutton [ref=e665]
+      - spinbutton [ref=e668]: "0"
+      - spinbutton [ref=e671]: "0"
+      - generic [ref=e673]:
+        - generic [ref=e674]: 请输入处理说明
+        - textbox [ref=e675]
+      - generic [ref=e676] [cursor=pointer]: 提交处理结果

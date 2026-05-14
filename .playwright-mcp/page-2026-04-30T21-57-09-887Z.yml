@@ -1,0 +1,82 @@
+- generic [ref=e3]:
+  - generic [ref=e765]:
+    - generic [ref=e769]: 发布物品
+    - generic [ref=e775]:
+      - generic [ref=e776]:
+        - generic [ref=e777]: 交易方式*
+        - generic [ref=e778]:
+          - generic [ref=e780]: 免费
+          - generic [ref=e782]: 租用
+          - generic [ref=e784]: 转卖
+      - generic [ref=e785]:
+        - generic [ref=e786]: 物品标题*
+        - generic [ref=e788]:
+          - generic: 请输入物品标题
+          - textbox [ref=e789]
+      - generic [ref=e790]:
+        - generic [ref=e791]: 物品分类*
+        - generic [ref=e794] [cursor=pointer]: 图书
+      - generic [ref=e795]:
+        - generic [ref=e796]: 物品描述
+        - generic [ref=e798]:
+          - generic [ref=e799]: 请详细描述物品的成色、使用方法等信息
+          - textbox [ref=e800]
+      - generic [ref=e801]:
+        - generic [ref=e802]: 租金 (元/天)*
+        - generic [ref=e804]:
+          - generic: 请输入租金
+          - spinbutton [ref=e805]
+      - generic [ref=e806]:
+        - generic [ref=e807]: 押金 (元)*
+        - generic [ref=e809]:
+          - generic: 请输入押金
+          - spinbutton [ref=e810]
+      - generic [ref=e811]:
+        - generic [ref=e812]:
+          - generic [ref=e813]: 可租时间
+          - generic [ref=e815]: 长期租用
+        - generic [ref=e819]:
+          - generic [ref=e820]:
+            - generic [ref=e821]: 开始时间
+            - generic [ref=e822]:
+              - generic [ref=e823] [cursor=pointer]:
+                - generic [ref=e825]: 2026-05-01
+                - textbox [ref=e827]: 2026-05-01
+              - generic [ref=e830] [cursor=pointer]: 05:57
+            - generic [ref=e831]: 2026-05-01 05:57
+          - generic [ref=e832]:
+            - generic [ref=e833]: 结束时间
+            - generic [ref=e834]:
+              - generic [ref=e835] [cursor=pointer]:
+                - generic [ref=e837]: 日期
+                - textbox [ref=e839]
+              - generic [ref=e842] [cursor=pointer]: 时间
+            - generic [ref=e843]: 未选择
+      - generic [ref=e844]:
+        - generic [ref=e845]: 交易地点
+        - generic [ref=e847]:
+          - generic: 请输入交易地点
+          - textbox [ref=e848]
+      - generic [ref=e849]:
+        - generic [ref=e850]: 物品图片
+        - generic [ref=e853]:
+          - generic [ref=e854]: +
+          - generic [ref=e855]: 0/6
+      - generic [ref=e857]: 当前账号已被标记为违规用户，暂不可发布物品
+      - generic [ref=e858]: 发布物品
+  - generic [ref=e7]:
+    - generic [ref=e10] [cursor=pointer]:
+      - img [ref=e12]
+      - generic [ref=e13]: 首页
+    - generic [ref=e15] [cursor=pointer]:
+      - img [ref=e17]
+      - generic [ref=e18]: 订单
+    - generic [ref=e20] [cursor=pointer]:
+      - img [ref=e22]
+      - generic [ref=e23]: 发布
+    - generic [ref=e25] [cursor=pointer]:
+      - img [ref=e27]
+      - generic [ref=e28]: 消息
+    - generic [ref=e30] [cursor=pointer]:
+      - img [ref=e32]
+      - generic [ref=e33]: 我的

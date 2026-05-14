@@ -1,0 +1,51 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e3]:
+    - generic [ref=e138]:
+      - generic [ref=e142]: 消息中心
+      - generic [ref=e146]:
+        - generic [ref=e147]:
+          - generic [ref=e148]: 消息中心
+          - generic [ref=e150]: 全部已读
+        - generic [ref=e154]:
+          - generic [ref=e155]:
+            - img [ref=e158]
+            - generic [ref=e159]:
+              - generic [ref=e160]:
+                - generic [ref=e161]: badge test item
+                - generic [ref=e162]: 10:55
+              - generic [ref=e163]: click clears badge test
+              - generic [ref=e165]: 共 3 条消息
+            - generic [ref=e166]:
+              - generic [ref=e167]: "1"
+              - generic [ref=e169]: 🗑️
+          - generic [ref=e170]:
+            - img [ref=e173]
+            - generic [ref=e174]:
+              - generic [ref=e175]:
+                - generic [ref=e176]: 免费物品
+                - generic [ref=e177]: 10:12
+              - generic [ref=e178]: 测试系统消息：请尽快查看该物品的最新状态
+              - generic [ref=e180]: 共 1 条消息
+            - generic [ref=e183]: 🗑️
+          - generic [ref=e185]: 没有更多了
+    - generic [ref=e110]:
+      - generic [ref=e113] [cursor=pointer]:
+        - img [ref=e115]
+        - generic [ref=e116]: 首页
+      - generic [ref=e118] [cursor=pointer]:
+        - img [ref=e120]
+        - generic [ref=e121]: 订单
+      - generic [ref=e123] [cursor=pointer]:
+        - img [ref=e125]
+        - generic [ref=e126]: 发布
+      - generic [ref=e128] [cursor=pointer]:
+        - img [ref=e130]
+        - generic [ref=e131]: 消息
+        - generic [ref=e186]: "1"
+      - generic [ref=e133] [cursor=pointer]:
+        - img [ref=e135]
+        - generic [ref=e136]: 我的
+  - generic:
+    - generic:
+      - generic:
+        - paragraph: 加载中...

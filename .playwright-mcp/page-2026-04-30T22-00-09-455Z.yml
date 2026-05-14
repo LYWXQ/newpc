@@ -1,0 +1,66 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e927]:
+    - generic [ref=e929]:
+      - img [ref=e932] [cursor=pointer]
+      - generic [ref=e935]: 物品详情
+    - generic [ref=e940]:
+      - img [ref=e949]
+      - generic [ref=e952]:
+        - generic [ref=e953]: 罗技机械键盘 K845
+        - generic [ref=e954]:
+          - generic [ref=e955]: ¥10.00/天
+          - generic [ref=e956]: 押金 ¥300.00
+        - generic [ref=e957]:
+          - generic [ref=e958]: 电子产品
+          - generic [ref=e959]: 可借用
+          - generic [ref=e960]: 浏览 1
+      - generic [ref=e961]:
+        - generic [ref=e962]:
+          - generic [ref=e963]: 发布者
+          - generic [ref=e965]: 已认证
+        - generic [ref=e966]:
+          - img [ref=e969]
+          - generic [ref=e970]:
+            - generic [ref=e971]: zhangsan
+            - generic [ref=e972]:
+              - generic [ref=e973]: 信用分
+              - generic [ref=e974]: "92"
+        - generic [ref=e975]:
+          - generic [ref=e976]:
+            - generic [ref=e977]: 联系方式
+            - generic [ref=e978]: 点击可复制
+          - generic [ref=e979]:
+            - generic [ref=e980]:
+              - generic [ref=e981]: 📞
+              - generic [ref=e982]: 手机号
+              - generic [ref=e983]: "13800000011"
+              - generic [ref=e984]: 📋
+            - generic [ref=e985]:
+              - generic [ref=e986]: 💬
+              - generic [ref=e987]: QQ号
+              - generic [ref=e988]: "2234567"
+              - generic [ref=e989]: 📋
+      - generic [ref=e990]:
+        - generic [ref=e991]: 物品描述
+        - generic [ref=e992]: 青轴机械键盘
+      - generic [ref=e993]:
+        - generic [ref=e994]: 物品信息
+        - generic [ref=e995]:
+          - generic [ref=e996]: 分类：
+          - generic [ref=e997]: 电子产品
+        - generic [ref=e998]:
+          - generic [ref=e999]: 状态：
+          - generic [ref=e1000]: 可借用
+        - generic [ref=e1001]:
+          - generic [ref=e1002]: 位置：
+          - generic [ref=e1003]: 东区宿舍
+        - generic [ref=e1004]:
+          - generic [ref=e1005]: 发布时间：
+          - generic [ref=e1006]: 2026/5/1
+      - generic [ref=e1007]:
+        - generic [ref=e1008] [cursor=pointer]: 收藏
+        - generic [ref=e1009] [cursor=pointer]: 发起交易
+  - generic:
+    - generic:
+      - generic:
+        - paragraph: 加载中...

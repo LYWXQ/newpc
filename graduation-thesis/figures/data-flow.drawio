@@ -1,0 +1,84 @@
+<mxfile host="app.diagrams.net" modified="2026-05-06T16:10:00.000Z" agent="Codex" version="24.7.17">
+  <diagram id="data-flow" name="系统数据流图">
+    <mxGraphModel dx="1280" dy="720" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <mxCell id="title" value="图 3.2 系统数据流图" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;fontSize=22;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="360" y="20" width="300" height="30" as="geometry"/>
+        </mxCell>
+        <mxCell id="caption" value="校园闲置物品共享平台数据流&#xa;（核心：HTTP 请求、RESTful API、MySQL）" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;fontSize=18;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="90" y="100" width="300" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="mobile" value="移动端&#xa;前端界面" style="shape=mxgraph.android.phone;html=1;outlineConnect=0;fillColor=#8FB0E3;strokeColor=#4F78A8;fontSize=18;" vertex="1" parent="1">
+          <mxGeometry x="50" y="180" width="70" height="150" as="geometry"/>
+        </mxCell>
+        <mxCell id="doc" value="" style="shape=document;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#CCCCCC;" vertex="1" parent="1">
+          <mxGeometry x="135" y="250" width="38" height="55" as="geometry"/>
+        </mxCell>
+        <mxCell id="url" value="URL" style="shape=cloud;whiteSpace=wrap;html=1;fillColor=#E6EEF9;strokeColor=#7F9BC9;fontSize=18;" vertex="1" parent="1">
+          <mxGeometry x="260" y="220" width="90" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="api" value="RESTful API" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#78A8E3;strokeColor=#4F78A8;fontColor=#FFFFFF;fontSize=20;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="400" y="210" width="170" height="70" as="geometry"/>
+        </mxCell>
+        <mxCell id="get" value="GET" style="shape=hexagon;perimeter=hexagonPerimeter2;whiteSpace=wrap;html=1;fillColor=#8FB0E3;strokeColor=#8FB0E3;fontColor=#FFFFFF;fontSize=18;" vertex="1" parent="1">
+          <mxGeometry x="390" y="130" width="95" height="45" as="geometry"/>
+        </mxCell>
+        <mxCell id="post" value="POST" style="shape=hexagon;perimeter=hexagonPerimeter2;whiteSpace=wrap;html=1;fillColor=#8FB0E3;strokeColor=#8FB0E3;fontColor=#FFFFFF;fontSize=18;" vertex="1" parent="1">
+          <mxGeometry x="520" y="90" width="95" height="45" as="geometry"/>
+        </mxCell>
+        <mxCell id="delete" value="DELETE" style="shape=hexagon;perimeter=hexagonPerimeter2;whiteSpace=wrap;html=1;fillColor=#8FB0E3;strokeColor=#8FB0E3;fontColor=#FFFFFF;fontSize=18;" vertex="1" parent="1">
+          <mxGeometry x="390" y="70" width="110" height="45" as="geometry"/>
+        </mxCell>
+        <mxCell id="put" value="PUT" style="shape=hexagon;perimeter=hexagonPerimeter2;whiteSpace=wrap;html=1;fillColor=#8FB0E3;strokeColor=#8FB0E3;fontColor=#FFFFFF;fontSize=18;" vertex="1" parent="1">
+          <mxGeometry x="520" y="150" width="95" height="45" as="geometry"/>
+        </mxCell>
+        <mxCell id="server" value="后端&#xa;Server" style="shape=mxgraph.networks.computer_and_monitor;html=1;fillColor=#D9E6F8;strokeColor=#7F9BC9;fontSize=20;" vertex="1" parent="1">
+          <mxGeometry x="690" y="180" width="140" height="115" as="geometry"/>
+        </mxCell>
+        <mxCell id="res1" value="静态资源&#xa;uploads" style="shape=cylinder;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#8FB0E3;strokeColor=#7F9BC9;fontSize=18;" vertex="1" parent="1">
+          <mxGeometry x="910" y="120" width="120" height="85" as="geometry"/>
+        </mxCell>
+        <mxCell id="res2" value="数据库&#xa;MySQL" style="shape=cylinder;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#8FB0E3;strokeColor=#7F9BC9;fontSize=18;" vertex="1" parent="1">
+          <mxGeometry x="910" y="250" width="120" height="85" as="geometry"/>
+        </mxCell>
+        <mxCell id="a1" value="" style="endArrow=block;html=1;rounded=0;strokeWidth=2;strokeColor=#6A97D4;" edge="1" parent="1" source="doc" target="url">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="a2" value="" style="endArrow=block;html=1;rounded=0;strokeWidth=2;strokeColor=#6A97D4;" edge="1" parent="1" source="url" target="api">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="a3" value="" style="endArrow=block;html=1;rounded=0;strokeWidth=2;strokeColor=#6A97D4;" edge="1" parent="1" source="get" target="api">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="a4" value="" style="endArrow=block;html=1;rounded=0;strokeWidth=2;strokeColor=#6A97D4;" edge="1" parent="1" source="post" target="api">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="a5" value="" style="endArrow=block;html=1;rounded=0;strokeWidth=2;strokeColor=#6A97D4;" edge="1" parent="1" source="delete" target="api">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="a6" value="" style="endArrow=block;html=1;rounded=0;strokeWidth=2;strokeColor=#6A97D4;" edge="1" parent="1" source="put" target="api">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="a7" value="" style="endArrow=block;startArrow=block;html=1;rounded=0;strokeWidth=2;strokeColor=#6A97D4;" edge="1" parent="1" source="api" target="server">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="a8" value="" style="endArrow=block;html=1;rounded=0;strokeWidth=2;strokeColor=#6A97D4;" edge="1" parent="1" source="server" target="res1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="a9" value="" style="endArrow=block;html=1;rounded=0;strokeWidth=2;strokeColor=#6A97D4;" edge="1" parent="1" source="server" target="res2">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="a10" value="" style="endArrow=block;html=1;rounded=0;strokeWidth=2;strokeColor=#6A97D4;" edge="1" parent="1" source="api" target="doc">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="485" y="360"/>
+              <mxPoint x="150" y="360"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

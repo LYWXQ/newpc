@@ -3,6 +3,49 @@ const { createCreditRecord, applyRestrictions } = require('./creditService');
 const { logAdminAction } = require('./adminService');
 
 const DISPUTE_RESTRICTION_HOURS = 24;
+const LOCAL_UPLOAD_HOSTS = new Set(['localhost:3000', '127.0.0.1:3000']);
+
+const normalizeDisputeImages = (images = []) => {
+  return images
+    .filter((image) => image !== undefined && image !== null)
+    .map((image) => {
+      const rawValue = String(image).trim();
+      if (!rawValue) {
+        throw new Error('纠纷图片路径无效');
+      }
+
+      const slashNormalized = rawValue.replace(/\\/g, '/');
+
+      if (slashNormalized.startsWith('data:')) {
+        throw new Error('纠纷图片路径无效');
+      }
+
+      if (slashNormalized.startsWith('http://') || slashNormalized.startsWith('https://')) {
+        const url = new URL(slashNormalized);
+        if (!LOCAL_UPLOAD_HOSTS.has(url.host)) {
+          throw new Error('纠纷图片路径无效');
+        }
+
+        const path = url.pathname.replace(/\/\/+/g, '/');
+        if (!path.startsWith('/uploads/')) {
+          throw new Error('纠纷图片路径无效');
+        }
+
+        return path;
+      }
+
+      if (slashNormalized.startsWith('/uploads/')) {
+        return slashNormalized.replace(/\/\/+/g, '/');
+      }
+
+      if (slashNormalized.startsWith('uploads/')) {
+        return `/${slashNormalized}`.replace(/\/\/+/g, '/');
+      }
+
+      throw new Error('纠纷图片路径无效');
+    })
+    .filter((image, index, list) => list.indexOf(image) === index);
+};
 
 const sendSystemMessage = async (receiverId, content, relatedId, relatedType, itemId = null) => {
   await Message.create({
@@ -42,6 +85,8 @@ const ensureOrderCanCreateDispute = (order) => {
 const createDispute = async ({ order, initiatorId, statement, images = [] }) => {
   ensureOrderCanCreateDispute(order);
 
+  const normalizedImages = normalizeDisputeImages(images);
+
   const existing = await Dispute.findOne({ where: { orderId: order.id } });
   if (existing) {
     throw new Error('该订单已存在纠纷记录');
@@ -59,7 +104,7 @@ const createDispute = async ({ order, initiatorId, statement, images = [] }) => 
     respondentId,
     status: 'awaiting_counterparty',
     initiatorStatement: statement,
-    initiatorImages: images,
+    initiatorImages: normalizedImages,
     respondentStatement: null,
     respondentImages: []
   });
@@ -82,9 +127,11 @@ const respondToDispute = async ({ dispute, userId, statement, images = [] }) => 
     throw new Error('当前纠纷不可补充回应');
   }
 
+  const normalizedImages = normalizeDisputeImages(images);
+
   await dispute.update({
     respondentStatement: statement,
-    respondentImages: images,
+    respondentImages: normalizedImages,
     status: 'under_review'
   });
 

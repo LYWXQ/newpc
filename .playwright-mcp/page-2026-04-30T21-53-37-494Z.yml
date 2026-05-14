@@ -1,0 +1,28 @@
+- generic [ref=e502]:
+  - generic [ref=e504]:
+    - img [ref=e507] [cursor=pointer]
+    - generic [ref=e510]: 登录
+  - generic [ref=e514]:
+    - generic [ref=e515]:
+      - generic [ref=e518]: 校园闲置共享
+      - generic [ref=e519]: 让闲置物品流动起来
+    - generic [ref=e520]:
+      - generic [ref=e521]:
+        - generic [ref=e522]: 学号/手机号/用户名
+        - generic [ref=e524]:
+          - generic: 请输入学号、手机号或用户名
+          - textbox [ref=e525]
+      - generic [ref=e526]:
+        - generic [ref=e527]: 密码
+        - generic [ref=e529]:
+          - generic: 请输入密码
+          - textbox [ref=e530]
+      - generic [ref=e531] [cursor=pointer]: 登录
+      - generic [ref=e532]:
+        - generic [ref=e533]: 还没有账号？去注册
+        - generic [ref=e534]: 忘记密码？
+    - generic [ref=e535]:
+      - generic [ref=e536]: 登录即表示您同意
+      - generic [ref=e537]: 《用户协议》
+      - generic [ref=e538]: 和
+      - generic [ref=e539]: 《隐私政策》

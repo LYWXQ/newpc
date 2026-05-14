@@ -1,0 +1,30 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e899]:
+    - generic [ref=e901]:
+      - img [ref=e904] [cursor=pointer]
+      - generic [ref=e907]: 设置
+    - generic [ref=e911]:
+      - generic [ref=e912]:
+        - generic [ref=e913]: 账号设置
+        - generic [ref=e914]:
+          - generic [ref=e915]: 编辑资料
+          - generic [ref=e916]: ＞
+        - generic [ref=e917]:
+          - generic [ref=e918]: 退出登录
+          - generic [ref=e919]: ＞
+      - generic [ref=e920]:
+        - generic [ref=e921]: 账号注销
+        - generic [ref=e922]:
+          - generic [ref=e923]: 申请注销后，7天内重新登录可取消注销。
+          - generic [ref=e924]: 注销前不能存在进行中的订单或借还业务。
+        - generic [ref=e925] [cursor=pointer]: 申请注销
+  - generic:
+    - generic:
+      - generic:
+        - paragraph: 当前账号已被标记为违规，暂无法注销
+  - generic [ref=e187]:
+    - strong [ref=e189]: 申请注销
+    - generic [ref=e190]: 账号注销申请提交后，将进入7天冷静期。确认继续吗？
+    - generic [ref=e191]:
+      - generic [ref=e192] [cursor=pointer]: 取消
+      - generic [ref=e193] [cursor=pointer]: 确定

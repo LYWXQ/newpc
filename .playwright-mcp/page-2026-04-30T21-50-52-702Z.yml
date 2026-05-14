@@ -1,0 +1,78 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e390]:
+    - generic [ref=e392]:
+      - img [ref=e395] [cursor=pointer]
+      - generic [ref=e398]: 订单详情
+    - generic [ref=e403]:
+      - generic [ref=e404]:
+        - generic [ref=e405]: 订单状态：待取货
+        - generic [ref=e406]: 2026/05/01 05:42
+      - generic [ref=e407]:
+        - generic [ref=e408]: 订单信息
+        - generic [ref=e409]:
+          - generic [ref=e410]: 订单编号：
+          - generic [ref=e411]: ORD0000000008
+        - generic [ref=e412]:
+          - generic [ref=e413]: 交易时间：
+          - generic [ref=e414]: 2026/05/02 05:42
+        - generic [ref=e415]:
+          - generic [ref=e416]: 约定交还：
+          - generic [ref=e417]: 2026/05/04 05:42
+        - generic [ref=e418]:
+          - generic [ref=e419]: 租金：
+          - generic [ref=e420]: ¥100.00
+        - generic [ref=e421]:
+          - generic [ref=e422]: 押金：
+          - generic [ref=e423]: ¥2000.00
+        - generic [ref=e424]:
+          - generic [ref=e425]: 取货地点：
+          - generic [ref=e426]: 图书馆门口
+        - generic [ref=e427]:
+          - generic [ref=e428]: 还货地点：
+          - generic [ref=e429]: 图书馆门口
+        - generic [ref=e430]:
+          - generic [ref=e431]: 备注：
+          - generic [ref=e432]: MCP 纠纷测试订单
+        - generic [ref=e433]:
+          - generic [ref=e434]: 验码提醒：
+          - generic [ref=e435]: 请向卖方获取取件码后完成验码
+      - generic [ref=e436]:
+        - generic [ref=e437]: 物品信息
+        - generic [ref=e438]:
+          - img [ref=e441]
+          - generic [ref=e442]:
+            - generic [ref=e443]: 佳能单反相机 EOS 200D
+            - generic [ref=e444]: ¥50.00/天
+      - generic [ref=e445]:
+        - generic [ref=e446]: 用户信息
+        - generic [ref=e447]:
+          - generic [ref=e448]: 出借方：
+          - generic [ref=e449]:
+            - img [ref=e452]
+            - generic [ref=e453]: seller
+        - generic [ref=e454]:
+          - generic [ref=e455]: 借用方：
+          - generic [ref=e456]:
+            - img [ref=e459]
+            - generic [ref=e460]: buyer
+      - generic [ref=e461]:
+        - generic [ref=e462]: 联系方式
+        - generic [ref=e463]:
+          - generic [ref=e464]: 手机号
+          - generic [ref=e465]: "13800000003"
+        - generic [ref=e466]:
+          - generic [ref=e467]: QQ
+          - generic [ref=e468]: "1234569"
+      - generic [ref=e469]:
+        - generic [ref=e470]: 纠纷处理
+        - generic [ref=e471]:
+          - generic [ref=e472]: 当前状态：
+          - generic [ref=e473]: 待对方回应
+      - generic [ref=e474]:
+        - generic [ref=e475] [cursor=pointer]: 输入取件码
+        - generic [ref=e476] [cursor=pointer]: 查看纠纷
+        - generic [ref=e477] [cursor=pointer]: 取消订单
+  - generic:
+    - generic:
+      - generic:
+        - paragraph: 加载中...

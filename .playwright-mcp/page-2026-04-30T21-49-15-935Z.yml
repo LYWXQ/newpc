@@ -1,0 +1,32 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e108]:
+    - generic [ref=e110]:
+      - img [ref=e113] [cursor=pointer]
+      - generic [ref=e116]: 管理员管理
+    - generic [ref=e158]:
+      - generic [ref=e160] [cursor=pointer]: 新建管理员
+      - generic [ref=e161]:
+        - generic [ref=e162]:
+          - generic [ref=e163]: admin2
+          - generic [ref=e164]: active
+        - generic [ref=e165]: 角色：管理员
+        - generic [ref=e166]:
+          - generic [ref=e184] [cursor=pointer]: 停用
+          - generic [ref=e168] [cursor=pointer]: 注销
+      - generic [ref=e169]:
+        - generic [ref=e170]:
+          - generic [ref=e171]: superadmin
+          - generic [ref=e172]: active
+        - generic [ref=e173]: 角色：超级管理员
+      - generic [ref=e174]:
+        - generic [ref=e175]:
+          - generic [ref=e176]: admin
+          - generic [ref=e177]: active
+        - generic [ref=e178]: 角色：管理员
+        - generic [ref=e179]:
+          - generic [ref=e180] [cursor=pointer]: 停用
+          - generic [ref=e181] [cursor=pointer]: 注销
+  - generic:
+    - generic:
+      - generic:
+        - paragraph: 加载中...

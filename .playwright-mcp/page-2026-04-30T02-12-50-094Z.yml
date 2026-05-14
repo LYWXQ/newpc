@@ -1,0 +1,41 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e3]:
+    - generic [ref=e393]:
+      - generic [ref=e397]: 消息中心
+      - generic [ref=e401]:
+        - generic [ref=e402]:
+          - generic [ref=e403]: 消息中心
+          - generic [ref=e405]: 全部已读
+        - generic [ref=e409]:
+          - generic [ref=e410]:
+            - img [ref=e413]
+            - generic [ref=e414]:
+              - generic [ref=e415]:
+                - generic [ref=e416]: 免费物品
+                - generic [ref=e417]: 10:12
+              - generic [ref=e418]: 测试系统消息：请尽快查看该物品的最新状态
+              - generic [ref=e420]: 共 1 条消息
+            - generic [ref=e421]:
+              - generic [ref=e422]: "1"
+              - generic [ref=e424]: 🗑️
+          - generic [ref=e426]: 没有更多了
+    - generic [ref=e7]:
+      - generic [ref=e10] [cursor=pointer]:
+        - img [ref=e12]
+        - generic [ref=e13]: 首页
+      - generic [ref=e15] [cursor=pointer]:
+        - img [ref=e17]
+        - generic [ref=e18]: 订单
+      - generic [ref=e20] [cursor=pointer]:
+        - img [ref=e22]
+        - generic [ref=e23]: 发布
+      - generic [ref=e25] [cursor=pointer]:
+        - img [ref=e27]
+        - generic [ref=e28]: 消息
+      - generic [ref=e30] [cursor=pointer]:
+        - img [ref=e32]
+        - generic [ref=e33]: 我的
+  - generic:
+    - generic:
+      - generic:
+        - paragraph: 加载中...

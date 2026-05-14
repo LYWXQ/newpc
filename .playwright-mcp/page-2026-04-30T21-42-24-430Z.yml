@@ -1,0 +1,21 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e7]:
+    - generic [ref=e10] [cursor=pointer]:
+      - img [ref=e12]
+      - generic [ref=e13]: 首页
+    - generic [ref=e15] [cursor=pointer]:
+      - img [ref=e17]
+      - generic [ref=e18]: 订单
+    - generic [ref=e20] [cursor=pointer]:
+      - img [ref=e22]
+      - generic [ref=e23]: 发布
+    - generic [ref=e25] [cursor=pointer]:
+      - img [ref=e27]
+      - generic [ref=e28]: 消息
+    - generic [ref=e30] [cursor=pointer]:
+      - img [ref=e32]
+      - generic [ref=e33]: 我的
+  - generic:
+    - generic:
+      - generic:
+        - paragraph: 登录已过期，请重新登录

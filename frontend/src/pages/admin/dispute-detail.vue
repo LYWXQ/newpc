@@ -5,8 +5,22 @@
       <text class="meta">状态：{{ statusText(dispute.status) }}</text>
       <text class="section-title">发起方说明</text>
       <text class="desc">{{ dispute.initiatorStatement }}</text>
-      <text class="section-title" v-if="dispute.respondentStatement">对方回应</text>
+      <view v-if="initiatorImages.length">
+        <text class="section-subtitle">发起方证据</text>
+        <view class="images-grid">
+          <image v-for="(img, index) in initiatorImages" :key="`${img}-${index}`" class="evidence-image" :src="getImageUrl(img)" mode="aspectFill" @click="previewImages(initiatorImages, index)" />
+        </view>
+      </view>
+      <text class="section-title" v-if="dispute.respondentStatement || respondentImages.length">对方回应</text>
       <text class="desc" v-if="dispute.respondentStatement">{{ dispute.respondentStatement }}</text>
+      <template v-if="dispute.respondentStatement || respondentImages.length">
+        <text class="section-subtitle">回应方证据</text>
+        <view class="images-grid" v-if="respondentImages.length">
+          <image v-for="(img, index) in respondentImages" :key="`${img}-${index}`" class="evidence-image" :src="getImageUrl(img)" mode="aspectFill" @click="previewImages(respondentImages, index)" />
+        </view>
+        <text class="empty-text" v-else>未上传证据</text>
+      </template>
+      <text class="empty-text" v-else>未收到对方回应</text>
     </view>
 
     <view class="card" v-if="dispute.status !== 'resolved'">
@@ -28,9 +42,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import { getAdminDisputeDetail, resolveAdminDispute } from '@/api/admin'
+import { getImageUrl } from '@/utils/image'
 import type { Dispute, DisputeVerdict } from '@/api/disputes'
 
 const dispute = ref<Dispute | null>(null)
@@ -42,6 +57,8 @@ const submitting = ref(false)
 const verdictValues: DisputeVerdict[] = ['borrower_responsible', 'lender_responsible', 'shared_responsibility', 'no_fault']
 const verdictLabels = ['借方负责', '卖方负责', '双方有责', '双方无责']
 const verdictIndex = ref(0)
+const initiatorImages = computed(() => dispute.value?.initiatorImages || [])
+const respondentImages = computed(() => dispute.value?.respondentImages || [])
 
 const loadDetail = async (id: number) => {
   dispute.value = (await getAdminDisputeDetail(id)).dispute
@@ -56,6 +73,14 @@ onLoad(async (options) => {
 
 const onVerdictChange = (event: any) => {
   verdictIndex.value = Number(event.detail.value || 0)
+}
+
+const previewImages = (images: string[], currentIndex: number) => {
+  if (!images.length) return
+  uni.previewImage({
+    urls: images.map(img => getImageUrl(img)),
+    current: getImageUrl(images[currentIndex])
+  })
 }
 
 const submit = async () => {
@@ -88,10 +113,14 @@ const statusText = (status: string) => ({ open: '待处理', awaiting_counterpar
 .page { min-height:100vh; background:#f5f5f5; padding:24rpx; }
 .card { background:#fff; border-radius:18rpx; padding:24rpx; margin-bottom:20rpx; }
 .title { display:block; font-size:30rpx; font-weight:600; color:#111827; }
-.meta,.section-title,.desc { display:block; }
+.meta,.section-title,.section-subtitle,.desc,.empty-text { display:block; }
 .meta { margin-top:12rpx; font-size:24rpx; color:#007aff; }
 .section-title { margin-top:20rpx; font-size:26rpx; font-weight:600; color:#374151; }
+.section-subtitle { margin-top:16rpx; font-size:24rpx; color:#4b5563; }
 .desc { margin-top:12rpx; font-size:24rpx; color:#6b7280; line-height:1.7; }
+.empty-text { margin-top:12rpx; font-size:24rpx; color:#9ca3af; }
+.images-grid { display:flex; flex-wrap:wrap; gap:20rpx; margin-top:16rpx; }
+.evidence-image { width:180rpx; height:180rpx; border-radius:14rpx; display:block; }
 .input,.picker,.textarea { width:100%; box-sizing:border-box; background:#f8fafc; border-radius:14rpx; padding:18rpx 22rpx; margin-bottom:16rpx; }
 .textarea { min-height:220rpx; }
 .picker-text { font-size:26rpx; color:#111827; }

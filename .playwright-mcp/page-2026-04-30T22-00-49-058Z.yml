@@ -1,0 +1,105 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e927]:
+    - generic [ref=e929]:
+      - img [ref=e932] [cursor=pointer]
+      - generic [ref=e935]: 物品详情
+    - generic [ref=e939]:
+      - generic [ref=e1010]:
+        - img [ref=e1019]
+        - generic [ref=e1022]:
+          - generic [ref=e1023]: 罗技机械键盘 K845
+          - generic [ref=e1024]:
+            - generic [ref=e1025]: ¥10.00/天
+            - generic [ref=e1026]: 押金 ¥300.00
+          - generic [ref=e1027]:
+            - generic [ref=e1028]: 电子产品
+            - generic [ref=e1029]: 可借用
+            - generic [ref=e1030]: 浏览 2
+        - generic [ref=e1031]:
+          - generic [ref=e1032]:
+            - generic [ref=e1033]: 发布者
+            - generic [ref=e1035]: 已认证
+          - generic [ref=e1036]:
+            - img [ref=e1039]
+            - generic [ref=e1040]:
+              - generic [ref=e1041]: zhangsan
+              - generic [ref=e1042]:
+                - generic [ref=e1043]: 信用分
+                - generic [ref=e1044]: "92"
+          - generic [ref=e1045]:
+            - generic [ref=e1046]:
+              - generic [ref=e1047]: 联系方式
+              - generic [ref=e1048]: 点击可复制
+            - generic [ref=e1049]:
+              - generic [ref=e1050]:
+                - generic [ref=e1051]: 📞
+                - generic [ref=e1052]: 手机号
+                - generic [ref=e1053]: "13800000011"
+                - generic [ref=e1054]: 📋
+              - generic [ref=e1055]:
+                - generic [ref=e1056]: 💬
+                - generic [ref=e1057]: QQ号
+                - generic [ref=e1058]: "2234567"
+                - generic [ref=e1059]: 📋
+        - generic [ref=e1060]:
+          - generic [ref=e1061]: 物品描述
+          - generic [ref=e1062]: 青轴机械键盘
+        - generic [ref=e1063]:
+          - generic [ref=e1064]: 物品信息
+          - generic [ref=e1065]:
+            - generic [ref=e1066]: 分类：
+            - generic [ref=e1067]: 电子产品
+          - generic [ref=e1068]:
+            - generic [ref=e1069]: 状态：
+            - generic [ref=e1070]: 可借用
+          - generic [ref=e1071]:
+            - generic [ref=e1072]: 位置：
+            - generic [ref=e1073]: 东区宿舍
+          - generic [ref=e1074]:
+            - generic [ref=e1075]: 发布时间：
+            - generic [ref=e1076]: 2026/5/1
+        - generic [ref=e1077]:
+          - generic [ref=e1078] [cursor=pointer]: 收藏
+          - generic [ref=e1079] [cursor=pointer]: 发起交易
+      - generic [ref=e1081]:
+        - generic [ref=e1082]:
+          - generic [ref=e1083]: 交易信息
+          - generic [ref=e1084]: ×
+        - generic [ref=e1085]:
+          - generic [ref=e1086]:
+            - generic [ref=e1087]: 物品名称
+            - generic [ref=e1088]: 罗技机械键盘 K845
+          - generic [ref=e1089]:
+            - generic [ref=e1090]: 租金
+            - generic [ref=e1091]: ¥10.00/天
+          - generic [ref=e1092]:
+            - generic [ref=e1093]: 交易时间
+            - generic [ref=e1094]:
+              - generic [ref=e1095]: 2026-05-01 07:00
+              - generic [ref=e1096]: ">"
+          - generic [ref=e1097]:
+            - generic [ref=e1098]: 交还时间
+            - generic [ref=e1099]:
+              - generic [ref=e1100]: 2026-05-08 07:00
+              - generic [ref=e1101]: ">"
+          - generic [ref=e1102]:
+            - generic [ref=e1103]: 预计交易时长
+            - generic [ref=e1104]: 7天
+          - generic [ref=e1105]:
+            - generic [ref=e1106]: 取货地点
+            - textbox [ref=e1109]: 东区宿舍
+          - generic [ref=e1110]:
+            - generic [ref=e1111]: 还货地点
+            - textbox [ref=e1114]: 东区宿舍
+          - generic [ref=e1115]:
+            - generic [ref=e1116]: 备注信息
+            - generic [ref=e1118]:
+              - generic [ref=e1119]: 请输入备注信息（可选）
+              - textbox [ref=e1120]
+        - generic [ref=e1121]:
+          - generic [ref=e1122] [cursor=pointer]: 取消
+          - generic [ref=e1123] [cursor=pointer]: 确认交易
+  - generic:
+    - generic:
+      - generic:
+        - paragraph: Server Error

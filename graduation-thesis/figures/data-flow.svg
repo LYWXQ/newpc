@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="760" viewBox="0 0 1200 760">
+  <defs>
+    <style>
+      .bg { fill: #f7f9fc; }
+      .box { fill: #ffffff; stroke: #4f78a8; stroke-width: 2; rx: 12; ry: 12; }
+      .api { fill: #e7f0fa; stroke: #4f78a8; stroke-width: 2; rx: 12; ry: 12; }
+      .db { fill: #dbe9f8; stroke: #4f78a8; stroke-width: 2; }
+      .title { font: 700 28px 'Microsoft YaHei', sans-serif; fill: #1d3557; }
+      .label { font: 700 21px 'Microsoft YaHei', sans-serif; fill: #1d3557; }
+      .text { font: 16px 'Microsoft YaHei', sans-serif; fill: #2b2b2b; }
+      .small { font: 15px 'Microsoft YaHei', sans-serif; fill: #2b2b2b; }
+      .arrow { stroke: #355c7d; stroke-width: 2.6; fill: none; marker-end: url(#m); }
+      .dash { stroke-dasharray: 10 8; }
+    </style>
+    <marker id="m" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#355c7d"/>
+    </marker>
+  </defs>
+
+  <rect class="bg" x="0" y="0" width="1200" height="760"/>
+  <text class="title" x="600" y="48" text-anchor="middle">图 3.2 系统数据流图</text>
+
+  <rect class="box" x="70" y="280" width="150" height="90"/>
+  <text class="label" x="145" y="318" text-anchor="middle">用户</text>
+  <text class="small" x="145" y="348" text-anchor="middle">注册 / 浏览</text>
+  <text class="small" x="145" y="372" text-anchor="middle">下单 / 消息</text>
+
+  <rect class="box" x="280" y="260" width="220" height="130"/>
+  <text class="label" x="390" y="305" text-anchor="middle">uni-app 前端</text>
+  <text class="small" x="390" y="336" text-anchor="middle">页面交互</text>
+  <text class="small" x="390" y="360" text-anchor="middle">request 请求封装</text>
+
+  <rect class="api" x="560" y="260" width="220" height="130"/>
+  <text class="label" x="670" y="305" text-anchor="middle">RESTful API</text>
+  <text class="small" x="670" y="336" text-anchor="middle">Express 路由</text>
+  <text class="small" x="670" y="360" text-anchor="middle">JWT 鉴权</text>
+
+  <rect class="box" x="840" y="230" width="230" height="190"/>
+  <text class="label" x="955" y="275" text-anchor="middle">业务处理</text>
+  <text class="small" x="955" y="308" text-anchor="middle">用户与物品管理</text>
+  <text class="small" x="955" y="334" text-anchor="middle">订单与评价处理</text>
+  <text class="small" x="955" y="360" text-anchor="middle">消息与纠纷处理</text>
+  <text class="small" x="955" y="386" text-anchor="middle">后台管理与提醒任务</text>
+
+  <ellipse class="db" cx="940" cy="560" rx="120" ry="24"/>
+  <rect class="db" x="820" y="560" width="240" height="55"/>
+  <ellipse class="db" cx="940" cy="615" rx="120" ry="24"/>
+  <text class="label" x="940" y="592" text-anchor="middle">MySQL</text>
+
+  <rect class="box" x="1010" y="470" width="140" height="70"/>
+  <text class="small" x="1080" y="500" text-anchor="middle">图片资源</text>
+  <text class="small" x="1080" y="524" text-anchor="middle">系统消息</text>
+
+  <path class="arrow" d="M220 325 L280 325"/>
+  <path class="arrow" d="M500 325 L560 325"/>
+  <path class="arrow" d="M780 325 L840 325"/>
+  <path class="arrow" d="M955 420 L955 530"/>
+  <path class="arrow" d="M1020 420 L1070 470"/>
+
+  <path class="arrow dash" d="M840 260 C760 170, 620 150, 500 220"/>
+  <text class="small" x="635" y="165" text-anchor="middle">JSON 响应返回前端</text>
+
+  <path class="arrow dash" d="M820 560 C700 650, 470 650, 350 390"/>
+  <text class="small" x="600" y="660" text-anchor="middle">数据读写结果返回并展示</text>
+</svg>

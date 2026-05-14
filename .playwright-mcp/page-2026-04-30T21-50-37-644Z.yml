@@ -1,0 +1,52 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e3]:
+    - generic [ref=e343]:
+      - generic [ref=e347]: 我的订单
+      - generic [ref=e351]:
+        - generic [ref=e352]:
+          - generic [ref=e353]: 我借入的
+          - generic [ref=e354]: 我借出的
+        - generic [ref=e355]:
+          - generic [ref=e356]: 全部
+          - generic [ref=e357]: 待处理
+          - generic [ref=e358]: 进行中
+          - generic [ref=e359]: 已完成
+        - generic [ref=e364]:
+          - generic [ref=e366]:
+            - generic [ref=e367]:
+              - generic [ref=e368]: "订单号: 8"
+              - generic [ref=e369]: 待取货
+            - generic [ref=e370]:
+              - img [ref=e373]
+              - generic [ref=e374]:
+                - generic [ref=e375]: 佳能单反相机 EOS 200D
+                - generic [ref=e376]: 交易 5月2日 · 交还 5月4日
+                - generic [ref=e377]:
+                  - generic [ref=e378]: "租金: ¥100.00"
+                  - generic [ref=e379]: "押金: ¥2000.00"
+            - generic [ref=e380]:
+              - generic [ref=e381]:
+                - img [ref=e384]
+                - generic [ref=e385]: seller
+              - generic [ref=e387] [cursor=pointer]: 去处理
+          - generic [ref=e389]: 没有更多了
+    - generic [ref=e7]:
+      - generic [ref=e10] [cursor=pointer]:
+        - img [ref=e12]
+        - generic [ref=e13]: 首页
+      - generic [ref=e15] [cursor=pointer]:
+        - img [ref=e17]
+        - generic [ref=e18]: 订单
+      - generic [ref=e20] [cursor=pointer]:
+        - img [ref=e22]
+        - generic [ref=e23]: 发布
+      - generic [ref=e25] [cursor=pointer]:
+        - img [ref=e27]
+        - generic [ref=e28]: 消息
+      - generic [ref=e30] [cursor=pointer]:
+        - img [ref=e32]
+        - generic [ref=e33]: 我的
+  - generic:
+    - generic:
+      - generic:
+        - paragraph: 加载中...
