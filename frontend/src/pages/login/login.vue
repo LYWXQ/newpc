@@ -1,8 +1,7 @@
 <template>
   <view class="login-container">
     <view class="login-header">
-      <image class="logo" src="/static/logo.png" mode="aspectFit" />
-      <text class="title">校园闲置共享</text>
+      <image class="logo" src="/static/login-logo.svg" mode="widthFix" />
       <text class="subtitle">让闲置物品流动起来</text>
     </view>
 
@@ -220,23 +219,13 @@
 }
 
 .logo {
-  width: 160rpx;
-  height: 160rpx;
-  border-radius: 50%;
-  background-color: #fff;
-  margin-bottom: 30rpx;
-}
-
-.title {
-  font-size: 48rpx;
-  font-weight: bold;
-  color: #fff;
-  margin-bottom: 16rpx;
+  width: 420rpx;
+  margin-bottom: 24rpx;
 }
 
 .subtitle {
   font-size: 28rpx;
-  color: rgba(255,255,255,0.8);
+  color: rgba(255,255,255,0.85);
 }
 
 .login-form {

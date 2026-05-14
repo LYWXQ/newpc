@@ -1,0 +1,20 @@
+<svg width="512" height="640" viewBox="0 0 512 640" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="logoGradient" x1="96" y1="72" x2="416" y2="568" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#59C2D3"/>
+      <stop offset="1" stop-color="#2FA8C0"/>
+    </linearGradient>
+  </defs>
+
+  <g stroke="url(#logoGradient)" stroke-width="20" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M140 128C182 108 228 108 256 132V314C228 290 182 290 140 310V128Z"/>
+    <path d="M372 128C330 108 284 108 256 132V314C284 290 330 290 372 310V128Z"/>
+    <path d="M120 148V370C172 340 228 338 256 360C284 338 340 340 392 370V148"/>
+    <path d="M300 248C320 224 350 212 382 214C413 216 442 232 458 258"/>
+    <path d="M436 248L458 258L445 280"/>
+    <path d="M412 286C408 344 363 396 303 408C241 421 178 392 146 339"/>
+    <path d="M175 347L146 339L154 309"/>
+  </g>
+
+  <text x="256" y="564" text-anchor="middle" font-size="86" font-weight="700" fill="url(#logoGradient)" font-family="'PingFang SC', 'Microsoft YaHei', sans-serif">校园闲置共享</text>
+</svg>
